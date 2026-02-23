@@ -278,7 +278,7 @@ const LoginPage = () => {
                                                     onClick={() => setShowPassword(!showPassword)}
                                                     className="absolute right-4 top-1/2 -translate-y-1/2 text-[var(--color-text-gray)] hover:text-white"
                                                 >
-                                                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                                    {showPassword ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
                                                 </button>
                                             </div>
                                         </div>
@@ -301,7 +301,7 @@ const LoginPage = () => {
                                                         onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                                                         className="absolute right-4 top-1/2 -translate-y-1/2 text-[var(--color-text-gray)] hover:text-white"
                                                     >
-                                                        {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                                        {showConfirmPassword ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
                                                     </button>
                                                 </div>
                                             </div>
@@ -389,7 +389,7 @@ const LoginPage = () => {
                                             onClick={() => setShowPassword(!showPassword)}
                                             className="absolute right-4 top-1/2 -translate-y-1/2 text-[var(--color-text-gray)] hover:text-white"
                                         >
-                                            {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                            {showPassword ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
                                         </button>
                                     </div>
                                 </div>
@@ -412,7 +412,7 @@ const LoginPage = () => {
                                                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                                                 className="absolute right-4 top-1/2 -translate-y-1/2 text-[var(--color-text-gray)] hover:text-white"
                                             >
-                                                {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                                {showConfirmPassword ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
                                             </button>
                                         </div>
                                     </div>
