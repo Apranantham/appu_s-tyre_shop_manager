@@ -1,3 +1,5 @@
+import React from 'react';
+import { Outlet, useNavigate, NavLink } from 'react-router-dom';
 import { Bell, Settings, Menu, X } from 'lucide-react';
 import Sidebar from './Sidebar';
 import BottomNav from './BottomNav';
