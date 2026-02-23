@@ -5,10 +5,12 @@ import { cn } from '../../utils/cn';
 import { useInvoices } from '../../context/InvoiceContext';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
+import { CustomerCardSkeleton } from '../../components/ui/SkeletonVariants';
 
 const CustomerHistory = () => {
     const navigate = useNavigate();
-    const { invoices } = useInvoices();
+    const { invoices, loading } = useInvoices();
+
     const [searchTerm, setSearchTerm] = useState('');
 
     // Grouping invoices by customer phone to show unique customers
@@ -55,7 +57,11 @@ const CustomerHistory = () => {
             </div>
 
             <div className="space-y-4">
-                {filteredCustomers.length === 0 ? (
+                {loading ? (
+                    Array.from({ length: 5 }).map((_, i) => (
+                        <CustomerCardSkeleton key={i} />
+                    ))
+                ) : filteredCustomers.length === 0 ? (
                     <div className="text-center py-12 text-[var(--color-text-gray)]">
                         <User className="h-12 w-12 mx-auto mb-4 opacity-20" />
                         <p>No customers found</p>

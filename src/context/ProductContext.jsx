@@ -42,7 +42,7 @@ export const ProductProvider = ({ children }) => {
         });
 
         return () => unsubscribe();
-    }, []);
+    }, [user]);
 
 
     const addProduct = async (product) => {
@@ -89,7 +89,14 @@ export const ProductProvider = ({ children }) => {
     };
 
     return (
-        <ProductContext.Provider value={{ products, addProduct, updateProduct, deleteProduct, updateStock, loading }}>
+        <ProductContext.Provider value={{
+            products,
+            addProduct,
+            updateProduct,
+            deleteProduct,
+            loading,
+            updateStock
+        }}>
             {children}
         </ProductContext.Provider>
     );

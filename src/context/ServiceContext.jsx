@@ -40,7 +40,7 @@ export const ServiceProvider = ({ children }) => {
         });
 
         return () => unsubscribe();
-    }, []);
+    }, [user]);
 
 
     const addService = async (service) => {
@@ -89,7 +89,14 @@ export const ServiceProvider = ({ children }) => {
     };
 
     return (
-        <ServiceContext.Provider value={{ services, addService, updateService, deleteService, toggleService, loading }}>
+        <ServiceContext.Provider value={{
+            services,
+            addService,
+            updateService,
+            deleteService,
+            toggleService,
+            loading
+        }}>
             {children}
         </ServiceContext.Provider>
     );

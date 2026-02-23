@@ -4,6 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
 import { Shield, Lock, ChevronRight, Mail, Phone, UserPlus, LogIn, Key, Eye, EyeOff, CheckCircle2 } from 'lucide-react';
+import Loader from '../../components/ui/Loader';
 
 const LoginPage = () => {
     const {
@@ -134,11 +135,7 @@ const LoginPage = () => {
     };
 
     if (loading) {
-        return (
-            <div className="min-h-screen bg-[var(--color-bg-dark)] flex items-center justify-center">
-                <div className="w-12 h-12 border-4 border-[var(--color-primary)] border-t-transparent rounded-full animate-spin"></div>
-            </div>
-        );
+        return <Loader fullScreen text="Booting management suite..." />;
     }
 
     return (

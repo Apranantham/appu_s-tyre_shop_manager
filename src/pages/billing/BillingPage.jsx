@@ -8,6 +8,7 @@ import { useProducts } from '../../context/ProductContext';
 import { useInvoices } from '../../context/InvoiceContext';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
+import Loader from '../../components/ui/Loader';
 import { CheckCircle2, Download, MessageSquare, Printer, X, Plus, Home } from 'lucide-react';
 
 const BillingPage = () => {

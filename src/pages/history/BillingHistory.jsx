@@ -18,6 +18,7 @@ import { Button } from '../../components/ui/Button';
 import { useReactToPrint } from 'react-to-print';
 import InvoiceTemplate from '../billing/components/InvoiceTemplate';
 import { cn } from '../../utils/cn';
+import { TableRowSkeleton } from '../../components/ui/SkeletonVariants';
 
 const BillingHistory = () => {
     const navigate = useNavigate();
@@ -88,9 +89,6 @@ const BillingHistory = () => {
 
     const filteredInvoices = getSortedInvoices();
 
-    if (loading) {
-        return <div className="p-8 text-center text-[var(--color-text-gray)]">Loading history...</div>;
-    }
 
     return (
         <div className="space-y-6 pb-20">
@@ -167,7 +165,11 @@ const BillingHistory = () => {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-[var(--color-border)]">
-                            {filteredInvoices.length === 0 ? (
+                            {loading ? (
+                                Array.from({ length: 8 }).map((_, i) => (
+                                    <TableRowSkeleton key={i} columns={5} />
+                                ))
+                            ) : filteredInvoices.length === 0 ? (
                                 <tr>
                                     <td colSpan="5" className="px-6 py-12 text-center text-[var(--color-text-gray)]">
                                         <FileText className="h-10 w-10 mx-auto mb-2 opacity-10" />

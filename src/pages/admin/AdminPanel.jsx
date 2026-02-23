@@ -11,11 +11,16 @@ import {
     UserPlus,
     UserCircle
 } from 'lucide-react';
+import Loader from '../../components/ui/Loader';
 
 const AdminPanel = () => {
     const navigate = useNavigate();
     const { user, isAdmin } = useAuth();
-    const { invoices } = useInvoices();
+    const { invoices, loading } = useInvoices();
+
+    if (loading) {
+        return <Loader text="Retrieving administrative data..." />;
+    }
 
     // Protection: If not admin, bounce back to dashboard
     React.useEffect(() => {

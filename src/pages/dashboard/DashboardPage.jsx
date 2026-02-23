@@ -5,11 +5,15 @@ import SalesChart from './components/SalesChart';
 import LowStockAlert from './components/LowStockAlert';
 import TopSellingProducts from './components/TopSellingProducts';
 import { useInvoices } from '../../context/InvoiceContext';
+import { useProducts } from '../../context/ProductContext';
+import { StatSkeleton, CompactStatSkeleton } from '../../components/ui/SkeletonVariants';
 
 const DashboardPage = () => {
-    const { invoices } = useInvoices();
+    const { invoices, loading: invoicesLoading } = useInvoices();
+    const { products, loading: productsLoading } = useProducts();
 
     const stats = useMemo(() => {
+        if (invoicesLoading || productsLoading) return null;
         const now = new Date();
         const today = now.toDateString();
         const thisMonth = now.getMonth();
@@ -89,33 +93,46 @@ const DashboardPage = () => {
 
             {/* Featured Stats Grid */}
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                <StatCard
-                    title="MONTHLY REVENUE"
-                    value={`₹${stats.monthlySales.toLocaleString()}`}
-                    trend={stats.monthGrowth >= 0 ? 'up' : 'down'}
-                    trendValue={`${stats.monthGrowth >= 0 ? '+' : ''}${stats.monthGrowth}%`}
-                    icon={IndianRupee}
-                    variant="featured"
-                    className="h-44"
-                />
-
-                <div className="grid grid-cols-2 gap-4 h-44 lg:col-span-2">
+                {(invoicesLoading || productsLoading) ? (
+                    <StatSkeleton />
+                ) : (
                     <StatCard
-                        title="Today's Sales"
-                        value={`₹${stats.dailySales.toLocaleString()}`}
-                        trend={stats.dayGrowth >= 0 ? 'up' : 'down'}
-                        trendValue={`${stats.dayGrowth >= 0 ? '+' : ''}${stats.dayGrowth}%`}
-                        icon={TrendingUp}
-                        variant="compact"
-                    />
-                    <StatCard
-                        title="Est. Profit (40%)"
-                        value={`₹${stats.profit.toLocaleString()}`}
+                        title="MONTHLY REVENUE"
+                        value={`₹${stats.monthlySales.toLocaleString()}`}
                         trend={stats.monthGrowth >= 0 ? 'up' : 'down'}
                         trendValue={`${stats.monthGrowth >= 0 ? '+' : ''}${stats.monthGrowth}%`}
-                        icon={TrendingUp}
-                        variant="compact"
+                        icon={IndianRupee}
+                        variant="featured"
+                        className="h-44"
                     />
+                )}
+
+                <div className="grid grid-cols-2 gap-4 h-44 lg:col-span-2">
+                    {(invoicesLoading || productsLoading) ? (
+                        <>
+                            <CompactStatSkeleton />
+                            <CompactStatSkeleton />
+                        </>
+                    ) : (
+                        <>
+                            <StatCard
+                                title="Today's Sales"
+                                value={`₹${stats.dailySales.toLocaleString()}`}
+                                trend={stats.dayGrowth >= 0 ? 'up' : 'down'}
+                                trendValue={`${stats.dayGrowth >= 0 ? '+' : ''}${stats.dayGrowth}%`}
+                                icon={TrendingUp}
+                                variant="compact"
+                            />
+                            <StatCard
+                                title="Est. Profit (40%)"
+                                value={`₹${stats.profit.toLocaleString()}`}
+                                trend={stats.monthGrowth >= 0 ? 'up' : 'down'}
+                                trendValue={`${stats.monthGrowth >= 0 ? '+' : ''}${stats.monthGrowth}%`}
+                                icon={TrendingUp}
+                                variant="compact"
+                            />
+                        </>
+                    )}
                 </div>
             </div>
 
@@ -129,7 +146,7 @@ const DashboardPage = () => {
             {/* Secondary Sections */}
             <div className="grid gap-6 md:grid-cols-2">
                 <LowStockAlert />
-                <TopSellingProducts invoices={invoices} />
+                <TopSellingProducts invoices={invoices || []} />
             </div>
         </div>
     );

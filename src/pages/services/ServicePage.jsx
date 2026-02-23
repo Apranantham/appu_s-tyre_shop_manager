@@ -4,6 +4,7 @@ import { useServices } from '../../context/ServiceContext';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
 import Modal from '../../components/ui/Modal';
+import { ServiceCardSkeleton } from '../../components/ui/SkeletonVariants';
 
 // Icon mapping (simple version)
 import { Disc, Activity, Circle, Wind, Wrench } from 'lucide-react';
@@ -68,7 +69,8 @@ const ServiceForm = ({ onSubmit, initialData, onCancel }) => {
 };
 
 const ServicePage = () => {
-    const { services, addService, updateService, deleteService, toggleService } = useServices();
+    const { services, addService, updateService, deleteService, toggleService, loading } = useServices();
+
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingService, setEditingService] = useState(null);
 
@@ -101,54 +103,60 @@ const ServicePage = () => {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {services.map((service) => {
-                    const Icon = iconMap[service.icon] || Wrench;
-                    return (
-                        <Card key={service.id} className={`group relative p-5 transition-all hover:border-[var(--color-primary)]/50 ${!service.active && 'opacity-60 grayscale'}`}>
-                            <div className="flex items-start justify-between gap-4">
-                                <div className="flex items-center gap-4 min-w-0 flex-1">
-                                    <div className="h-12 w-12 shrink-0 rounded-xl bg-[var(--color-primary)]/10 flex items-center justify-center text-[var(--color-primary)] shadow-sm">
-                                        <Icon className="h-6 w-6" />
+                {loading ? (
+                    Array.from({ length: 6 }).map((_, i) => (
+                        <ServiceCardSkeleton key={i} />
+                    ))
+                ) : (
+                    services.map((service) => {
+                        const Icon = iconMap[service.icon] || Wrench;
+                        return (
+                            <Card key={service.id} className={`group relative p-5 transition-all hover:border-[var(--color-primary)]/50 ${!service.active && 'opacity-60 grayscale'}`}>
+                                <div className="flex items-start justify-between gap-4">
+                                    <div className="flex items-center gap-4 min-w-0 flex-1">
+                                        <div className="h-12 w-12 shrink-0 rounded-xl bg-[var(--color-primary)]/10 flex items-center justify-center text-[var(--color-primary)] shadow-sm">
+                                            <Icon className="h-6 w-6" />
+                                        </div>
+                                        <div className="min-w-0 flex-1">
+                                            <h3 className="font-bold text-base tracking-tight truncate" title={service.name}>
+                                                {service.name}
+                                            </h3>
+                                            <div className="text-[var(--color-primary)] font-black text-lg">₹{service.price}</div>
+                                        </div>
                                     </div>
-                                    <div className="min-w-0 flex-1">
-                                        <h3 className="font-bold text-base tracking-tight truncate" title={service.name}>
-                                            {service.name}
-                                        </h3>
-                                        <div className="text-[var(--color-primary)] font-black text-lg">₹{service.price}</div>
+                                    <div className="shrink-0">
+                                        <div className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-widest border ${service.active ? 'bg-green-500/10 text-green-500 border-green-500/20' : 'bg-[var(--color-text-gray)]/10 text-[var(--color-text-gray)] border-[var(--color-text-gray)]/20'}`}>
+                                            <span className="hidden sm:inline">{service.active ? 'Active' : 'Disabled'}</span>
+                                            <span className="sm:hidden">{service.active ? 'A' : 'D'}</span>
+                                        </div>
                                     </div>
                                 </div>
-                                <div className="shrink-0">
-                                    <div className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-widest border ${service.active ? 'bg-green-500/10 text-green-500 border-green-500/20' : 'bg-[var(--color-text-gray)]/10 text-[var(--color-text-gray)] border-[var(--color-text-gray)]/20'}`}>
-                                        <span className="hidden sm:inline">{service.active ? 'Active' : 'Disabled'}</span>
-                                        <span className="sm:hidden">{service.active ? 'A' : 'D'}</span>
-                                    </div>
-                                </div>
-                            </div>
 
-                            <div className="mt-5 flex flex-wrap items-center justify-between pt-4 border-t border-[var(--color-border)]/30 gap-2">
-                                <div className="flex gap-1 overflow-visible">
-                                    <Button size="sm" variant="ghost" onClick={() => openEdit(service)} className="h-9 w-9 sm:h-8 sm:w-auto px-0 sm:px-2 text-xs hover:bg-[var(--color-bg-dark)]">
-                                        <Edit2 className="h-4 w-4 sm:h-3.5 sm:w-3.5 sm:mr-1" />
-                                        <span className="hidden sm:inline">Edit</span>
-                                    </Button>
-                                    <Button size="sm" variant="ghost" className="h-9 w-9 sm:h-8 sm:w-auto px-0 sm:px-2 text-red-500 text-xs hover:bg-red-500/10" onClick={() => deleteService(service.id)}>
-                                        <Trash2 className="h-4 w-4 sm:h-3.5 sm:w-3.5 sm:mr-1" />
-                                        <span className="hidden sm:inline">Delete</span>
+                                <div className="mt-5 flex flex-wrap items-center justify-between pt-4 border-t border-[var(--color-border)]/30 gap-2">
+                                    <div className="flex gap-1 overflow-visible">
+                                        <Button size="sm" variant="ghost" onClick={() => openEdit(service)} className="h-9 w-9 sm:h-8 sm:w-auto px-0 sm:px-2 text-xs hover:bg-[var(--color-bg-dark)]">
+                                            <Edit2 className="h-4 w-4 sm:h-3.5 sm:w-3.5 sm:mr-1" />
+                                            <span className="hidden sm:inline">Edit</span>
+                                        </Button>
+                                        <Button size="sm" variant="ghost" className="h-9 w-9 sm:h-8 sm:w-auto px-0 sm:px-2 text-red-500 text-xs hover:bg-red-500/10" onClick={() => deleteService(service.id)}>
+                                            <Trash2 className="h-4 w-4 sm:h-3.5 sm:w-3.5 sm:mr-1" />
+                                            <span className="hidden sm:inline">Delete</span>
+                                        </Button>
+                                    </div>
+                                    <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => toggleService(service.id)}
+                                        className={`h-9 sm:h-8 px-2 sm:px-3 text-[10px] uppercase font-bold tracking-widest border-2 whitespace-nowrap ${service.active ? 'text-orange-500 border-orange-500/20 hover:bg-orange-500/10' : 'text-green-500 border-green-500/20 hover:bg-green-500/10'}`}
+                                    >
+                                        <Power className="h-4 w-4 sm:h-3 sm:w-3 sm:mr-1.5" />
+                                        <span className="hidden sm:inline">{service.active ? 'Disable' : 'Enable'}</span>
                                     </Button>
                                 </div>
-                                <Button
-                                    size="sm"
-                                    variant="outline"
-                                    onClick={() => toggleService(service.id)}
-                                    className={`h-9 sm:h-8 px-2 sm:px-3 text-[10px] uppercase font-bold tracking-widest border-2 whitespace-nowrap ${service.active ? 'text-orange-500 border-orange-500/20 hover:bg-orange-500/10' : 'text-green-500 border-green-500/20 hover:bg-green-500/10'}`}
-                                >
-                                    <Power className="h-4 w-4 sm:h-3 sm:w-3 sm:mr-1.5" />
-                                    <span className="hidden sm:inline">{service.active ? 'Disable' : 'Enable'}</span>
-                                </Button>
-                            </div>
-                        </Card>
-                    );
-                })}
+                            </Card>
+                        );
+                    })
+                )}
             </div>
 
             <Modal
