@@ -368,8 +368,20 @@ const CustomerProfile = () => {
                     <div className="relative w-full max-w-3xl max-h-[90vh] overflow-y-auto bg-[var(--color-bg-card)] rounded-2xl shadow-2xl">
                         <div className="sticky top-0 right-0 p-4 flex justify-between z-10 bg-[var(--color-bg-card)]/10 backdrop-blur-md">
                             <div className="flex space-x-2">
-                                <Button size="sm" onClick={() => shareOnWhatsApp(selectedInvoice)} className="bg-green-600">WhatsApp</Button>
-                                <Button size="sm" onClick={() => shareViaSMS(selectedInvoice)} variant="outline" className="text-black">SMS</Button>
+                                <Button
+                                    size="sm"
+                                    onClick={() => shareOnWhatsApp(selectedInvoice)}
+                                    className="bg-green-600 hover:bg-green-700 text-white shadow-lg shadow-green-500/20"
+                                >
+                                    WhatsApp
+                                </Button>
+                                <Button
+                                    size="sm"
+                                    onClick={() => shareViaSMS(selectedInvoice)}
+                                    className="bg-indigo-500 hover:bg-indigo-600 text-white shadow-lg shadow-indigo-500/20"
+                                >
+                                    SMS
+                                </Button>
                             </div>
                             <div className="flex space-x-2">
                                 <Button
