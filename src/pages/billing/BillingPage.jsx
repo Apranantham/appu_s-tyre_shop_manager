@@ -218,20 +218,18 @@ const BillingPage = () => {
                                 <span>WhatsApp</span>
                             </Button>
                             <Button
-                                variant="outline"
-                                className="flex flex-col items-center justify-center h-24 space-y-2 border-[var(--color-border)] rounded-2xl"
+                                className="flex flex-col items-center justify-center h-24 space-y-2 bg-indigo-500 hover:bg-indigo-600 text-white shadow-lg shadow-indigo-500/20 rounded-2xl border-none"
                                 onClick={shareViaSMS}
                             >
                                 <MessageSquare className="h-6 w-6" />
-                                <span>Message</span>
+                                <span className="text-sm font-bold">Message</span>
                             </Button>
                             <Button
-                                variant="outline"
-                                className="flex flex-col items-center justify-center h-24 space-y-2 border-[var(--color-border)] rounded-2xl"
+                                className="flex flex-col items-center justify-center h-24 space-y-2 bg-slate-700 hover:bg-slate-600 text-white shadow-lg shadow-slate-900/20 rounded-2xl border-none"
                                 onClick={() => handlePrint()}
                             >
                                 <Download className="h-6 w-6" />
-                                <span>PDF</span>
+                                <span className="text-sm font-bold">PDF Bill</span>
                             </Button>
                         </div>
 
