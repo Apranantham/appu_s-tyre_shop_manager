@@ -28,7 +28,7 @@ const StatCard = ({ title, value, trend, trendValue, icon: Icon, variant = 'defa
 
     if (variant === 'compact') {
         return (
-            <div className={cn("p-5 rounded-3xl bg-[var(--color-bg-card)] border border-[var(--color-border)] flex flex-col justify-between h-full", className)}>
+            <div className={cn("p-5 rounded-3xl bg-[var(--color-bg-card)] border-none md:border border-[var(--color-border)] flex flex-col justify-between h-full", className)}>
                 <div>
                     <p className="text-[var(--color-text-gray)] text-xs font-medium mb-1">{title}</p>
                     <h3 className="text-2xl font-bold text-[var(--color-text-white)]">{value}</h3>

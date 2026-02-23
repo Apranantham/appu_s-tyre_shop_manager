@@ -37,7 +37,7 @@ const LowStockAlert = () => {
 
             <div className="flex space-x-4 overflow-x-auto pb-4 -mx-4 px-4 md:mx-0 md:px-0 md:grid md:grid-cols-2 md:gap-4 md:space-x-0 md:overflow-visible">
                 {lowStockItems.map((item) => (
-                    <div key={item.id} className="min-w-[200px] p-4 rounded-3xl bg-[var(--color-bg-card)] border border-[var(--color-border)] flex flex-col items-center text-center space-y-3 relative group">
+                    <div key={item.id} className="min-w-[200px] p-4 rounded-3xl bg-[var(--color-bg-card)] border-none md:border border-[var(--color-border)] flex flex-col items-center text-center space-y-3 relative group">
                         <div className="h-24 w-full rounded-2xl bg-[var(--color-bg-dark)] overflow-hidden">
                             <img src={item.image || FALLBACK_IMAGE} alt={item.name} className="h-full w-full object-cover group-hover:scale-110 transition-transform" />
                         </div>
@@ -54,7 +54,7 @@ const LowStockAlert = () => {
                     </div>
                 ))}
                 {lowStockItems.length === 0 && (
-                    <div className="col-span-full py-10 bg-[var(--color-bg-card)] border border-dashed border-[var(--color-border)] rounded-3xl text-center text-[var(--color-text-gray)]">
+                    <div className="col-span-full py-10 bg-[var(--color-bg-card)] border-none md:border md:border-dashed border-[var(--color-border)] rounded-3xl text-center text-[var(--color-text-gray)]">
                         <p className="text-sm">No low stock alerts</p>
                     </div>
                 )}

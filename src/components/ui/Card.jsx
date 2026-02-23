@@ -7,7 +7,7 @@ const Card = React.forwardRef(({ className, glass = false, children, ...props },
             ref={ref}
             className={cn(
                 'rounded-xl p-6',
-                glass ? 'glass-panel' : 'bg-[var(--color-bg-card)] border border-[var(--color-border)]',
+                glass ? 'glass-panel' : 'bg-[var(--color-bg-card)] border-none md:border border-[var(--color-border)]',
                 'text-[var(--color-text-white)] shadow-sm',
                 className
             )}

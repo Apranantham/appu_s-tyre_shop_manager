@@ -132,7 +132,7 @@ const SalesChart = () => {
     };
 
     return (
-        <Card className="h-full flex flex-col p-6 bg-[var(--color-bg-card)] border border-[var(--color-border)] rounded-3xl overflow-hidden">
+        <Card className="h-full flex flex-col p-4 md:p-6 bg-[var(--color-bg-card)] border-none md:border border-[var(--color-border)] rounded-3xl overflow-hidden shadow-none md:shadow-sm">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
                 <div>
                     <h3 className="text-xl font-bold flex items-center">
@@ -145,7 +145,7 @@ const SalesChart = () => {
                 <div className="flex flex-col items-end">
                     <div className="text-[#3B82F6] font-bold text-2xl">₹{totalRevenue.toLocaleString()}</div>
                     <div className="flex items-center space-x-2 mt-2">
-                        <div className="flex bg-[var(--color-bg-dark)] rounded-lg p-1 border border-[var(--color-border)]">
+                        <div className="flex bg-[var(--color-bg-dark)] rounded-lg p-1 border-none md:border border-[var(--color-border)]">
                             {['days', 'weeks', 'months', 'years'].map((r) => (
                                 <button
                                     key={r}
@@ -163,7 +163,7 @@ const SalesChart = () => {
                             <Button
                                 variant="ghost"
                                 size="sm"
-                                className="h-8 w-8 p-0 bg-[var(--color-bg-dark)] rounded-lg border border-[var(--color-border)]"
+                                className="h-8 w-8 p-0 bg-[var(--color-bg-dark)] rounded-lg border-none md:border border-[var(--color-border)]"
                                 onClick={() => setOffset(prev => prev - 1)}
                             >
                                 <ChevronLeft className="h-4 w-4" />
@@ -171,7 +171,7 @@ const SalesChart = () => {
                             <Button
                                 variant="ghost"
                                 size="sm"
-                                className="h-8 w-8 p-0 bg-[var(--color-bg-dark)] rounded-lg border border-[var(--color-border)]"
+                                className="h-8 w-8 p-0 bg-[var(--color-bg-dark)] rounded-lg border-none md:border border-[var(--color-border)]"
                                 onClick={() => setOffset(prev => prev + 1)}
                             >
                                 <ChevronRight className="h-4 w-4" />
@@ -213,6 +213,8 @@ const SalesChart = () => {
                             fill="#3B82F6"
                             radius={[6, 6, 0, 0]}
                             barSize={range === 'months' ? 20 : range === 'days' ? 12 : 30}
+                            activeBar={false}
+                            style={{ outline: 'none' }}
                         >
                         </Bar>
                     </BarChart>
