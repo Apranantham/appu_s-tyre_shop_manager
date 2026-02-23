@@ -9,6 +9,7 @@ import {
     writeBatch
 } from 'firebase/firestore';
 import { db } from '../firebase';
+import { useAuth } from './AuthContext';
 
 
 const ServiceContext = createContext();
@@ -17,7 +18,15 @@ export const ServiceProvider = ({ children }) => {
     const [services, setServices] = useState([]);
     const [loading, setLoading] = useState(true);
 
+    const { user } = useAuth();
+
     useEffect(() => {
+        if (!user) {
+            setServices([]);
+            setLoading(false);
+            return;
+        }
+
         const servicesCollection = collection(db, 'service');
 
         const unsubscribe = onSnapshot(servicesCollection, (snapshot) => {

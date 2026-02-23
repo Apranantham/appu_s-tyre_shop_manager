@@ -11,6 +11,7 @@ import {
     increment
 } from 'firebase/firestore';
 import { db } from '../firebase';
+import { useAuth } from './AuthContext';
 
 const ProductContext = createContext();
 
@@ -18,7 +19,15 @@ export const ProductProvider = ({ children }) => {
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
 
+    const { user } = useAuth();
+
     useEffect(() => {
+        if (!user) {
+            setProducts([]);
+            setLoading(false);
+            return;
+        }
+
         const productsCollection = collection(db, 'inventory');
 
         // Real-time listener
