@@ -1,6 +1,10 @@
-import { User, LogOut, Sun, Moon, Info, Shield, Store, Save } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { useAuth } from '../../context/AuthContext';
+import { useTheme } from '../../context/ThemeContext';
 import { useSettings } from '../../context/SettingsContext';
-import { useState, useEffect } from 'react';
+import { Card } from '../../components/ui/Card';
+import { Button } from '../../components/ui/Button';
+import { User, LogOut, Sun, Moon, Info, Shield, Store, Save } from 'lucide-react';
 
 const SettingsPage = () => {
     const { user, login, logout, isAuthenticated } = useAuth();
