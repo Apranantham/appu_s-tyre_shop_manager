@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
-import { Shield, Lock, ChevronRight, Mail, Phone, UserPlus, LogIn, Key } from 'lucide-react';
+import { Shield, Lock, ChevronRight, Mail, Phone, UserPlus, LogIn, Key, Eye, EyeOff, CheckCircle2 } from 'lucide-react';
 
 const LoginPage = () => {
     const {
@@ -12,6 +12,7 @@ const LoginPage = () => {
         registerWithEmail,
         loginWithPhonePassword,
         registerWithPhonePassword,
+        resetPassword,
         isAuthenticated,
         loading
     } = useAuth();
@@ -22,14 +23,22 @@ const LoginPage = () => {
     // UI States
     const [authMode, setAuthMode] = useState('google'); // 'google', 'email', 'phone'
     const [isSignup, setIsSignup] = useState(false);
+    const [isForgotPassword, setIsForgotPassword] = useState(false);
     const [error, setError] = useState('');
+    const [successMessage, setSuccessMessage] = useState('');
     const [loadingAction, setLoadingAction] = useState(false);
+
+    // Visibility States
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
     // Form States
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
     const [phoneNumber, setPhoneNumber] = useState('');
     const [phonePassword, setPhonePassword] = useState('');
+    const [phoneConfirmPassword, setPhoneConfirmPassword] = useState('');
 
     const from = location.state?.from?.pathname || "/dashboard";
 
@@ -54,9 +63,13 @@ const LoginPage = () => {
     const handleEmailAuth = async (e) => {
         e.preventDefault();
         setError('');
+        setSuccessMessage('');
         setLoadingAction(true);
         try {
             if (isSignup) {
+                if (password !== confirmPassword) {
+                    throw new Error("Passwords do not match");
+                }
                 await registerWithEmail(email, password);
             } else {
                 await loginWithEmail(email, password);
@@ -79,9 +92,13 @@ const LoginPage = () => {
     const handlePhoneAuth = async (e) => {
         e.preventDefault();
         setError('');
+        setSuccessMessage('');
         setLoadingAction(true);
         try {
             if (isSignup) {
+                if (phonePassword !== phoneConfirmPassword) {
+                    throw new Error("Passwords do not match");
+                }
                 await registerWithPhonePassword(phoneNumber, phonePassword);
             } else {
                 await loginWithPhonePassword(phoneNumber, phonePassword);
@@ -92,6 +109,25 @@ const LoginPage = () => {
             } else {
                 setError(err.message || 'Authentication failed');
             }
+        } finally {
+            setLoadingAction(false);
+        }
+    };
+
+    const handleForgotPassword = async (e) => {
+        e.preventDefault();
+        if (!email) {
+            setError('Please enter your email address.');
+            return;
+        }
+        setError('');
+        setSuccessMessage('');
+        setLoadingAction(true);
+        try {
+            await resetPassword(email);
+            setSuccessMessage('Password reset email sent! Please check your inbox.');
+        } catch (err) {
+            setError(err.message || 'Failed to send reset email.');
         } finally {
             setLoadingAction(false);
         }
@@ -151,6 +187,13 @@ const LoginPage = () => {
                             </div>
                         )}
 
+                        {successMessage && (
+                            <div className="mb-4 p-3 bg-green-500/10 border border-green-500/20 rounded-xl text-green-500 text-xs text-center font-medium flex items-center justify-center">
+                                <CheckCircle2 className="h-4 w-4 mr-2" />
+                                {successMessage}
+                            </div>
+                        )}
+
                         {authMode === 'google' && (
                             <div className="space-y-6 py-4 text-center">
                                 <h2 className="text-xl font-bold">Welcome Back</h2>
@@ -178,11 +221,15 @@ const LoginPage = () => {
                         )}
 
                         {authMode === 'email' && (
-                            <form onSubmit={handleEmailAuth} className="space-y-4 py-2">
+                            <form onSubmit={isForgotPassword ? handleForgotPassword : handleEmailAuth} className="space-y-4 py-2">
                                 <div className="text-center mb-6">
-                                    <h2 className="text-xl font-bold">{isSignup ? 'Create Account' : 'Welcome Back'}</h2>
+                                    <h2 className="text-xl font-bold">
+                                        {isForgotPassword ? 'Reset Password' : (isSignup ? 'Create Account' : 'Welcome Back')}
+                                    </h2>
                                     <p className="text-xs text-[var(--color-text-gray)] mt-1">
-                                        {isSignup ? 'Start managing your shop today' : 'Sign in to continue to your dashboard'}
+                                        {isForgotPassword
+                                            ? 'Enter your email to receive a reset link'
+                                            : (isSignup ? 'Start managing your shop today' : 'Sign in to continue to your dashboard')}
                                     </p>
                                 </div>
 
@@ -201,20 +248,66 @@ const LoginPage = () => {
                                     </div>
                                 </div>
 
-                                <div className="space-y-2">
-                                    <label className="text-[10px] font-bold uppercase tracking-widest text-[var(--color-text-gray)] ml-1">Password</label>
-                                    <div className="relative">
-                                        <Key className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--color-text-gray)]" />
-                                        <input
-                                            type="password"
-                                            value={password}
-                                            onChange={(e) => setPassword(e.target.value)}
-                                            className="w-full bg-[var(--color-bg-dark)] border border-[var(--color-border)] rounded-2xl h-12 pl-11 pr-4 focus:ring-2 focus:ring-[var(--color-primary)] outline-none text-sm transition-all"
-                                            placeholder="••••••••"
-                                            required
-                                        />
-                                    </div>
-                                </div>
+                                {!isForgotPassword && (
+                                    <>
+                                        <div className="space-y-2">
+                                            <div className="flex justify-between items-center ml-1">
+                                                <label className="text-[10px] font-bold uppercase tracking-widest text-[var(--color-text-gray)]">Password</label>
+                                                {!isSignup && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setIsForgotPassword(true)}
+                                                        className="text-[10px] text-[var(--color-primary)] font-bold hover:underline"
+                                                    >
+                                                        Forgot?
+                                                    </button>
+                                                )}
+                                            </div>
+                                            <div className="relative">
+                                                <Key className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--color-text-gray)]" />
+                                                <input
+                                                    type={showPassword ? "text" : "password"}
+                                                    value={password}
+                                                    onChange={(e) => setPassword(e.target.value)}
+                                                    className="w-full bg-[var(--color-bg-dark)] border border-[var(--color-border)] rounded-2xl h-12 pl-11 pr-12 focus:ring-2 focus:ring-[var(--color-primary)] outline-none text-sm transition-all"
+                                                    placeholder="••••••••"
+                                                    required
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setShowPassword(!showPassword)}
+                                                    className="absolute right-4 top-1/2 -translate-y-1/2 text-[var(--color-text-gray)] hover:text-white"
+                                                >
+                                                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        {isSignup && (
+                                            <div className="space-y-2">
+                                                <label className="text-[10px] font-bold uppercase tracking-widest text-[var(--color-text-gray)] ml-1">Confirm Password</label>
+                                                <div className="relative">
+                                                    <Key className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--color-text-gray)]" />
+                                                    <input
+                                                        type={showConfirmPassword ? "text" : "password"}
+                                                        value={confirmPassword}
+                                                        onChange={(e) => setConfirmPassword(e.target.value)}
+                                                        className="w-full bg-[var(--color-bg-dark)] border border-[var(--color-border)] rounded-2xl h-12 pl-11 pr-12 focus:ring-2 focus:ring-[var(--color-primary)] outline-none text-sm transition-all"
+                                                        placeholder="••••••••"
+                                                        required
+                                                    />
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                                        className="absolute right-4 top-1/2 -translate-y-1/2 text-[var(--color-text-gray)] hover:text-white"
+                                                    >
+                                                        {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </>
+                                )}
 
                                 <Button
                                     type="submit"
@@ -225,18 +318,32 @@ const LoginPage = () => {
                                         <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                                     ) : (
                                         <>
-                                            {isSignup ? <UserPlus className="h-4 w-4 mr-2" /> : <LogIn className="h-4 w-4 mr-2" />}
-                                            {isSignup ? 'Create Account' : 'Sign In'}
+                                            {isForgotPassword
+                                                ? <Mail className="h-4 w-4 mr-2" />
+                                                : (isSignup ? <UserPlus className="h-4 w-4 mr-2" /> : <LogIn className="h-4 w-4 mr-2" />)}
+                                            {isForgotPassword
+                                                ? 'Send Reset Link'
+                                                : (isSignup ? 'Create Account' : 'Sign In')}
                                         </>
                                     )}
                                 </Button>
 
                                 <button
                                     type="button"
-                                    onClick={() => setIsSignup(!isSignup)}
+                                    onClick={() => {
+                                        if (isForgotPassword) {
+                                            setIsForgotPassword(false);
+                                        } else {
+                                            setIsSignup(!isSignup);
+                                        }
+                                        setError('');
+                                        setSuccessMessage('');
+                                    }}
                                     className="w-full text-center text-xs text-[var(--color-text-gray)] hover:text-white mt-4"
                                 >
-                                    {isSignup ? 'Already have an account? Sign In' : "Don't have an account? Sign Up"}
+                                    {isForgotPassword
+                                        ? 'Back to Sign In'
+                                        : (isSignup ? 'Already have an account? Sign In' : "Don't have an account? Sign Up")}
                                 </button>
                             </form>
                         )}
@@ -270,15 +377,46 @@ const LoginPage = () => {
                                     <div className="relative">
                                         <Key className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--color-text-gray)]" />
                                         <input
-                                            type="password"
+                                            type={showPassword ? "text" : "password"}
                                             value={phonePassword}
                                             onChange={(e) => setPhonePassword(e.target.value)}
-                                            className="w-full bg-[var(--color-bg-dark)] border border-[var(--color-border)] rounded-2xl h-12 pl-11 pr-4 focus:ring-2 focus:ring-[var(--color-primary)] outline-none text-sm transition-all"
+                                            className="w-full bg-[var(--color-bg-dark)] border border-[var(--color-border)] rounded-2xl h-12 pl-11 pr-12 focus:ring-2 focus:ring-[var(--color-primary)] outline-none text-sm transition-all"
                                             placeholder="••••••••"
                                             required
                                         />
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowPassword(!showPassword)}
+                                            className="absolute right-4 top-1/2 -translate-y-1/2 text-[var(--color-text-gray)] hover:text-white"
+                                        >
+                                            {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                        </button>
                                     </div>
                                 </div>
+
+                                {isSignup && (
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-bold uppercase tracking-widest text-[var(--color-text-gray)] ml-1">Confirm Password</label>
+                                        <div className="relative">
+                                            <Key className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--color-text-gray)]" />
+                                            <input
+                                                type={showConfirmPassword ? "text" : "password"}
+                                                value={phoneConfirmPassword}
+                                                onChange={(e) => setPhoneConfirmPassword(e.target.value)}
+                                                className="w-full bg-[var(--color-bg-dark)] border border-[var(--color-border)] rounded-2xl h-12 pl-11 pr-12 focus:ring-2 focus:ring-[var(--color-primary)] outline-none text-sm transition-all"
+                                                placeholder="••••••••"
+                                                required
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                                className="absolute right-4 top-1/2 -translate-y-1/2 text-[var(--color-text-gray)] hover:text-white"
+                                            >
+                                                {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
 
                                 <Button
                                     type="submit"
@@ -297,7 +435,7 @@ const LoginPage = () => {
 
                                 <button
                                     type="button"
-                                    onClick={() => { setIsSignup(!isSignup); setError(''); }}
+                                    onClick={() => { setIsSignup(!isSignup); setError(''); setSuccessMessage(''); }}
                                     className="w-full text-center text-xs text-[var(--color-text-gray)] hover:text-white mt-4"
                                 >
                                     {isSignup ? 'Already registered? Login' : "First time? Register your phone"}

@@ -5,6 +5,7 @@ import {
     onAuthStateChanged,
     createUserWithEmailAndPassword,
     signInWithEmailAndPassword,
+    sendPasswordResetEmail,
     RecaptchaVerifier,
     signInWithPhoneNumber
 } from 'firebase/auth';
@@ -110,6 +111,15 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
+    const resetPassword = async (email) => {
+        try {
+            await sendPasswordResetEmail(auth, email);
+        } catch (error) {
+            console.error("Password reset failed:", error);
+            throw error;
+        }
+    };
+
     return (
         <AuthContext.Provider value={{
             user,
@@ -121,6 +131,7 @@ export const AuthProvider = ({ children }) => {
             loginWithEmail,
             registerWithPhonePassword,
             loginWithPhonePassword,
+            resetPassword,
             getRecaptchaVerifier,
             signInWithPhone,
             logout,
