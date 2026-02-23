@@ -68,55 +68,95 @@ const BillingItems = ({ onAddToCart }) => {
 
             {/* Grid */}
             <div className="flex-1 overflow-y-auto px-4 pb-10 min-w-0 pt-6">
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-4 min-w-0">
+                <div className={cn(
+                    "grid gap-4 min-w-0",
+                    (activeTab === 'products' ? filteredProducts.length > 0 : filteredServices.length > 0)
+                        ? "grid-cols-2 md:grid-cols-3 lg:grid-cols-3"
+                        : "grid-cols-1"
+                )}>
                     {activeTab === 'products' ? (
-                        filteredProducts.map(product => (
-                            <Card
-                                key={product.id}
-                                className="cursor-pointer border border-[var(--color-border)] hover:border-[var(--color-primary)] transition-all p-4 flex flex-col h-full group shadow-md hover:shadow-xl active:scale-[0.98] rounded-2xl"
-                                onClick={() => product.stock > 0 && onAddToCart(product, 'product')}
-                            >
-                                <div className="aspect-square rounded mb-2 bg-[var(--color-bg-dark)] overflow-hidden">
-                                    <img src={product.image || FALLBACK_IMAGE} alt={product.name} className="h-full w-full object-cover group-hover:scale-110 transition-transform" />
-                                </div>
-                                <div className="flex-1">
-                                    <h4 className="font-bold text-sm line-clamp-2 leading-tight mb-1">{product.name}</h4>
-                                    <p className="text-xs text-[var(--color-text-gray)] mb-2">{product.size}</p>
-                                </div>
-                                <div className="mt-auto flex justify-between items-center">
-                                    <div className="flex flex-col">
-                                        <span className="font-bold text-[var(--color-primary)]">₹{product.price}</span>
-                                        <span className={`text-[10px] font-bold ${product.stock > 0 ? 'text-green-500' : 'text-red-500'}`}>
-                                            {product.stock > 0 ? `${product.stock} IN STOCK` : 'OUT OF STOCK'}
-                                        </span>
+                        filteredProducts.length > 0 ? (
+                            filteredProducts.map(product => (
+                                <Card
+                                    key={product.id}
+                                    className="cursor-pointer border border-[var(--color-border)] hover:border-[var(--color-primary)] transition-all p-4 flex flex-col h-full group shadow-md hover:shadow-xl active:scale-[0.98] rounded-2xl"
+                                    onClick={() => product.stock > 0 && onAddToCart(product, 'product')}
+                                >
+                                    <div className="aspect-square rounded-xl mb-3 bg-[var(--color-bg-dark)] overflow-hidden">
+                                        <img src={product.image || FALLBACK_IMAGE} alt={product.name} className="h-full w-full object-cover group-hover:scale-110 transition-transform" />
                                     </div>
-                                    <div className={cn(
-                                        "text-white p-1 rounded-full transition-all",
-                                        product.stock > 0 ? "bg-[var(--color-primary)] opacity-0 group-hover:opacity-100" : "bg-gray-700 cursor-not-allowed"
-                                    )}>
-                                        <ChevronRight className="h-4 w-4" />
+                                    <div className="flex-1">
+                                        <h4 className="font-bold text-sm line-clamp-2 leading-tight mb-1">{product.name}</h4>
+                                        <p className="text-xs text-[var(--color-text-gray)] mb-3">{product.size}</p>
                                     </div>
-                                </div>
-                            </Card>
-                        ))
+                                    <div className="mt-auto flex justify-between items-center pt-2 border-t border-[var(--color-border)]/50">
+                                        <div className="flex flex-col">
+                                            <span className="font-bold text-[var(--color-primary)]">₹{product.price}</span>
+                                            <span className={`text-[10px] font-bold ${product.stock > 0 ? 'text-green-500' : 'text-red-500'}`}>
+                                                {product.stock > 0 ? `${product.stock} IN STOCK` : 'OUT OF STOCK'}
+                                            </span>
+                                        </div>
+                                        <div className={cn(
+                                            "text-white p-1 rounded-full transition-all",
+                                            product.stock > 0 ? "bg-[var(--color-primary)] opacity-0 group-hover:opacity-100" : "bg-gray-700 cursor-not-allowed"
+                                        )}>
+                                            <ChevronRight className="h-4 w-4" />
+                                        </div>
+                                    </div>
+                                </Card>
+                            ))
+                        ) : (
+                            <div className="col-span-full py-16 text-center animate-fade-in">
+                                <Package className="h-16 w-16 mx-auto mb-4 text-[var(--color-text-gray)] opacity-20" />
+                                <h3 className="text-lg font-bold mb-1">No Products Found</h3>
+                                <p className="text-sm text-[var(--color-text-gray)] mb-6">We couldn't find any products matching your search.</p>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => setSearchTerm('')}
+                                    className="border-[var(--color-primary)] text-[var(--color-primary)] hover:bg-[var(--color-primary)] hover:text-white rounded-full px-6"
+                                >
+                                    Clear Search
+                                </Button>
+                            </div>
+                        )
                     ) : (
-                        filteredServices.map(service => (
-                            <Card
-                                key={service.id}
-                                className="cursor-pointer border border-[var(--color-border)] hover:border-[var(--color-secondary)] transition-all p-5 flex flex-col justify-between group h-36 shadow-md hover:shadow-xl active:scale-[0.98] rounded-2xl"
-                                onClick={() => onAddToCart(service, 'service')}
-                            >
-                                <div className="flex justify-between items-start">
-                                    <div className="p-2 bg-[var(--color-bg-dark)] rounded-lg text-[var(--color-secondary)]">
-                                        <Wrench className="h-5 w-5" />
+                        filteredServices.length > 0 ? (
+                            filteredServices.map(service => (
+                                <Card
+                                    key={service.id}
+                                    className="cursor-pointer border border-[var(--color-border)] hover:border-[var(--color-secondary)] transition-all p-5 flex flex-col justify-between group h-40 shadow-md hover:shadow-xl active:scale-[0.98] rounded-2xl"
+                                    onClick={() => onAddToCart(service, 'service')}
+                                >
+                                    <div className="flex justify-between items-start">
+                                        <div className="p-3 bg-[var(--color-bg-dark)] rounded-xl text-[var(--color-secondary)] shadow-sm group-hover:scale-110 transition-transform">
+                                            <Wrench className="h-6 w-6" />
+                                        </div>
+                                        <div className="text-right">
+                                            <span className="block text-xs text-[var(--color-text-gray)] font-bold uppercase tracking-wider mb-0.5">Price</span>
+                                            <span className="font-bold text-lg">₹{service.price}</span>
+                                        </div>
                                     </div>
-                                    <span className="font-bold">₹{service.price}</span>
-                                </div>
-                                <div>
-                                    <h4 className="font-bold text-sm">{service.name}</h4>
-                                </div>
-                            </Card>
-                        ))
+                                    <div className="pt-2">
+                                        <h4 className="font-bold text-sm group-hover:text-[var(--color-secondary)] transition-colors">{service.name}</h4>
+                                    </div>
+                                </Card>
+                            ))
+                        ) : (
+                            <div className="col-span-full py-16 text-center animate-fade-in">
+                                <Wrench className="h-16 w-16 mx-auto mb-4 text-[var(--color-text-gray)] opacity-20" />
+                                <h3 className="text-lg font-bold mb-1">No Services Found</h3>
+                                <p className="text-sm text-[var(--color-text-gray)] mb-6">We couldn't find any services matching your search.</p>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => setSearchTerm('')}
+                                    className="border-[var(--color-primary)] text-[var(--color-primary)] hover:bg-[var(--color-primary)] hover:text-white rounded-full px-6"
+                                >
+                                    Clear Search
+                                </Button>
+                            </div>
+                        )
                     )}
                 </div>
             </div>
