@@ -1,13 +1,40 @@
-import React from 'react';
-import { useAuth } from '../../context/AuthContext';
-import { useTheme } from '../../context/ThemeContext';
-import { Card } from '../../components/ui/Card';
-import { Button } from '../../components/ui/Button';
-import { User, LogOut, Sun, Moon, Info, Shield } from 'lucide-react';
+import { User, LogOut, Sun, Moon, Info, Shield, Store, Save } from 'lucide-react';
+import { useSettings } from '../../context/SettingsContext';
+import { useState, useEffect } from 'react';
 
 const SettingsPage = () => {
     const { user, login, logout, isAuthenticated } = useAuth();
     const { theme, toggleTheme } = useTheme();
+    const { shopDetails, updateShopDetails } = useSettings();
+
+    const [formData, setFormData] = useState({
+        shopName: '',
+        shopAddress: '',
+        shopPhone: ''
+    });
+    const [isSaving, setIsSaving] = useState(false);
+    const [saveMessage, setSaveMessage] = useState('');
+
+    useEffect(() => {
+        if (shopDetails) {
+            setFormData(shopDetails);
+        }
+    }, [shopDetails]);
+
+    const handleSaveShopDetails = async (e) => {
+        e.preventDefault();
+        setIsSaving(true);
+        setSaveMessage('');
+        try {
+            await updateShopDetails(formData);
+            setSaveMessage('Settings saved successfully!');
+            setTimeout(() => setSaveMessage(''), 3000);
+        } catch (error) {
+            setSaveMessage('Failed to save settings.');
+        } finally {
+            setIsSaving(false);
+        }
+    };
 
     return (
         <div className="space-y-6 max-w-2xl mx-auto pb-24">
@@ -59,6 +86,70 @@ const SettingsPage = () => {
                         </Button>
                     </div>
                 )}
+            </Card>
+
+            {/* Shop Profile Section */}
+            <Card className="p-6">
+                <div className="flex items-center justify-between mb-6">
+                    <div className="flex items-center space-x-2 text-[var(--color-primary)]">
+                        <Store className="h-5 w-5" />
+                        <h2 className="font-bold text-lg text-[var(--color-text-white)]">Shop Profile</h2>
+                    </div>
+                </div>
+
+                <form onSubmit={handleSaveShopDetails} className="space-y-4">
+                    <div className="space-y-2">
+                        <label className="text-[10px] font-bold uppercase tracking-widest text-[var(--color-text-gray)] ml-1">Company Name</label>
+                        <input
+                            type="text"
+                            value={formData.shopName}
+                            onChange={(e) => setFormData({ ...formData, shopName: e.target.value })}
+                            className="w-full bg-[var(--color-bg-dark)] border border-[var(--color-border)] rounded-xl h-11 px-4 focus:ring-2 focus:ring-[var(--color-primary)] outline-none text-sm transition-all"
+                            placeholder="Your Shop Name"
+                            required
+                        />
+                    </div>
+                    <div className="space-y-2">
+                        <label className="text-[10px] font-bold uppercase tracking-widest text-[var(--color-text-gray)] ml-1">Shop Address</label>
+                        <textarea
+                            value={formData.shopAddress}
+                            onChange={(e) => setFormData({ ...formData, shopAddress: e.target.value })}
+                            className="w-full bg-[var(--color-bg-dark)] border border-[var(--color-border)] rounded-xl p-4 focus:ring-2 focus:ring-[var(--color-primary)] outline-none text-sm transition-all min-h-[80px]"
+                            placeholder="Full Shop Address"
+                            required
+                        />
+                    </div>
+                    <div className="space-y-2">
+                        <label className="text-[10px] font-bold uppercase tracking-widest text-[var(--color-text-gray)] ml-1">Contact Phone</label>
+                        <input
+                            type="text"
+                            value={formData.shopPhone}
+                            onChange={(e) => setFormData({ ...formData, shopPhone: e.target.value })}
+                            className="w-full bg-[var(--color-bg-dark)] border border-[var(--color-border)] rounded-xl h-11 px-4 focus:ring-2 focus:ring-[var(--color-primary)] outline-none text-sm transition-all"
+                            placeholder="+91 00000 00000"
+                            required
+                        />
+                    </div>
+
+                    <div className="flex items-center justify-between pt-2">
+                        {saveMessage && (
+                            <p className={`text-xs font-bold ${saveMessage.includes('successfully') ? 'text-green-500' : 'text-red-500'}`}>
+                                {saveMessage}
+                            </p>
+                        )}
+                        <Button
+                            type="submit"
+                            disabled={isSaving}
+                            className="ml-auto bg-[var(--color-primary)] hover:bg-blue-600 rounded-xl px-6"
+                        >
+                            {isSaving ? (
+                                <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                            ) : (
+                                <><Save className="h-4 w-4 mr-2" /> Save Details</>
+                            )}
+                        </Button>
+                    </div>
+                </form>
             </Card>
 
             {/* Appearance Section */}

@@ -9,6 +9,7 @@ import LoginPage from './pages/auth/LoginPage';
 import { ProductProvider } from './context/ProductContext';
 import { ServiceProvider } from './context/ServiceContext';
 import { InvoiceProvider } from './context/InvoiceContext';
+import { SettingsProvider } from './context/SettingsContext';
 import DashboardPage from './pages/dashboard/DashboardPage';
 import InventoryPage from './pages/inventory/InventoryPage';
 import ServicePage from './pages/services/ServicePage';
@@ -23,42 +24,44 @@ function App() {
   return (
     <ThemeProvider>
       <AuthProvider>
-        <ProductProvider>
-          <ServiceProvider>
-            <InvoiceProvider>
-              <Router>
-                <Routes>
-                  {/* Public Route */}
-                  <Route path="/login" element={<LoginPage />} />
+        <SettingsProvider>
+          <ProductProvider>
+            <ServiceProvider>
+              <InvoiceProvider>
+                <Router>
+                  <Routes>
+                    {/* Public Route */}
+                    <Route path="/login" element={<LoginPage />} />
 
-                  {/* Protected Routes */}
-                  <Route
-                    path="/"
-                    element={
-                      <ProtectedRoute>
-                        <Layout />
-                      </ProtectedRoute>
-                    }
-                  >
-                    <Route index element={<Navigate to="/dashboard" replace />} />
-                    <Route path="dashboard" element={<DashboardPage />} />
-                    <Route path="billing" element={<BillingPage />} />
-                    <Route path="inventory" element={<InventoryPage />} />
-                    <Route path="services" element={<ServicePage />} />
-                    <Route path="customers" element={<CustomerHistory />} />
-                    <Route path="customers/:id" element={<CustomerProfile />} />
-                    <Route path="history" element={<BillingHistory />} />
-                    <Route path="settings" element={<SettingsPage />} />
-                    <Route path="admin" element={<AdminPanel />} />
-                  </Route>
+                    {/* Protected Routes */}
+                    <Route
+                      path="/"
+                      element={
+                        <ProtectedRoute>
+                          <Layout />
+                        </ProtectedRoute>
+                      }
+                    >
+                      <Route index element={<Navigate to="/dashboard" replace />} />
+                      <Route path="dashboard" element={<DashboardPage />} />
+                      <Route path="billing" element={<BillingPage />} />
+                      <Route path="inventory" element={<InventoryPage />} />
+                      <Route path="services" element={<ServicePage />} />
+                      <Route path="customers" element={<CustomerHistory />} />
+                      <Route path="customers/:id" element={<CustomerProfile />} />
+                      <Route path="history" element={<BillingHistory />} />
+                      <Route path="settings" element={<SettingsPage />} />
+                      <Route path="admin" element={<AdminPanel />} />
+                    </Route>
 
-                  {/* Catch-all redirect */}
-                  <Route path="*" element={<Navigate to="/dashboard" replace />} />
-                </Routes>
-              </Router>
-            </InvoiceProvider>
-          </ServiceProvider>
-        </ProductProvider>
+                    {/* Catch-all redirect */}
+                    <Route path="*" element={<Navigate to="/dashboard" replace />} />
+                  </Routes>
+                </Router>
+              </InvoiceProvider>
+            </ServiceProvider>
+          </ProductProvider>
+        </SettingsProvider>
       </AuthProvider>
     </ThemeProvider>
   );

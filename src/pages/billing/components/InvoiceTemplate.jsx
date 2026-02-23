@@ -1,6 +1,8 @@
 import React from 'react';
+import { useSettings } from '../../../context/SettingsContext';
 
 const InvoiceTemplate = React.forwardRef(({ invoice, showPreview = false }, ref) => {
+    const { shopDetails } = useSettings();
     if (!invoice) return null;
 
     return (
@@ -11,10 +13,11 @@ const InvoiceTemplate = React.forwardRef(({ invoice, showPreview = false }, ref)
             {/* Header */}
             <div className="flex justify-between items-start mb-8 border-b border-slate-200 pb-4">
                 <div>
-                    <h1 className="text-2xl font-bold uppercase tracking-wider text-slate-900">TyreMaster</h1>
-                    <p className="text-sm text-slate-500">123, Auto Garage Street</p>
-                    <p className="text-sm text-slate-500">Chennai, TN 600001</p>
-                    <p className="text-sm text-slate-500">Phone: +91 98765 43210</p>
+                    <h1 className="text-2xl font-bold uppercase tracking-wider text-slate-900">{shopDetails.shopName}</h1>
+                    <div className="text-sm text-slate-500 max-w-[250px] whitespace-pre-wrap">
+                        {shopDetails.shopAddress}
+                    </div>
+                    <p className="text-sm text-slate-500">Phone: {shopDetails.shopPhone}</p>
                 </div>
                 <div className="text-right text-slate-900">
                     <h2 className="text-xl font-bold mb-2">INVOICE</h2>
