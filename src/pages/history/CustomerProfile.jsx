@@ -294,10 +294,11 @@ const CustomerProfile = () => {
                     <h3 className="font-bold text-lg">Billing Records</h3>
                 </div>
 
-                <div className="space-y-6 relative pl-4 border-l-2 border-[var(--color-border)] ml-2">
+                <div className="space-y-6 relative ml-4">
+                    <div className="absolute left-0 top-2 bottom-0 w-0.5 bg-[var(--color-border)] rounded-full"></div>
                     {customerInvoices.map((item, index) => (
-                        <div key={item.id} className="relative pl-6">
-                            <div className={`absolute -left-[21px] top-1 h-3 w-3 rounded-full border-2 border-[var(--color-bg-dark)] ${index === 0 ? 'bg-[#3B82F6]' : 'bg-[var(--color-text-gray)]'}`}></div>
+                        <div key={item.id} className="relative pl-8">
+                            <div className={`absolute left-[-7px] top-5 h-3.5 w-3.5 rounded-full border-2 border-[var(--color-bg-dark)] z-10 transition-colors duration-300 ${index === 0 ? 'bg-[#3B82F6] shadow-[0_0_10px_rgba(59,130,246,0.5)]' : 'bg-[var(--color-text-gray)]'}`}></div>
 
                             <Card
                                 onClick={() => { setSelectedInvoice(item); setShowPreview(true); }}
