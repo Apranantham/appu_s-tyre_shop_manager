@@ -17,7 +17,7 @@ import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
 import { cn } from '../../utils/cn';
 
-const Sidebar = () => {
+const Sidebar = ({ isMobile }) => {
     const { theme, toggleTheme } = useTheme();
     const { user, logout, isAuthenticated } = useAuth();
 
@@ -33,7 +33,10 @@ const Sidebar = () => {
     ];
 
     return (
-        <aside className="fixed left-0 top-0 z-40 h-screen w-64 bg-[var(--color-bg-card)] border-r border-[var(--color-border)] transition-transform">
+        <aside className={cn(
+            "z-40 h-screen w-64 bg-[var(--color-bg-card)] border-r border-[var(--color-border)] transition-transform",
+            isMobile ? "relative" : "fixed left-0 top-0"
+        )}>
             <div className="flex h-full flex-col">
                 {/* Logo Area */}
                 <div className="flex h-16 items-center border-b border-[var(--color-border)] px-6">

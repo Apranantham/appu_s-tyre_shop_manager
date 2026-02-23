@@ -17,7 +17,7 @@ const BillingItems = ({ onAddToCart }) => {
         const name = (p.name || '').toLowerCase();
         const size = (p.size || '').toLowerCase();
         const search = searchTerm.toLowerCase();
-        return name.includes(search) || size.includes(search);
+        return (p.isActive !== false) && (name.includes(search) || size.includes(search));
     });
 
     const filteredServices = services.filter(s => {

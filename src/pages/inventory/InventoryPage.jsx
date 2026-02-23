@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { Plus, Search, Filter, Edit2, Trash2, AlertTriangle, Package } from 'lucide-react';
+import { Plus, Search, Filter, Edit2, Trash2, AlertTriangle, Package, Eye, EyeOff } from 'lucide-react';
 import { useProducts } from '../../context/ProductContext';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
 import Modal from '../../components/ui/Modal';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { cn } from '../../utils/cn';
 import ProductForm from './components/ProductForm';
 import { PRODUCT_CATEGORIES, FALLBACK_IMAGE } from '../../utils/constants';
 import { ProductCardSkeleton } from '../../components/ui/SkeletonVariants';
@@ -17,6 +18,7 @@ const InventoryPage = () => {
     const [activeCategory, setActiveCategory] = useState(location.state?.filter || 'all');
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingProduct, setEditingProduct] = useState(null);
+    const [productToDelete, setProductToDelete] = useState(null);
 
     const filteredProducts = products.filter(product => {
         const matchesSearch =
@@ -107,9 +109,11 @@ const InventoryPage = () => {
                     ))
                 ) : (
                     filteredProducts.map((product) => (
-                        <Card key={product.id} className="group hover:border-[var(--color-primary)] transition-all duration-200">
+                        <Card key={product.id} className={cn(
+                            "group hover:border-[var(--color-primary)] transition-all duration-200",
+                            product.isActive === false && "opacity-60 saturate-50"
+                        )}>
                             <div className="relative aspect-video rounded-lg overflow-hidden mb-4 bg-[var(--color-bg-dark)]">
-                                {/* Debug: {console.log(`Product ${product.name} image length:`, product.image?.length || 0)} */}
                                 <img
                                     src={product.image || FALLBACK_IMAGE}
                                     alt={product.name}
@@ -120,17 +124,33 @@ const InventoryPage = () => {
                                     }}
                                 />
                                 <div className="absolute top-2 right-2 flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity bg-black/50 rounded-lg p-1">
+                                    <Button
+                                        size="icon"
+                                        variant="ghost"
+                                        className="h-8 w-8 text-white hover:bg-slate-200/20"
+                                        onClick={(e) => { e.stopPropagation(); updateProduct(product.id, { isActive: !product.isActive }); }}
+                                        title={product.isActive === false ? "Enable Product" : "Disable Product"}
+                                    >
+                                        {product.isActive === false ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+                                    </Button>
                                     <Button size="icon" variant="ghost" className="h-8 w-8 text-white hover:bg-slate-200/20" onClick={() => openEditModal(product)}>
                                         <Edit2 className="h-4 w-4" />
                                     </Button>
-                                    <Button size="icon" variant="ghost" className="h-8 w-8 text-red-500 hover:bg-slate-200/20" onClick={() => deleteProduct(product.id)}>
+                                    <Button size="icon" variant="ghost" className="h-8 w-8 text-red-500 hover:bg-slate-200/20" onClick={() => setProductToDelete(product)}>
                                         <Trash2 className="h-4 w-4" />
                                     </Button>
                                 </div>
-                                {product.stock <= product.minStock && (
+                                {product.stock <= product.minStock && product.isActive !== false && (
                                     <div className="absolute bottom-2 left-2 px-2 py-1 bg-red-600 text-white text-xs font-bold rounded flex items-center">
                                         <AlertTriangle className="h-3 w-3 mr-1" />
                                         Low Stock
+                                    </div>
+                                )}
+                                {product.isActive === false && (
+                                    <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
+                                        <span className="bg-black/60 text-white text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full border border-white/20">
+                                            Disabled
+                                        </span>
                                     </div>
                                 )}
                             </div>
@@ -188,6 +208,28 @@ const InventoryPage = () => {
                     onCancel={() => setIsModalOpen(false)}
                 />
             </Modal>
+
+            {/* Delete Confirmation Modal */}
+            {productToDelete && (
+                <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
+                    <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setProductToDelete(null)}></div>
+                    <Card className="relative w-full max-w-sm p-6 space-y-6 text-center animate-in zoom-in-95 duration-200">
+                        <div className="mx-auto h-16 w-16 rounded-full bg-red-100 flex items-center justify-center text-red-600">
+                            <Trash2 className="h-8 w-8" />
+                        </div>
+                        <div>
+                            <h3 className="text-xl font-bold">Delete Product?</h3>
+                            <p className="text-[var(--color-text-gray)] text-sm">
+                                This action cannot be undone. Are you sure you want to delete <strong>{productToDelete.name}</strong>?
+                            </p>
+                        </div>
+                        <div className="flex space-x-3">
+                            <Button variant="outline" className="flex-1" onClick={() => setProductToDelete(null)}>Cancel</Button>
+                            <Button className="flex-1 bg-red-600 hover:bg-red-700" onClick={() => { deleteProduct(productToDelete.id); setProductToDelete(null); }}>Delete</Button>
+                        </div>
+                    </Card>
+                </div>
+            )}
         </div>
     );
 };

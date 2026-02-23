@@ -49,6 +49,7 @@ export const ProductProvider = ({ children }) => {
         try {
             await addDoc(collection(db, 'inventory'), {
                 ...product,
+                isActive: true, // Default to active
                 createdAt: new Date().toISOString()
             });
         } catch (error) {

@@ -10,7 +10,8 @@ import {
     X,
     Filter,
     ChevronRight,
-    ArrowLeft
+    ArrowLeft,
+    Trash2
 } from 'lucide-react';
 import { useInvoices } from '../../context/InvoiceContext';
 import { Card } from '../../components/ui/Card';
@@ -23,11 +24,12 @@ import { TableRowSkeleton } from '../../components/ui/SkeletonVariants';
 const BillingHistory = () => {
     const navigate = useNavigate();
     const location = useLocation();
-    const { invoices, loading } = useInvoices();
+    const { invoices, loading, deleteInvoice } = useInvoices();
     const [sortConfig, setSortConfig] = useState({ key: 'date', direction: 'desc' });
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedInvoice, setSelectedInvoice] = useState(null);
     const [showPreview, setShowPreview] = useState(false);
+    const [invoiceToDelete, setInvoiceToDelete] = useState(null);
     const [dateFilter, setDateFilter] = useState('all'); // 'all', 'today', 'week', 'month'
     const [activeUserFilter, setActiveUserFilter] = useState(location.state?.creatorId || null);
     const [activeUserLabel, setActiveUserLabel] = useState(location.state?.creatorLabel || '');
@@ -219,6 +221,13 @@ const BillingHistory = () => {
                                                 >
                                                     <ChevronRight className="h-4 w-4" />
                                                 </button>
+                                                <button
+                                                    onClick={() => setInvoiceToDelete(inv)}
+                                                    className="p-2 hover:bg-[var(--color-bg-card)] rounded-lg text-[var(--color-text-gray)] hover:text-red-500 transition-colors"
+                                                    title="Delete"
+                                                >
+                                                    <Trash2 className="h-4 w-4" />
+                                                </button>
                                             </div>
                                         </td>
                                     </tr>
@@ -256,6 +265,27 @@ const BillingHistory = () => {
                             <InvoiceTemplate ref={printRef} invoice={selectedInvoice} />
                         </div>
                     </div>
+                </div>
+            )}
+            {/* Delete Confirmation Modal */}
+            {invoiceToDelete && (
+                <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
+                    <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setInvoiceToDelete(null)}></div>
+                    <Card className="relative w-full max-w-sm p-6 space-y-6 text-center animate-in zoom-in-95 duration-200">
+                        <div className="mx-auto h-16 w-16 rounded-full bg-red-100 flex items-center justify-center text-red-600">
+                            <Trash2 className="h-8 w-8" />
+                        </div>
+                        <div>
+                            <h3 className="text-xl font-bold">Delete Invoice?</h3>
+                            <p className="text-[var(--color-text-gray)] text-sm">
+                                This action cannot be undone. Delete invoice <strong>#{invoiceToDelete.id}</strong> for <strong>{invoiceToDelete.customer?.name || 'Walk-in'}</strong>?
+                            </p>
+                        </div>
+                        <div className="flex space-x-3">
+                            <Button variant="outline" className="flex-1" onClick={() => setInvoiceToDelete(null)}>Cancel</Button>
+                            <Button className="flex-1 bg-red-600 hover:bg-red-700" onClick={() => { deleteInvoice(invoiceToDelete.id); setInvoiceToDelete(null); }}>Delete</Button>
+                        </div>
+                    </Card>
                 </div>
             )}
         </div>
