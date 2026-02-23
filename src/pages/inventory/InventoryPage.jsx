@@ -147,10 +147,17 @@ const InventoryPage = () => {
                                     </div>
                                 )}
                                 {product.isActive === false && (
-                                    <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
-                                        <span className="bg-black/60 text-white text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full border border-white/20">
+                                    <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px] flex flex-col items-center justify-center space-y-3 z-10 transition-all">
+                                        <span className="bg-black/60 text-white text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full border border-white/20">
                                             Disabled
                                         </span>
+                                        <Button
+                                            size="sm"
+                                            className="bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-bold h-8 px-4 rounded-full shadow-lg"
+                                            onClick={(e) => { e.stopPropagation(); updateProduct(product.id, { isActive: true }); }}
+                                        >
+                                            Enable Product
+                                        </Button>
                                     </div>
                                 )}
                             </div>
