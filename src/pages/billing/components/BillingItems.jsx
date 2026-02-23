@@ -29,7 +29,7 @@ const BillingItems = ({ onAddToCart }) => {
     return (
         <div className="flex flex-col h-full bg-[var(--color-bg-card)] border border-[var(--color-border)] rounded-xl md:mr-4 overflow-hidden w-full max-w-full">
             {/* Tabs & Search */}
-            <div className="p-4 border-b border-[var(--color-border)] space-y-4">
+            <div className="p-4 border-b border-[var(--color-border)] space-y-6">
                 <div className="flex p-1 bg-[var(--color-bg-dark)] rounded-lg">
                     <button
                         onClick={() => setActiveTab('products')}
@@ -67,7 +67,7 @@ const BillingItems = ({ onAddToCart }) => {
             </div>
 
             {/* Grid */}
-            <div className="flex-1 overflow-y-auto px-4 pb-10 min-w-0">
+            <div className="flex-1 overflow-y-auto px-4 pb-10 min-w-0 pt-6">
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-4 min-w-0">
                     {activeTab === 'products' ? (
                         filteredProducts.map(product => (

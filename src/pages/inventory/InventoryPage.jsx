@@ -72,7 +72,7 @@ const InventoryPage = () => {
             </div>
 
             {/* Filters & Search */}
-            <div className="flex flex-col md:flex-row gap-4 items-center bg-[var(--color-bg-card)] p-4 rounded-xl border border-[var(--color-border)]">
+            <div className="flex flex-col md:flex-row gap-4 items-center bg-[var(--color-bg-card)] p-4 rounded-xl border border-[var(--color-border)] mt-4">
                 <div className="relative flex-1 w-full">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--color-text-gray)]" />
                     <input
@@ -100,7 +100,7 @@ const InventoryPage = () => {
             </div>
 
             {/* Product Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pt-6">
                 {loading ? (
                     Array.from({ length: 9 }).map((_, i) => (
                         <ProductCardSkeleton key={i} />
