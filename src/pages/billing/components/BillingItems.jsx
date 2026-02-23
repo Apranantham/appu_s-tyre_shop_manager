@@ -73,7 +73,7 @@ const BillingItems = ({ onAddToCart }) => {
                         filteredProducts.map(product => (
                             <Card
                                 key={product.id}
-                                className="cursor-pointer hover:border-[var(--color-primary)] transition-all p-3 flex flex-col h-full group"
+                                className="cursor-pointer border border-[var(--color-border)] hover:border-[var(--color-primary)] transition-all p-4 flex flex-col h-full group shadow-md hover:shadow-xl active:scale-[0.98] rounded-2xl"
                                 onClick={() => product.stock > 0 && onAddToCart(product, 'product')}
                             >
                                 <div className="aspect-square rounded mb-2 bg-[var(--color-bg-dark)] overflow-hidden">
@@ -103,7 +103,7 @@ const BillingItems = ({ onAddToCart }) => {
                         filteredServices.map(service => (
                             <Card
                                 key={service.id}
-                                className="cursor-pointer hover:border-[var(--color-secondary)] transition-all p-4 flex flex-col justify-between group h-32"
+                                className="cursor-pointer border border-[var(--color-border)] hover:border-[var(--color-secondary)] transition-all p-5 flex flex-col justify-between group h-36 shadow-md hover:shadow-xl active:scale-[0.98] rounded-2xl"
                                 onClick={() => onAddToCart(service, 'service')}
                             >
                                 <div className="flex justify-between items-start">

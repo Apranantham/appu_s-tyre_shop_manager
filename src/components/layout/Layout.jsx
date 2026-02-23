@@ -99,7 +99,7 @@ const Layout = () => {
             <BottomNav />
 
             {/* Main Content */}
-            <main className="flex-1 transition-[padding] pt-24 pb-24 md:pt-0 md:pb-0 md:pl-64 w-full max-w-[100vw] overflow-x-hidden">
+            <main className="flex-1 transition-[padding] pt-20 pb-24 md:pt-0 md:pb-0 md:pl-64 w-full max-w-[100vw] overflow-x-hidden">
                 <div className="container mx-auto p-4 md:p-6 max-w-7xl animate-fade-in w-full">
                     <Outlet />
                 </div>

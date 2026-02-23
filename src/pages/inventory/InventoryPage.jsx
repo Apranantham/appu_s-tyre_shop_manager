@@ -110,7 +110,7 @@ const InventoryPage = () => {
                 ) : (
                     filteredProducts.map((product) => (
                         <Card key={product.id} className={cn(
-                            "group hover:border-[var(--color-primary)] transition-all duration-200",
+                            "group border border-[var(--color-border)] hover:border-[var(--color-primary)] transition-all duration-300 shadow-md hover:shadow-xl rounded-2xl active:scale-[0.99]",
                             product.isActive === false && "opacity-60 saturate-50"
                         )}>
                             <div className="relative aspect-video rounded-lg overflow-hidden mb-4 bg-[var(--color-bg-dark)]">

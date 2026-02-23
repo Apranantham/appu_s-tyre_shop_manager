@@ -3,6 +3,7 @@ import { Plus, Settings, Edit2, Trash2, Power } from 'lucide-react';
 import { useServices } from '../../context/ServiceContext';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
+import { cn } from '../../utils/cn';
 import Modal from '../../components/ui/Modal';
 import { ServiceCardSkeleton } from '../../components/ui/SkeletonVariants';
 
@@ -111,7 +112,10 @@ const ServicePage = () => {
                     services.map((service) => {
                         const Icon = iconMap[service.icon] || Wrench;
                         return (
-                            <Card key={service.id} className={`group relative p-5 transition-all hover:border-[var(--color-primary)]/50 ${!service.active && 'opacity-60 grayscale'}`}>
+                            <Card key={service.id} className={cn(
+                                "group relative p-6 transition-all border border-[var(--color-border)] hover:border-[var(--color-primary)] shadow-md hover:shadow-xl rounded-2xl active:scale-[0.99]",
+                                !service.active && 'opacity-60 grayscale'
+                            )}>
                                 <div className="flex items-start justify-between gap-4">
                                     <div className="flex items-center gap-4 min-w-0 flex-1">
                                         <div className="h-12 w-12 shrink-0 rounded-xl bg-[var(--color-primary)]/10 flex items-center justify-center text-[var(--color-primary)] shadow-sm">
