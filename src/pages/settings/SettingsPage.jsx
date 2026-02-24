@@ -251,7 +251,7 @@ const SettingsPage = () => {
                                         "px-8 py-3 rounded-[1rem] text-[11px] font-black transition-all uppercase tracking-[0.05em]",
                                         shopDetails?.appLanguage === l
                                             ? "bg-[var(--color-primary)] text-white shadow-xl"
-                                            : "text-[var(--color-text-gray)] hover:text-white"
+                                            : "text-[var(--color-text-gray)] hover:text-[var(--color-text)]"
                                     )}
                                 >
                                     {l === 'ta' ? 'தமிழ்' : 'English'}
@@ -275,7 +275,7 @@ const SettingsPage = () => {
                                         "px-5 py-3 rounded-[1rem] text-[10px] border border-transparent font-black uppercase tracking-tight transition-all flex flex-col items-center flex-1 min-w-[70px]",
                                         shopDetails?.appFontSize === size
                                             ? "bg-[var(--color-primary)] text-white shadow-xl border-[var(--color-primary)]"
-                                            : "text-[var(--color-text-gray)] hover:text-white hover:bg-white/5"
+                                            : "text-[var(--color-text-gray)] hover:text-[var(--color-text)] hover:bg-white/5"
                                     )}
                                 >
                                     <span className="text-xl leading-none transition-transform group-hover:scale-125">
