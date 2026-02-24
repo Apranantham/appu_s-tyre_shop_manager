@@ -20,6 +20,7 @@ import BillingHistory from './pages/history/BillingHistory';
 import BillingPage from './pages/billing/BillingPage';
 import SettingsPage from './pages/settings/SettingsPage';
 import AdminPanel from './pages/admin/AdminPanel';
+import RecycleBin from './pages/admin/RecycleBin';
 
 function App() {
   return (
@@ -54,6 +55,7 @@ function App() {
                       <Route path="history" element={<BillingHistory />} />
                       <Route path="settings" element={<SettingsPage />} />
                       <Route path="admin" element={<AdminPanel />} />
+                      <Route path="admin/recycle-bin" element={<RecycleBin />} />
                     </Route>
 
                     {/* Catch-all redirect */}

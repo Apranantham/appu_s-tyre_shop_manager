@@ -181,8 +181,8 @@ const SalesChart = () => {
                 </div>
             </div>
 
-            <div className="flex-1 w-full min-h-[400px] mt-4 min-w-0">
-                <ResponsiveContainer width="100%" height="100%" minWidth={0}>
+            <div className="w-full h-[400px] mt-4 min-w-0">
+                <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={chartData} margin={{ top: 10, right: 30, left: 10, bottom: 60 }}>
                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isDark ? '#374151' : '#E5E7EB'} />
                         <XAxis

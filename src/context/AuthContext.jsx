@@ -9,7 +9,8 @@ import {
     RecaptchaVerifier,
     signInWithPhoneNumber
 } from 'firebase/auth';
-import { auth, googleProvider } from '../firebase';
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { auth, db, googleProvider } from '../firebase';
 
 const AuthContext = createContext();
 
@@ -18,9 +19,9 @@ export const AuthProvider = ({ children }) => {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+        const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
             if (currentUser) {
-                setUser({
+                const userData = {
                     name: currentUser.displayName || currentUser.email?.split('@')[0] || currentUser.phoneNumber,
                     email: currentUser.email,
                     picture: currentUser.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser.displayName || 'U')}&background=0D8ABC&color=fff`,
@@ -31,7 +32,19 @@ export const AuthProvider = ({ children }) => {
                         (currentUser.email || '').toLowerCase().includes('appuananth') ||
                         (currentUser.displayName || '').toLowerCase().includes('apranantham') ||
                         (currentUser.displayName || '').toLowerCase().includes('appu')
-                });
+                };
+
+                setUser(userData);
+
+                // Sync user data to Firestore
+                try {
+                    await setDoc(doc(db, 'users', currentUser.uid), {
+                        ...userData,
+                        lastLogin: serverTimestamp()
+                    }, { merge: true });
+                } catch (err) {
+                    console.error("Error syncing user to Firestore:", err);
+                }
             } else {
                 setUser(null);
             }

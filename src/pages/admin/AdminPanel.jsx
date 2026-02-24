@@ -5,23 +5,32 @@ import { useAuth } from '../../context/AuthContext';
 import { useSettings } from '../../context/SettingsContext';
 import { translations } from '../../utils/translations';
 import { Card } from '../../components/ui/Card';
+import { Button } from '../../components/ui/Button';
 import {
     Users,
     TrendingUp,
     ShoppingCart,
     ShieldCheck,
     UserPlus,
-    UserCircle
+    UserCircle,
+    Trash2,
+    RefreshCcw
 } from 'lucide-react';
 import Loader from '../../components/ui/Loader';
+
+import { collection, onSnapshot, query } from 'firebase/firestore';
+import { db } from '../../firebase';
 
 const AdminPanel = () => {
     const navigate = useNavigate();
     const { user, isAdmin } = useAuth();
-    const { invoices, loading } = useInvoices();
+    const { invoices, loading: invoicesLoading } = useInvoices();
     const { shopDetails } = useSettings();
     const lang = shopDetails?.appLanguage || 'ta';
     const t = translations[lang];
+
+    const [allUsers, setAllUsers] = React.useState([]);
+    const [usersLoading, setUsersLoading] = React.useState(true);
 
     // Protection: If not admin, bounce back to dashboard
     React.useEffect(() => {
@@ -29,6 +38,22 @@ const AdminPanel = () => {
             navigate('/dashboard');
         }
     }, [user, isAdmin, navigate]);
+
+    // Fetch all users
+    React.useEffect(() => {
+        const q = query(collection(db, 'users'));
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            const usersData = snapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+            }));
+            setAllUsers(usersData);
+            setUsersLoading(false);
+        });
+        return () => unsubscribe();
+    }, []);
+
+    const loading = invoicesLoading || usersLoading;
 
     if (loading) {
         return <Loader text={lang === 'ta' ? 'நிர்வாக தரவு மீட்டெடுக்கப்படுகிறது...' : 'Retrieving administrative data...'} />;
@@ -38,29 +63,46 @@ const AdminPanel = () => {
     const totalRevenue = invoices.reduce((sum, inv) => sum + inv.total, 0);
     const totalInvoices = invoices.length;
 
-    // Group invoices by user
-    const usersData = invoices.reduce((acc, inv) => {
+    // Merge users from both 'users' collection and invoice history
+    const mergedUsersMap = new Map();
+
+    // 1. Add all synced users from 'users' collection
+    allUsers.forEach(u => {
+        mergedUsersMap.set(u.id, {
+            id: u.id,
+            label: u.email || u.name || u.id,
+            sales: 0,
+            count: 0,
+            lastSeen: u.lastLogin?.toDate?.()?.toISOString() || u.createdAt || 'N/A'
+        });
+    });
+
+    // 2. Add/Merge users from invoice history (captures legacy/unsynced users)
+    invoices.forEach(inv => {
         const creatorId = inv.createdBy || 'Unknown';
         const label = inv.creatorEmail || inv.creatorName || creatorId;
 
-        if (!acc[creatorId]) {
-            acc[creatorId] = {
+        if (!mergedUsersMap.has(creatorId)) {
+            mergedUsersMap.set(creatorId, {
                 id: creatorId,
                 label: label,
                 sales: 0,
                 count: 0,
                 lastSeen: inv.date
-            };
+            });
         }
-        acc[creatorId].sales += inv.total;
-        acc[creatorId].count += 1;
-        if (new Date(inv.date) > new Date(acc[creatorId].lastSeen)) {
-            acc[creatorId].lastSeen = inv.date;
-        }
-        return acc;
-    }, {});
 
-    const usersList = Object.values(usersData).sort((a, b) => b.sales - a.sales);
+        const userData = mergedUsersMap.get(creatorId);
+        userData.sales += inv.total;
+        userData.count += 1;
+
+        // Update lastSeen if this invoice is newer
+        if (userData.lastSeen === 'N/A' || new Date(inv.date) > new Date(userData.lastSeen)) {
+            userData.lastSeen = inv.date;
+        }
+    });
+
+    const usersList = Array.from(mergedUsersMap.values()).sort((a, b) => b.sales - a.sales);
 
     return (
         <div className="space-y-6 pb-20">
@@ -108,10 +150,27 @@ const AdminPanel = () => {
 
             {/* Performance by User */}
             <Card className="bg-[var(--color-bg-card)] border-[var(--color-border)] overflow-hidden">
-                <div className="p-6 border-b border-[var(--color-border)] bg-[var(--color-bg-dark)]/50">
+                <div className="p-6 border-b border-[var(--color-border)] bg-[var(--color-bg-dark)]/50 flex justify-between items-center"> {/* Modified this div to be flex */}
                     <h3 className="font-bold flex items-center uppercase tracking-tighter">
                         <UserCircle className="h-4 w-4 mr-2" /> {t.performance_by_user}
                     </h3>
+                    <div className="flex items-center gap-3">
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            className="bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white rounded-xl h-10 px-4 font-black uppercase tracking-widest text-[10px] border border-red-500/10 shadow-sm transition-all"
+                            onClick={() => navigate('/admin/recycle-bin')}
+                        >
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            {lang === 'ta' ? 'குப்பைத் தொட்டி' : 'Recycle Bin'}
+                        </Button>
+                        <button
+                            onClick={() => window.location.reload()}
+                            className="p-2.5 rounded-xl bg-[var(--color-bg-dark)] border border-[var(--color-border)] text-[var(--color-text-gray)] hover:text-[var(--color-primary)] transition-all active:scale-95 shadow-inner"
+                        >
+                            <RefreshCcw className="h-5 w-5" />
+                        </button>
+                    </div>
                 </div>
                 <div className="overflow-x-auto">
                     <table className="w-full text-left">
@@ -134,7 +193,9 @@ const AdminPanel = () => {
                                     <td className="px-6 py-4 font-bold text-blue-500">₹{usr.sales.toLocaleString(lang === 'ta' ? 'ta-IN' : 'en-IN')}</td>
                                     <td className="px-6 py-4 text-sm">{usr.count}</td>
                                     <td className="px-6 py-4 text-xs text-[var(--color-text-gray)]">
-                                        {new Date(usr.lastSeen).toLocaleString(lang === 'ta' ? 'ta-IN' : 'en-IN')}
+                                        {usr.lastSeen !== 'N/A'
+                                            ? new Date(usr.lastSeen).toLocaleString(lang === 'ta' ? 'ta-IN' : 'en-IN')
+                                            : 'No Activity'}
                                     </td>
                                     <td className="px-6 py-4 text-right">
                                         <button

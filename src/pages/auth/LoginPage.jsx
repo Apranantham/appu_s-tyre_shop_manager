@@ -226,7 +226,7 @@ const LoginPage = () => {
                             <form onSubmit={isForgotPassword ? handleForgotPassword : handleEmailAuth} className="space-y-5">
                                 <div className="text-center mb-8">
                                     <h2 className="text-2xl font-black tracking-tight text-[var(--color-text)] italic">
-                                        {isForgotPassword ? 'RECOVERY' : (isSignup ? 'NEW AGENT' : 'SYSTEM LOGIN')}
+                                        {isForgotPassword ? 'RECOVERY' : (isSignup ? 'NEW USER' : 'SYSTEM LOGIN')}
                                     </h2>
                                     <p className="text-[9px] font-black text-[var(--color-text-gray)] uppercase tracking-[0.3em] opacity-50 mt-2">
                                         {isForgotPassword ? 'Reset authentication token' : (isSignup ? 'Initialize your credentials' : 'Enter security passcodes')}
@@ -242,7 +242,7 @@ const LoginPage = () => {
                                             value={email}
                                             onChange={(e) => setEmail(e.target.value)}
                                             className="w-full bg-[var(--color-bg-dark)]/50 border border-[var(--color-border)] rounded-2xl h-14 pl-12 pr-4 focus:ring-2 focus:ring-[var(--color-primary)]/20 focus:border-[var(--color-primary)] outline-none text-sm font-bold transition-all placeholder:text-gray-600 shadow-inner"
-                                            placeholder="agent@turbotyre.com"
+                                            placeholder="user@turbotyre.com"
                                             required
                                         />
                                     </div>
@@ -343,7 +343,7 @@ const LoginPage = () => {
                                 >
                                     {isForgotPassword
                                         ? '← RETURN TO LOGIN'
-                                        : (isSignup ? 'ALREADY REGISTERED? SIGN IN' : "NEW AGENT? CREATE ACCESS")}
+                                        : (isSignup ? 'ALREADY REGISTERED? SIGN IN' : "new user? create account")}
                                 </button>
                             </form>
                         )}

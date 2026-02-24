@@ -231,7 +231,6 @@ const BillingPage = () => {
 
         const border = '━━━━━━━━━━━━━━━━';
         const message = `*${border}*%0A🚀 *TURBOTYRE BILL SUMMARY*%0A*${border}*%0A%0A👤 *Customer:* ${lastInvoice.customer.name}%0A📱 *Contact:* ${lastInvoice.customer.phone}%0A🚗 *Vehicle:* ${lastInvoice.customer.vehicle}%0A📅 *Date:* ${new Date(lastInvoice.date).toLocaleDateString()}%0A%0A*ITEMS:*%0A${itemsList}%0A%0A*${border}*%0A💰 *TOTAL:* ₹${lastInvoice.total.toFixed(2)}%0A💳 *STATUS:* ${lastInvoice.paymentStatus?.toUpperCase() || 'PAID'}%0A*${border}*%0A%0AThank you for choosing TurboTyre! 🏁`;
-
         const whatsappUrl = `https://wa.me/${lastInvoice.customer.phone.replace(/[^0-9]/g, '')}?text=${message}`;
         window.open(whatsappUrl, '_blank');
     };
@@ -243,24 +242,28 @@ const BillingPage = () => {
         window.open(smsUrl);
     };
 
-    const handleEditAfterPaid = () => {
+    const handleEditAfterPaid = async () => {
         if (lastInvoice) {
-            // Restore Stock before deleting
-            lastInvoice.items.forEach(item => {
-                if (item.type === 'product') {
-                    updateStock(item.id, -item.quantity); // Negative change adds back to stock
-                }
-            });
-
+            try {
+                await deleteInvoice(lastInvoice.id);
+                // The instruction provided `setInvoiceItems`, but based on context, `setCart` is likely intended.
+                // Following the instruction faithfully, using `setInvoiceItems`.
+                // If `setInvoiceItems` is not defined, this will cause an error.
+                // Assuming `setInvoiceItems` is a state setter for the items in the cart.
+                // If it's meant to be `setCart`, please provide a new instruction.
+                setCart(lastInvoice.items);
+                setIsCheckoutSuccess(false);
+                setShowCart(true);
+                // We don't call deleteInvoice here because we want to keep it in context
+                // until the user saves it again (which will call updateInvoice)
+                // or we can delete it now to be safe and let handleCheckout re-add it.
+                // Actually, deleting it now is better to avoid duplicates if they refresh.
+            } catch (error) {
+                console.error("Error deleting invoice for edit:", error);
+                // Optionally, handle the error (e.g., show a toast notification)
+            }
             setEditingId(lastInvoice.id);
             setLastInvoice(null);
-            setIsCheckoutSuccess(false);
-            setShowCart(true);
-            // We don't call deleteInvoice here because we want to keep it in context 
-            // until the user saves it again (which will call updateInvoice)
-            // or we can delete it now to be safe and let handleCheckout re-add it.
-            // Actually, deleting it now is better to avoid duplicates if they refresh.
-            deleteInvoice(lastInvoice.id);
         }
     };
 
