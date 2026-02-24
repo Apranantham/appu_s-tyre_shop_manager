@@ -45,16 +45,17 @@ export const InvoiceProvider = ({ children }) => {
         }
 
         const unsubscribe = onSnapshot(q, (snapshot) => {
+            console.log("Invoice snapshot received. Doc count:", snapshot.size);
             const allFetched = snapshot.docs.map(doc => ({
-                id: doc.id,
-                ...doc.data()
+                ...doc.data(),
+                id: doc.id
             }));
 
             // Sort client-side to avoid complex Firestore indexes
             const sorted = allFetched.sort((a, b) => new Date(b.date) - new Date(a.date));
 
-            setInvoices(sorted.filter(inv => !inv.isDeleted));
-            setDeletedInvoices(sorted.filter(inv => inv.isDeleted));
+            setInvoices(sorted.filter(inv => inv.isDeleted !== true));
+            setDeletedInvoices(sorted.filter(inv => inv.isDeleted === true));
             setLoading(false);
         }, (err) => {
             console.error("Invoice listener error:", err);
@@ -117,7 +118,9 @@ export const InvoiceProvider = ({ children }) => {
             const invoiceRef = doc(db, 'billing', String(id));
             await runTransaction(db, async (transaction) => {
                 const invSnap = await transaction.get(invoiceRef);
-                if (!invSnap.exists()) return;
+                if (!invSnap.exists()) {
+                    throw new Error("BILL_NOT_FOUND: The invoice with ID " + id + " was not found in database.");
+                }
                 const invData = invSnap.data();
 
                 // Restore Stock
@@ -147,7 +150,9 @@ export const InvoiceProvider = ({ children }) => {
             const invoiceRef = doc(db, 'billing', String(id));
             await runTransaction(db, async (transaction) => {
                 const invSnap = await transaction.get(invoiceRef);
-                if (!invSnap.exists()) return;
+                if (!invSnap.exists()) {
+                    throw new Error("BILL_NOT_FOUND: The invoice with ID " + id + " was not found in database.");
+                }
                 const invData = invSnap.data();
 
                 // Deduct Stock
