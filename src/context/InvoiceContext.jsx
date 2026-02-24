@@ -35,7 +35,16 @@ export const InvoiceProvider = ({ children }) => {
         const billingCollection = collection(db, 'billing');
         let q;
 
-        const q = query(billingCollection);
+        if (user.isAdmin) {
+            // Admin sees everything
+            q = query(billingCollection);
+        } else {
+            // Regular user sees only their own
+            q = query(
+                billingCollection,
+                where('createdBy', '==', user.uid)
+            );
+        }
 
         const unsubscribe = onSnapshot(q, (snapshot) => {
             const allInvoices = snapshot.docs.map(doc => ({
