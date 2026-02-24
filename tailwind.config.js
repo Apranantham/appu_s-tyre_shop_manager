@@ -16,6 +16,9 @@ export default {
                     DEFAULT: 'var(--color-secondary)',
                     hover: 'var(--color-secondary-hover)',
                 },
+            },
+            screens: {
+                'xs': '480px',
             }
         },
     },

@@ -5,6 +5,7 @@ import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
 import { Shield, Lock, ChevronRight, Mail, Phone, UserPlus, LogIn, Key, Eye, EyeOff, CheckCircle2 } from 'lucide-react';
 import Loader from '../../components/ui/Loader';
+import { cn } from '../../utils/cn';
 
 const LoginPage = () => {
     const {
@@ -173,8 +174,7 @@ const LoginPage = () => {
                                 )}
                             >
                                 <tab.icon className="h-3 w-3 mr-2 opacity-50" />
-                                <span className="hidden xs:inline">{tab.label}</span>
-                                <span className="xs:hidden">{tab.label[0]}</span>
+                                <span className="inline">{tab.label}</span>
                             </button>
                         ))}
                     </div>
@@ -200,8 +200,8 @@ const LoginPage = () => {
                                     <p className="text-[10px] font-black text-[var(--color-text-gray)] uppercase tracking-widest opacity-60">Access your manager suite instantly</p>
                                 </div>
 
-                                <Button
-                                    className="w-full h-16 bg-white hover:bg-gray-100 text-gray-900 font-black rounded-2xl flex items-center justify-center shadow-xl transition-all active:scale-95 group text-sm uppercase tracking-widest"
+                                <button
+                                    className="w-full h-16 bg-white hover:bg-gray-100 text-gray-900 font-black rounded-2xl flex items-center justify-center shadow-xl transition-all active:scale-95 group text-sm uppercase tracking-widest border-none"
                                     onClick={handleGoogleLogin}
                                     disabled={loadingAction}
                                 >
@@ -218,7 +218,7 @@ const LoginPage = () => {
                                             Continue with Google
                                         </>
                                     )}
-                                </Button>
+                                </button>
                             </div>
                         )}
 

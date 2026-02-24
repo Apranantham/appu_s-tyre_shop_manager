@@ -23,16 +23,16 @@ const AdminPanel = () => {
     const lang = shopDetails?.appLanguage || 'ta';
     const t = translations[lang];
 
-    if (loading) {
-        return <Loader text={lang === 'ta' ? 'நிர்வாக தரவு மீட்டெடுக்கப்படுகிறது...' : 'Retrieving administrative data...'} />;
-    }
-
     // Protection: If not admin, bounce back to dashboard
     React.useEffect(() => {
         if (user && !isAdmin) {
             navigate('/dashboard');
         }
     }, [user, isAdmin, navigate]);
+
+    if (loading) {
+        return <Loader text={lang === 'ta' ? 'நிர்வாக தரவு மீட்டெடுக்கப்படுகிறது...' : 'Retrieving administrative data...'} />;
+    }
 
     // Calculate global stats
     const totalRevenue = invoices.reduce((sum, inv) => sum + inv.total, 0);
