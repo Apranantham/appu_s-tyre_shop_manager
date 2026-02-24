@@ -5,8 +5,9 @@ import { useSettings } from '../../context/SettingsContext';
 import { translations } from '../../utils/translations';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
-import { Trash2, RefreshCcw, ArrowLeft, History, AlertCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { createPortal } from 'react-dom';
+import { cn } from '../../utils/cn';
 import Loader from '../../components/ui/Loader';
 
 const RecycleBin = () => {
@@ -16,6 +17,7 @@ const RecycleBin = () => {
     const { shopDetails } = useSettings();
     const lang = shopDetails?.appLanguage || 'ta';
     const t = translations[lang];
+    const [confirmAction, setConfirmAction] = React.useState(null); // { type: 'restore' | 'burn', invoice: inv }
 
     // Protection: If not admin, bounce back
     React.useEffect(() => {
@@ -28,24 +30,21 @@ const RecycleBin = () => {
         return <Loader text={lang === 'ta' ? 'அகற்றப்பட்ட தரவுகள் மீட்டெடுக்கப்படுகின்றன...' : 'Loading trashed records...'} />;
     }
 
-    const handleRestore = async (id) => {
-        if (window.confirm(lang === 'ta' ? 'இந்த விலைப்பட்டியலை மீண்டும் நிலைநிறுத்தலாமா?' : 'Are you sure you want to restore this invoice?')) {
-            try {
-                await restoreInvoice(id);
-                // Success feedback could go here
-            } catch (err) {
-                alert('Restore failed: ' + err.message);
-            }
+    const handleRestore = async (inv) => {
+        try {
+            await restoreInvoice(inv.id);
+            setConfirmAction(null);
+        } catch (err) {
+            alert('Restore failed: ' + err.message);
         }
     };
 
-    const handlePermanentDelete = async (id) => {
-        if (window.confirm(lang === 'ta' ? 'எச்சரிக்கை: இது தரவுத்தளத்திலிருந்து நிரந்தரமாக நீக்கப்படும்! தொடரலாமா?' : 'WARNING: This will be deleted from the database FOREVER! Proceed?')) {
-            try {
-                await permanentlyDeleteInvoice(id);
-            } catch (err) {
-                alert('Delete failed: ' + err.message);
-            }
+    const handlePermanentDelete = async (inv) => {
+        try {
+            await permanentlyDeleteInvoice(inv.id);
+            setConfirmAction(null);
+        } catch (err) {
+            alert('Delete failed: ' + err.message);
         }
     };
 
@@ -140,7 +139,7 @@ const RecycleBin = () => {
                                                         size="sm"
                                                         variant="ghost"
                                                         className="h-10 px-4 rounded-xl bg-blue-500/10 text-blue-500 hover:bg-blue-500 hover:text-white transition-all font-black text-[10px] uppercase tracking-widest"
-                                                        onClick={() => handleRestore(inv.id)}
+                                                        onClick={() => setConfirmAction({ type: 'restore', invoice: inv })}
                                                     >
                                                         <RefreshCcw className="h-3.5 w-3.5 mr-2" />
                                                         Restore
@@ -149,7 +148,7 @@ const RecycleBin = () => {
                                                         size="sm"
                                                         variant="ghost"
                                                         className="h-10 px-4 rounded-xl bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white transition-all font-black text-[10px] uppercase tracking-widest"
-                                                        onClick={() => handlePermanentDelete(inv.id)}
+                                                        onClick={() => setConfirmAction({ type: 'burn', invoice: inv })}
                                                     >
                                                         <Trash2 className="h-3.5 w-3.5 mr-2" />
                                                         Burn
@@ -163,6 +162,63 @@ const RecycleBin = () => {
                         </div>
                     </Card>
                 </div>
+            )}
+
+            {/* Premium Confirmation Modal */}
+            {confirmAction && createPortal(
+                <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
+                    <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setConfirmAction(null)}></div>
+                    <Card className="relative w-full max-w-sm p-8 space-y-6 text-center animate-in zoom-in-95 duration-200 border border-[var(--color-border)] rounded-[2.5rem] shadow-2xl">
+                        <div className={cn(
+                            "mx-auto h-20 w-20 rounded-full flex items-center justify-center",
+                            confirmAction.type === 'restore' ? "bg-blue-500/10 text-blue-500" : "bg-red-500/10 text-red-500"
+                        )}>
+                            {confirmAction.type === 'restore' ? <RefreshCcw className="h-10 w-10" /> : <Trash2 className="h-10 w-10" />}
+                        </div>
+
+                        <div className="space-y-2">
+                            <h3 className="text-2xl font-black uppercase tracking-tight">
+                                {confirmAction.type === 'restore'
+                                    ? (lang === 'ta' ? 'மீட்டமைக்கவா?' : 'Restore Bill?')
+                                    : (lang === 'ta' ? 'நிரந்தரமாக நீக்கவா?' : 'Burn Permanently?')}
+                            </h3>
+                            <p className="text-[10px] font-bold text-[var(--color-text-gray)] uppercase tracking-widest leading-relaxed">
+                                {confirmAction.type === 'restore'
+                                    ? (lang === 'ta'
+                                        ? `விலைப்பட்டியல் #${confirmAction.invoice.invoiceNo} ஐ மீண்டும் விற்பனை பட்டியலுக்கு கொண்டு வரவா?`
+                                        : `Do you want to put Bill #${confirmAction.invoice.invoiceNo} back into your active history?`)
+                                    : (lang === 'ta'
+                                        ? `எச்சரிக்கை: #${confirmAction.invoice.invoiceNo} ஐ மீண்டும் மீட்டெடுக்க முடியாது. தொடரலாமா?`
+                                        : `Alert: Bill #${confirmAction.invoice.invoiceNo} will be gone forever and cannot be recovered.`)}
+                            </p>
+                        </div>
+
+                        <div className="flex flex-col sm:flex-row gap-3">
+                            <Button
+                                variant="outline"
+                                className="flex-1 py-6 rounded-2xl font-black uppercase tracking-widest border-2"
+                                onClick={() => setConfirmAction(null)}
+                            >
+                                {t.cancel}
+                            </Button>
+                            <Button
+                                className={cn(
+                                    "flex-1 py-6 text-white rounded-2xl font-black uppercase tracking-widest shadow-lg border-none",
+                                    confirmAction.type === 'restore'
+                                        ? "bg-blue-600 hover:bg-blue-700 shadow-blue-500/20"
+                                        : "bg-red-600 hover:bg-red-700 shadow-red-500/20"
+                                )}
+                                onClick={() => {
+                                    if (confirmAction.type === 'restore') handleRestore(confirmAction.invoice);
+                                    else handlePermanentDelete(confirmAction.invoice);
+                                }}
+                            >
+                                {confirmAction.type === 'restore' ? (lang === 'ta' ? 'மீட்டமை' : 'Restore') : (lang === 'ta' ? 'நீக்கு' : 'Burn')}
+                            </Button>
+                        </div>
+                    </Card>
+                </div>,
+                document.body
             )}
         </div>
     );
