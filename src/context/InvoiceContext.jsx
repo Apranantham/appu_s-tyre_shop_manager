@@ -35,23 +35,13 @@ export const InvoiceProvider = ({ children }) => {
         const billingCollection = collection(db, 'billing');
         let q;
 
-        if (user.isAdmin) {
-            // Admin sees everything
-            q = query(billingCollection);
-        } else {
-            // Regular user sees only their own
-            q = query(
-                billingCollection,
-                where('createdBy', '==', user.uid),
-                orderBy('createdAt', 'desc')
-            );
-        }
+        const q = query(billingCollection);
 
         const unsubscribe = onSnapshot(q, (snapshot) => {
             const allInvoices = snapshot.docs.map(doc => ({
                 id: doc.id,
                 ...doc.data()
-            }));
+            })).sort((a, b) => new Date(b.date) - new Date(a.date));
 
             setInvoices(allInvoices.filter(inv => !inv.isDeleted));
             setDeletedInvoices(allInvoices.filter(inv => inv.isDeleted));
