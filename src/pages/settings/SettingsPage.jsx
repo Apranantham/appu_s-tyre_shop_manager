@@ -59,7 +59,7 @@ const SettingsPage = () => {
         <div className="space-y-8 max-w-2xl mx-auto pb-24 px-4 pt-4">
             {/* Header section with refined typography */}
             <div className="space-y-2">
-                <h1 className="text-4xl font-black tracking-tight uppercase text-white leading-none">
+                <h1 className="text-4xl font-black tracking-tight uppercase text-[var(--color-text)] leading-none">
                     {t.settings}
                     <span className="text-[var(--color-primary)] ml-1">.</span>
                 </h1>
@@ -88,7 +88,7 @@ const SettingsPage = () => {
                         </div>
                         <div className="text-center space-y-4">
                             <div className="space-y-1">
-                                <p className="font-black text-white text-lg">{t.sign_in_sync_data}</p>
+                                <p className="font-black text-[var(--color-text)] text-lg">{t.sign_in_sync_data}</p>
                                 <p className="text-[10px] font-bold text-[var(--color-text-gray)] uppercase tracking-widest">{t.protect_data_firebase}</p>
                             </div>
                             <Button
@@ -113,7 +113,7 @@ const SettingsPage = () => {
                                 <div className="absolute -bottom-1 -right-1 h-5 w-5 bg-green-500 rounded-full border-4 border-[var(--color-bg-dark)]" />
                             </div>
                             <div>
-                                <p className="font-black text-xl text-white tracking-tight leading-tight">{user.name}</p>
+                                <p className="font-black text-xl text-[var(--color-text)] tracking-tight leading-tight">{user.name}</p>
                                 <p className="text-[10px] font-bold text-[var(--color-text-gray)] uppercase tracking-widest mt-1 opacity-60">{user.email}</p>
                             </div>
                         </div>
@@ -141,36 +141,36 @@ const SettingsPage = () => {
                     <form onSubmit={handleSaveShopDetails} className="space-y-6 relative z-10">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="space-y-2.5">
-                                <label className="text-[10px] font-black text-white/50 uppercase tracking-[0.2em] block px-1">
+                                <label className="text-[10px] font-black text-[var(--color-text-gray)] uppercase tracking-[0.2em] block px-1">
                                     {t.app_name}
                                 </label>
                                 <input
                                     name="shopName"
                                     defaultValue={shopDetails?.shopName}
-                                    className="w-full bg-[var(--color-bg-dark)] border border-[var(--color-border)] rounded-[1.5rem] px-5 py-4 text-sm font-bold focus:outline-none focus:ring-4 focus:ring-[var(--color-primary)]/10 focus:border-[var(--color-primary)] shadow-inner transition-all text-white placeholder:text-white/10"
+                                    className="w-full bg-[var(--color-bg-dark)] border border-[var(--color-border)] rounded-[1.5rem] px-5 py-4 text-sm font-bold focus:outline-none focus:ring-4 focus:ring-[var(--color-primary)]/10 focus:border-[var(--color-primary)] shadow-inner transition-all text-[var(--color-text)] placeholder:text-[var(--color-text-gray)]/30"
                                 />
                             </div>
                             <div className="space-y-2.5">
-                                <label className="text-[10px] font-black text-white/50 uppercase tracking-[0.2em] block px-1">
+                                <label className="text-[10px] font-black text-[var(--color-text-gray)] uppercase tracking-[0.2em] block px-1">
                                     {t.shop_phone}
                                 </label>
                                 <input
                                     name="shopPhone"
                                     defaultValue={shopDetails?.shopPhone}
-                                    className="w-full bg-[var(--color-bg-dark)] border border-[var(--color-border)] rounded-[1.5rem] px-5 py-4 text-sm font-bold focus:outline-none focus:ring-4 focus:ring-[var(--color-primary)]/10 focus:border-[var(--color-primary)] shadow-inner transition-all text-white placeholder:text-white/10"
+                                    className="w-full bg-[var(--color-bg-dark)] border border-[var(--color-border)] rounded-[1.5rem] px-5 py-4 text-sm font-bold focus:outline-none focus:ring-4 focus:ring-[var(--color-primary)]/10 focus:border-[var(--color-primary)] shadow-inner transition-all text-[var(--color-text)] placeholder:text-[var(--color-text-gray)]/30"
                                 />
                             </div>
                         </div>
 
                         <div className="space-y-2.5">
-                            <label className="text-[10px] font-black text-white/50 uppercase tracking-[0.2em] block px-1">
+                            <label className="text-[10px] font-black text-[var(--color-text-gray)] uppercase tracking-[0.2em] block px-1">
                                 {t.shop_address}
                             </label>
                             <textarea
                                 name="shopAddress"
                                 defaultValue={shopDetails?.shopAddress}
                                 rows={3}
-                                className="w-full bg-[var(--color-bg-dark)] border border-[var(--color-border)] rounded-[2rem] px-5 py-5 text-sm font-bold focus:outline-none focus:ring-4 focus:ring-[var(--color-primary)]/10 focus:border-[var(--color-primary)] shadow-inner transition-all text-white resize-none placeholder:text-white/10"
+                                className="w-full bg-[var(--color-bg-dark)] border border-[var(--color-border)] rounded-[2rem] px-5 py-5 text-sm font-bold focus:outline-none focus:ring-4 focus:ring-[var(--color-primary)]/10 focus:border-[var(--color-primary)] shadow-inner transition-all text-[var(--color-text)] resize-none placeholder:text-[var(--color-text-gray)]/30"
                             />
                         </div>
 
@@ -208,7 +208,7 @@ const SettingsPage = () => {
                         <Monitor className="h-5 w-5" />
                     </div>
                     <div>
-                        <h2 className="text-xl font-black uppercase tracking-tight text-white">{t.appearance}</h2>
+                        <h2 className="text-xl font-black uppercase tracking-tight text-[var(--color-text)]">{t.appearance}</h2>
                         <p className="text-[9px] font-bold text-[var(--color-text-gray)] uppercase tracking-[0.2em] opacity-40 mt-0.5">{t.customize_your_view}</p>
                     </div>
                 </div>
@@ -217,7 +217,7 @@ const SettingsPage = () => {
                     {/* Dark Mode Toggle */}
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-6 rounded-[2rem] bg-[var(--color-bg-dark)]/40 border border-white/5 shadow-inner">
                         <div>
-                            <p className="font-black text-xs uppercase tracking-widest text-white">{t.dark_mode}</p>
+                            <p className="font-black text-xs uppercase tracking-widest text-[var(--color-text)]">{t.dark_mode}</p>
                             <p className="text-[10px] text-[var(--color-text-gray)] font-medium mt-1 opacity-70">{t.switch_dark_light}</p>
                         </div>
                         <button
@@ -239,7 +239,7 @@ const SettingsPage = () => {
                     {/* Language Selection */}
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-6 rounded-[2rem] bg-[var(--color-bg-dark)]/40 border border-white/5 shadow-inner">
                         <div>
-                            <p className="font-black text-xs uppercase tracking-widest text-white">{t.language}</p>
+                            <p className="font-black text-xs uppercase tracking-widest text-[var(--color-text)]">{t.language}</p>
                             <p className="text-[10px] text-[var(--color-text-gray)] font-medium mt-1 opacity-70">{t.select_preferred_language}</p>
                         </div>
                         <div className="flex bg-[var(--color-bg-dark)] p-1.5 rounded-[1.5rem] border border-[var(--color-border)] shadow-inner">
@@ -263,7 +263,7 @@ const SettingsPage = () => {
                     {/* Font Size */}
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-6 rounded-[2rem] bg-[var(--color-bg-dark)]/40 border border-white/5 shadow-inner">
                         <div className="flex-shrink-0">
-                            <p className="font-black text-xs uppercase tracking-widest text-white">{t.font_size}</p>
+                            <p className="font-black text-xs uppercase tracking-widest text-[var(--color-text)]">{t.font_size}</p>
                             <p className="text-[10px] text-[var(--color-text-gray)] font-medium mt-1 opacity-70">{t.adjust_text_readability}</p>
                         </div>
                         <div className="flex bg-[var(--color-bg-dark)] p-1.5 rounded-[1.5rem] border border-[var(--color-border)] shadow-inner overflow-x-auto no-scrollbar max-w-full">
@@ -301,7 +301,7 @@ const SettingsPage = () => {
                     <div className="h-10 w-10 rounded-2xl bg-[var(--color-text-gray)]/10 flex items-center justify-center">
                         <Info className="h-5 w-5" />
                     </div>
-                    <h2 className="font-black text-xl uppercase tracking-tight text-white">{t.about_turbotyre || 'ABOUT APPLICATION'}</h2>
+                    <h2 className="font-black text-xl uppercase tracking-tight text-[var(--color-text)]">{t.about_turbotyre || 'ABOUT APPLICATION'}</h2>
                 </div>
 
                 <div className="space-y-6">
@@ -313,7 +313,7 @@ const SettingsPage = () => {
                     </div>
                     <div className="flex justify-between items-center text-sm border-b border-[var(--color-border)]/50 pb-5">
                         <span className="text-[var(--color-text-gray)] font-bold uppercase tracking-widest text-[10px] opacity-60">Licence Status</span>
-                        <span className="text-white font-black uppercase text-[10px] tracking-widest flex items-center gap-2">
+                        <span className="text-[var(--color-text)] font-black uppercase text-[10px] tracking-widest flex items-center gap-2">
                             Commercial
                             <Shield className="h-3 w-3 text-green-500" />
                         </span>
