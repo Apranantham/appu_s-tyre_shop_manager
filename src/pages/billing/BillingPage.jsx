@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useReactToPrint } from 'react-to-print';
 import BillingItems from './components/BillingItems';
@@ -6,14 +7,19 @@ import BillingCart from './components/BillingCart';
 import InvoiceTemplate from './components/InvoiceTemplate';
 import { useProducts } from '../../context/ProductContext';
 import { useInvoices } from '../../context/InvoiceContext';
+import { useSettings } from '../../context/SettingsContext';
+import { translations } from '../../utils/translations';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import Loader from '../../components/ui/Loader';
-import { CheckCircle2, Download, MessageSquare, Printer, X, Plus, Home } from 'lucide-react';
+import { CheckCircle2, Download, MessageSquare, Printer, X, Plus, Home, ShoppingCart, Edit2 } from 'lucide-react';
 
 const BillingPage = () => {
     const { updateStock } = useProducts();
     const { addInvoice, updateInvoice, deleteInvoice } = useInvoices();
+    const { shopDetails } = useSettings();
+    const lang = shopDetails?.appLanguage || 'ta';
+    const t = translations[lang];
     const location = useLocation();
     const navigate = useNavigate();
 
@@ -24,6 +30,9 @@ const BillingPage = () => {
     const [showCart, setShowCart] = useState(false);
     const [isCheckoutSuccess, setIsCheckoutSuccess] = useState(false);
     const [editingId, setEditingId] = useState(null);
+    const [paymentStatus, setPaymentStatus] = useState('paid');
+    const [paidAmount, setPaidAmount] = useState(0);
+    const [paymentNote, setPaymentNote] = useState('');
     const [discount, setDiscount] = useState(0);
     const [isAutoTime, setIsAutoTime] = useState(true);
     const getLocalDateTime = () => {
@@ -55,6 +64,18 @@ const BillingPage = () => {
     };
 
     const componentRef = useRef();
+    const pageRef = useRef();
+
+    // Reset scroll when switching between items and cart on mobile
+    useEffect(() => {
+        const timeoutId = setTimeout(() => {
+            if (pageRef.current) {
+                pageRef.current.scrollTo({ top: 0, behavior: 'instant' });
+            }
+            window.scrollTo({ top: 0, behavior: 'instant' });
+        }, 0);
+        return () => clearTimeout(timeoutId);
+    }, [showCart]);
 
     // Handle incoming edit state
     React.useEffect(() => {
@@ -65,6 +86,9 @@ const BillingPage = () => {
             setPaymentMode(editInvoice.paymentMode || 'cash');
             setDiscount(editInvoice.discount || 0);
             setEditingId(editInvoice.id);
+            setPaymentStatus(editInvoice.paymentStatus || 'paid');
+            setPaidAmount(editInvoice.paidAmount || editInvoice.total || 0);
+            setPaymentNote(editInvoice.paymentNote || '');
             setBillingDate(new Date(editInvoice.date).toISOString().split('T')[0]);
             setIsAutoTime(false); // Don't auto-update when editing an old invoice
             setShowCart(true); // Switch to cart view immediately
@@ -127,7 +151,12 @@ const BillingPage = () => {
             subtotal,
             discount: Number(discount) || 0,
             total,
-            paymentMode
+            paymentMode,
+            paymentStatus,
+            paidAmount: Number(paidAmount) || 0,
+            paymentNote: paymentNote || '',
+            balanceAmount: total - (Number(paidAmount) || 0),
+            isClosed: paymentStatus === 'paid'
         };
 
         let finalizedInvoice = { ...invoiceData };
@@ -155,13 +184,20 @@ const BillingPage = () => {
         setLastInvoice(null);
         setEditingId(null);
         setDiscount(0);
+        setPaymentStatus('paid');
+        setPaidAmount(0);
         setBillingDate(getLocalDateTime());
     };
 
     const shareOnWhatsApp = () => {
         if (!lastInvoice) return;
-        const itemsList = lastInvoice.items.map(item => `- ${item.name} (${item.quantity}x)`).join('%0A');
-        const message = `*TurboTyre Invoice*%0A%0AHello ${lastInvoice.customer.name}, here is your billing summary:%0A%0A*Invoice ID:* ${lastInvoice.id}%0A*Total:* ₹${lastInvoice.total.toFixed(2)}%0A%0A*Items:*%0A${itemsList}%0A%0AThank you!`;
+
+        const emojiMap = { product: '📦', service: '🛠️' };
+        const itemsList = lastInvoice.items.map(item => `${emojiMap[item.type] || '🔹'} *${item.name}* (x${item.quantity}) - ₹${item.price.toFixed(2)}`).join('%0A');
+
+        const border = '━━━━━━━━━━━━━━━━';
+        const message = `*${border}*%0A🚀 *TURBOTYRE BILL SUMMARY*%0A*${border}*%0A%0A👤 *Customer:* ${lastInvoice.customer.name}%0A📱 *Contact:* ${lastInvoice.customer.phone}%0A🚗 *Vehicle:* ${lastInvoice.customer.vehicle}%0A📅 *Date:* ${new Date(lastInvoice.date).toLocaleDateString()}%0A%0A*ITEMS:*%0A${itemsList}%0A%0A*${border}*%0A💰 *TOTAL:* ₹${lastInvoice.total.toFixed(2)}%0A💳 *STATUS:* ${lastInvoice.paymentStatus?.toUpperCase() || 'PAID'}%0A*${border}*%0A%0AThank you for choosing TurboTyre! 🏁`;
+
         const whatsappUrl = `https://wa.me/${lastInvoice.customer.phone.replace(/[^0-9]/g, '')}?text=${message}`;
         window.open(whatsappUrl, '_blank');
     };
@@ -175,19 +211,31 @@ const BillingPage = () => {
 
     const handleEditAfterPaid = () => {
         if (lastInvoice) {
-            deleteInvoice(lastInvoice.id);
-            setIsCheckoutSuccess(false);
+            // Restore Stock before deleting
+            lastInvoice.items.forEach(item => {
+                if (item.type === 'product') {
+                    updateStock(item.id, -item.quantity); // Negative change adds back to stock
+                }
+            });
+
+            setEditingId(lastInvoice.id);
             setLastInvoice(null);
+            setIsCheckoutSuccess(false);
             setShowCart(true);
+            // We don't call deleteInvoice here because we want to keep it in context 
+            // until the user saves it again (which will call updateInvoice)
+            // or we can delete it now to be safe and let handleCheckout re-add it.
+            // Actually, deleting it now is better to avoid duplicates if they refresh.
+            deleteInvoice(lastInvoice.id);
         }
     };
 
     const cartTotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
 
     return (
-        <div className="min-h-[calc(100vh-2rem)] lg:h-[calc(100vh-2rem)] flex flex-col lg:flex-row gap-4 overflow-y-auto lg:overflow-hidden relative pb-20 lg:pb-0">
+        <div ref={pageRef} className="min-h-[calc(100vh-2rem)] lg:h-[calc(100vh-2rem)] flex flex-col lg:flex-row gap-4 overflow-y-auto lg:overflow-hidden relative pb-20 lg:pb-0">
             {/* Success Overlay */}
-            {isCheckoutSuccess && lastInvoice && (
+            {isCheckoutSuccess && lastInvoice && createPortal(
                 <div className="fixed inset-0 z-[100] bg-[var(--color-bg-dark)]/95 backdrop-blur-md flex items-center justify-center p-4">
                     <Card className="max-w-md w-full p-8 text-center space-y-6 border-[var(--color-primary)] shadow-[0_0_50px_rgba(59,130,246,0.2)] animate-in zoom-in-95 duration-300">
                         <div className="flex justify-center">
@@ -200,72 +248,64 @@ const BillingPage = () => {
                             <p className="text-[var(--color-text-gray)]">Invoice #{lastInvoice.id} generated successfully</p>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-4 pt-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
                             <Button
-                                className="flex flex-col items-center justify-center h-24 space-y-2 bg-[#3B82F6] hover:bg-blue-600 rounded-2xl"
+                                className="flex items-center justify-center h-20 space-x-3 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl shadow-lg border-none"
                                 onClick={() => handlePrint()}
                             >
-                                <Printer className="h-6 w-6" />
-                                <span>Print Bill</span>
+                                <Printer className="h-8 w-8" />
+                                <div className="text-left">
+                                    <p className="font-black text-lg leading-tight uppercase">Print / PDF</p>
+                                    <p className="text-xs opacity-80 uppercase font-bold">Print Bill Now</p>
+                                </div>
                             </Button>
+
                             <Button
-                                className="flex flex-col items-center justify-center h-24 space-y-2 bg-green-600 hover:bg-green-700 rounded-2xl"
+                                className="flex items-center justify-center h-20 space-x-3 bg-green-600 hover:bg-green-700 text-white rounded-2xl shadow-xl shadow-green-500/20 border-none"
                                 onClick={shareOnWhatsApp}
                             >
-                                <svg className="h-6 w-6" viewBox="0 0 24 24" fill="currentColor">
+                                <svg className="h-8 w-8" viewBox="0 0 24 24" fill="currentColor">
                                     <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z" />
                                 </svg>
-                                <span>WhatsApp</span>
-                            </Button>
-                            <Button
-                                className="flex flex-col items-center justify-center h-24 space-y-2 bg-indigo-500 hover:bg-indigo-600 text-white shadow-lg shadow-indigo-500/20 rounded-2xl border-none"
-                                onClick={shareViaSMS}
-                            >
-                                <MessageSquare className="h-6 w-6" />
-                                <span className="text-sm font-bold">Message</span>
-                            </Button>
-                            <Button
-                                className="flex flex-col items-center justify-center h-24 space-y-2 bg-slate-700 hover:bg-slate-600 text-white shadow-lg shadow-slate-900/20 rounded-2xl border-none"
-                                onClick={() => handlePrint()}
-                            >
-                                <Download className="h-6 w-6" />
-                                <span className="text-sm font-bold">PDF Bill</span>
+                                <div className="text-left">
+                                    <p className="font-black text-lg leading-tight uppercase">WhatsApp</p>
+                                    <p className="text-xs opacity-80 uppercase font-bold">Share to Customer</p>
+                                </div>
                             </Button>
                         </div>
 
-                        <div className="pt-6 space-y-3">
+                        <div className="pt-8 space-y-3">
                             <div className="grid grid-cols-2 gap-3">
-                                <Button className="w-full bg-[var(--color-primary)] py-6 rounded-2xl font-bold flex items-center justify-center" onClick={resetBilling}>
-                                    <Plus className="h-5 w-5 mr-2" /> New Bill
+                                <Button className="bg-green-500 py-6 rounded-2xl text-base font-black shadow-lg shadow-green-500/20 flex items-center justify-center uppercase tracking-widest border-none" onClick={resetBilling}>
+                                    <Plus className="h-5 w-5 mr-2 stroke-[3px]" /> {t.new_bill || 'Next Bill'}
                                 </Button>
-                                <Button variant="outline" className="w-full border-[var(--color-border)] py-6 rounded-2xl font-bold flex items-center justify-center opacity-70 hover:opacity-100" onClick={handleEditAfterPaid}>
-                                    <X className="h-5 w-5 mr-2 text-red-500" /> Edit Bill
+                                <Button variant="outline" className="py-6 rounded-2xl text-base font-black border-2 border-[var(--color-border)] hover:bg-[var(--color-bg-dark)]/50 flex items-center justify-center uppercase tracking-widest" onClick={handleEditAfterPaid}>
+                                    <Edit2 className="h-5 w-5 mr-2 stroke-[3px]" /> {t.edit_bill || 'Edit Bill'}
                                 </Button>
                             </div>
-                            <Button variant="ghost" className="w-full" onClick={() => navigate('/dashboard')}>
+
+                            <Button variant="ghost" className="w-full py-4 text-sm font-bold text-[var(--color-text-gray)] hover:text-[var(--color-text-white)] flex items-center justify-center" onClick={() => navigate('/dashboard')}>
                                 <Home className="h-5 w-5 mr-2" /> Back to Home
                             </Button>
                         </div>
                     </Card>
-                </div>
+                </div>,
+                document.body
             )}
 
             {/* Left Side: Items (Search/Grid) */}
-            <div className={`w-full lg:w-[70%] h-fit lg:h-full ${showCart ? 'hidden md:block' : 'block'}`}>
-                <BillingItems onAddToCart={addToCart} />
+            <div className={`w-full lg:w-[60%] h-fit lg:h-full ${showCart ? 'hidden md:block' : 'block'}`}>
+                <BillingItems
+                    onAddToCart={addToCart}
+                    onUpdateQuantity={updateQuantity}
+                    onRemoveItem={removeItem}
+                    cart={cart}
+                />
             </div>
 
             {/* Right Side: Cart/Checkout */}
-            <div className={`w-full lg:w-[30%] min-h-[500px] lg:h-full flex flex-col ${!showCart ? 'hidden md:block' : 'block'}`}>
+            <div className={`w-full lg:w-[40%] min-h-[500px] lg:h-full flex flex-col ${!showCart ? 'hidden md:block' : 'block'}`}>
                 <div className="h-full flex flex-col">
-                    <div className="md:hidden flex items-center p-4 border-b border-[var(--color-border)] bg-[var(--color-bg-card)]">
-                        <button
-                            onClick={() => setShowCart(false)}
-                            className="text-[var(--color-primary)] font-bold flex items-center"
-                        >
-                            <span className="mr-2 text-xl">←</span> Back to Items
-                        </button>
-                    </div>
                     <div className="flex-1 min-h-0 lg:overflow-hidden">
                         <BillingCart
                             cart={cart}
@@ -280,6 +320,13 @@ const BillingPage = () => {
                             setDiscount={setDiscount}
                             billingDate={billingDate}
                             setBillingDate={handleDateChange}
+                            paymentStatus={paymentStatus}
+                            setPaymentStatus={setPaymentStatus}
+                            paidAmount={paidAmount}
+                            setPaidAmount={setPaidAmount}
+                            paymentNote={paymentNote}
+                            setPaymentNote={setPaymentNote}
+                            onToggleView={() => setShowCart(false)}
                         />
                     </div>
                 </div>
@@ -287,19 +334,36 @@ const BillingPage = () => {
 
             {/* Mobile Footer Toggle */}
             {!showCart && cart.length > 0 && (
-                <div className="md:hidden fixed bottom-24 left-4 right-4 z-40 animate-fade-in">
-                    <button
+                <div className="fixed bottom-0 left-0 right-0 p-6 z-40 md:hidden animate-in fade-in slide-in-from-bottom-10 duration-500">
+                    {/* Glassmorphism Background Container */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-[var(--color-bg-card)] via-[var(--color-bg-card)]/95 to-transparent backdrop-blur-md -z-10" />
+
+                    <Button
                         onClick={() => setShowCart(true)}
-                        className="w-full bg-[var(--color-primary)] text-white py-4 rounded-xl font-bold shadow-lg shadow-blue-500/30 flex justify-between px-6 items-center"
+                        className="w-full h-20 bg-[var(--color-primary)] hover:bg-[var(--color-primary)]/90 text-white shadow-[0_20px_40px_rgba(59,130,246,0.3)] rounded-[2rem] flex items-center justify-between px-8 border-none active:scale-[0.98] transition-all group overflow-hidden relative"
                     >
-                        <div className="flex items-center">
-                            <div className="bg-[var(--color-bg-card)] text-[var(--color-primary)] rounded-full w-6 h-6 flex items-center justify-center text-xs mr-3">
-                                {cart.reduce((sum, i) => sum + i.quantity, 0)}
+                        {/* Shimmer Effect */}
+                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:animate-shimmer" />
+
+                        <div className="flex items-center gap-4 relative z-10">
+                            <div className="h-12 w-12 rounded-2xl bg-white/20 flex items-center justify-center backdrop-blur-sm group-hover:scale-110 transition-transform">
+                                <ShoppingCart className="h-6 w-6 text-white" />
                             </div>
-                            View Bill
+                            <div className="text-left">
+                                <p className="text-[10px] font-black uppercase opacity-70 tracking-[0.2em] mb-0.5">{t.view_bill || 'BILLING'}</p>
+                                <p className="text-base font-black uppercase tracking-tight flex items-center gap-2">
+                                    {lang === 'ta' ? 'ரசீது பார்க்க' : 'VIEW CART'}
+                                    <span className="h-2 w-2 rounded-full bg-white animate-pulse" />
+                                    <span>({cart.length})</span>
+                                </p>
+                            </div>
                         </div>
-                        <span className="text-xl">₹{cartTotal.toFixed(2)} →</span>
-                    </button>
+
+                        <div className="text-right relative z-10">
+                            <p className="text-[10px] font-black opacity-60 uppercase tracking-widest leading-none mb-1">Total Amount</p>
+                            <p className="text-2xl font-black tracking-tighter">₹{cartTotal.toLocaleString()}</p>
+                        </div>
+                    </Button>
                 </div>
             )}
 

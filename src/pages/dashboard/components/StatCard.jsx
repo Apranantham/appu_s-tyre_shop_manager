@@ -8,7 +8,7 @@ const StatCard = ({ title, value, trend, trendValue, icon: Icon, variant = 'defa
 
     if (variant === 'featured') {
         return (
-            <div className={cn("relative p-6 rounded-3xl overflow-hidden bg-gradient-to-br from-[#0284c7] to-[#0c4a6e] text-white", className)}>
+            <div className={cn("relative p-4 md:p-6 rounded-3xl overflow-hidden bg-gradient-to-br from-[#0284c7] to-[#0c4a6e] text-white", className)}>
                 {/* Background Pattern */}
                 <div className="absolute right-0 bottom-0 opacity-10 transform translate-x-1/4 translate-y-1/4">
                     <Icon className="h-48 w-48" />
@@ -28,13 +28,19 @@ const StatCard = ({ title, value, trend, trendValue, icon: Icon, variant = 'defa
 
     if (variant === 'compact') {
         return (
-            <div className={cn("p-5 rounded-3xl bg-[var(--color-bg-card)] border-none md:border border-[var(--color-border)] flex flex-col justify-between h-full", className)}>
-                <div>
-                    <p className="text-[var(--color-text-gray)] text-xs font-medium mb-1">{title}</p>
-                    <h3 className="text-2xl font-bold text-[var(--color-text-white)]">{value}</h3>
+            <div className={cn("relative p-4 md:p-5 rounded-3xl bg-[var(--color-bg-card)] border border-[var(--color-border)] flex flex-col justify-between h-full overflow-hidden group", className)}>
+                {/* Subtle Background Icon */}
+                <div className="absolute right-0 bottom-0 opacity-[0.03] transform translate-x-4 translate-y-4 transition-transform group-hover:scale-110 duration-500">
+                    <Icon className="h-24 w-24" />
+                </div>
+
+                <div className="relative z-10">
+                    <p className="text-[var(--color-text-gray)] text-[10px] md:text-xs font-bold uppercase tracking-wider mb-2 opacity-60">{title}</p>
+                    <h3 className="text-xl md:text-2xl font-black text-[var(--color-text-white)] tracking-tight">{value}</h3>
                 </div>
                 {trendValue && (
-                    <div className={cn("text-xs font-bold mt-2", isPositive ? "text-[#10B981]" : "text-[#EF4444]")}>
+                    <div className={cn("relative z-10 text-[10px] md:text-xs font-black mt-4 uppercase tracking-tighter inline-flex items-center", isPositive ? "text-[#10B981]" : "text-[#EF4444]")}>
+                        {isPositive ? <ArrowUpRight className="h-3 w-3 mr-0.5" /> : <ArrowDownRight className="h-3 w-3 mr-0.5" />}
                         {trendValue}
                     </div>
                 )}
@@ -43,7 +49,7 @@ const StatCard = ({ title, value, trend, trendValue, icon: Icon, variant = 'defa
     }
 
     return (
-        <Card className={cn("hover:border-[var(--color-primary)] transition-colors cursor-pointer group overflow-hidden", className)}>
+        <Card className={cn("border-none md:border hover:border-[var(--color-primary)] transition-colors cursor-pointer group overflow-hidden", className)}>
             <div className="flex justify-between items-start mb-4">
                 <div>
                     <p className="text-[var(--color-text-gray)] text-sm font-medium">{title}</p>

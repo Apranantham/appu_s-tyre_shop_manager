@@ -2,14 +2,19 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import { useSettings } from '../../context/SettingsContext';
+import { translations } from '../../utils/translations';
+import { cn } from '../../utils/cn'; // Assuming cn utility is available
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
-import { User, LogOut, Sun, Moon, Info, Shield, Store, Save } from 'lucide-react';
+import { User, LogOut, Sun, Moon, Info, Shield, Store, Save, Type, Monitor } from 'lucide-react';
 
 const SettingsPage = () => {
     const { user, login, logout, isAuthenticated } = useAuth();
     const { theme, toggleTheme } = useTheme();
     const { shopDetails, updateShopDetails } = useSettings();
+    const { isAdmin } = useAuth();
+    const lang = shopDetails?.appLanguage || 'ta';
+    const t = translations[lang];
 
     const [formData, setFormData] = useState({
         shopName: '',
@@ -30,7 +35,13 @@ const SettingsPage = () => {
         setIsSaving(true);
         setSaveMessage('');
         try {
-            await updateShopDetails(formData);
+            const formData = new FormData(e.target);
+            const newShopDetails = {
+                shopName: formData.get('shopName'),
+                shopPhone: formData.get('shopPhone'),
+                shopAddress: formData.get('shopAddress'),
+            };
+            await updateShopDetails(newShopDetails);
             setSaveMessage('Settings saved successfully!');
             setTimeout(() => setSaveMessage(''), 3000);
         } catch (error) {
@@ -40,165 +51,276 @@ const SettingsPage = () => {
         }
     };
 
+    const handleLanguageChange = async (newLang) => {
+        await updateShopDetails({ appLanguage: newLang });
+    };
+
     return (
-        <div className="space-y-6 max-w-2xl mx-auto pb-24">
-            <div>
-                <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
-                <p className="text-[var(--color-text-gray)]">Manage your account and preferences</p>
+        <div className="space-y-8 max-w-2xl mx-auto pb-24 px-4 pt-4">
+            {/* Header section with refined typography */}
+            <div className="space-y-2">
+                <h1 className="text-4xl font-black tracking-tight uppercase text-white leading-none">
+                    {t.settings}
+                    <span className="text-[var(--color-primary)] ml-1">.</span>
+                </h1>
+                <p className="text-[var(--color-text-gray)] text-[10px] font-bold uppercase tracking-[0.2em] opacity-50">
+                    {t.manage_preferences_desc || 'Manage your application preferences and shop information'}
+                </p>
             </div>
 
             {/* Account Section */}
-            <Card className="p-6 space-y-6">
-                <div className="flex items-center space-x-2 text-[var(--color-primary)] mb-2">
-                    <User className="h-5 w-5" />
-                    <h2 className="font-bold text-lg">Account</h2>
+            <Card className="p-8 space-y-8 bg-[var(--color-bg-card)]/40 backdrop-blur-xl border border-[var(--color-border)] rounded-[2.5rem] shadow-2xl relative overflow-hidden group transition-all hover:bg-[var(--color-bg-card)]/60">
+                <div className="absolute top-0 right-0 p-8 opacity-[0.03] transform group-hover:scale-110 transition-transform duration-1000">
+                    <User className="h-32 w-32" />
+                </div>
+
+                <div className="flex items-center space-x-3 text-[var(--color-primary)] relative z-10">
+                    <div className="h-10 w-10 rounded-2xl bg-[var(--color-primary)]/10 flex items-center justify-center">
+                        <Shield className="h-5 w-5" />
+                    </div>
+                    <h2 className="font-black text-xl uppercase tracking-tight">{t.account}</h2>
                 </div>
 
                 {!isAuthenticated ? (
-                    <div className="flex flex-col items-center justify-center py-8 space-y-4">
-                        <div className="bg-[var(--color-bg-dark)] p-4 rounded-full">
-                            <Shield className="h-12 w-12 text-[var(--color-text-gray)] opacity-20" />
+                    <div className="flex flex-col items-center justify-center py-8 space-y-6 relative z-10">
+                        <div className="bg-[var(--color-bg-dark)]/50 p-6 rounded-[2.5rem] border border-[var(--color-border)] shadow-inner">
+                            <Shield className="h-16 w-16 text-[var(--color-text-gray)] opacity-20" />
                         </div>
-                        <div className="text-center">
-                            <p className="font-bold">Sign in to sync your data</p>
-                            <p className="text-sm text-[var(--color-text-gray)] mb-4">Protect your billing and inventory data with Google & Firebase</p>
+                        <div className="text-center space-y-4">
+                            <div className="space-y-1">
+                                <p className="font-black text-white text-lg">{t.sign_in_sync_data}</p>
+                                <p className="text-[10px] font-bold text-[var(--color-text-gray)] uppercase tracking-widest">{t.protect_data_firebase}</p>
+                            </div>
                             <Button
-                                className="bg-[#4285F4] hover:bg-[#357ae8] text-white px-8 py-2 rounded-full flex items-center shadow-lg"
+                                className="bg-white hover:bg-gray-100 text-gray-900 px-10 py-5 h-16 rounded-[1.5rem] flex items-center shadow-2xl transition-all active:scale-95 font-black uppercase tracking-[0.15em] text-xs border-none"
                                 onClick={login}
                             >
-                                <svg className="h-5 w-5 mr-3" viewBox="0 0 24 24" fill="currentColor">
-                                    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                                <svg className="h-5 w-5 mr-3" viewBox="0 0 24 24">
+                                    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
                                     <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
                                     <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05" />
                                     <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
                                 </svg>
-                                Continue with Google
+                                {t.continue_with_google}
                             </Button>
                         </div>
                     </div>
                 ) : (
-                    <div className="flex items-center justify-between p-4 bg-[var(--color-bg-dark)] rounded-xl border border-[var(--color-border)]">
-                        <div className="flex items-center space-x-4">
-                            <img src={user.picture} alt={user.name} className="h-12 w-12 rounded-full border-2 border-[var(--color-primary)]" />
+                    <div className="flex flex-col sm:flex-row items-center justify-between p-6 bg-[var(--color-bg-dark)]/50 rounded-[2rem] border border-[var(--color-border)] shadow-inner gap-4 relative z-10 transition-all group-hover:bg-[var(--color-bg-dark)]/80">
+                        <div className="flex items-center space-x-5">
+                            <div className="relative shrink-0">
+                                <img src={user.picture} alt={user.name} className="h-16 w-16 aspect-square object-cover rounded-[1.2rem] border-4 border-white/5 active:scale-95 transition-all shadow-xl" />
+                                <div className="absolute -bottom-1 -right-1 h-5 w-5 bg-green-500 rounded-full border-4 border-[var(--color-bg-dark)]" />
+                            </div>
                             <div>
-                                <p className="font-bold">{user.name}</p>
-                                <p className="text-xs text-[var(--color-text-gray)]">{user.email}</p>
+                                <p className="font-black text-xl text-white tracking-tight leading-tight">{user.name}</p>
+                                <p className="text-[10px] font-bold text-[var(--color-text-gray)] uppercase tracking-widest mt-1 opacity-60">{user.email}</p>
                             </div>
                         </div>
-                        <Button variant="ghost" className="text-red-500 hover:text-red-400" onClick={logout}>
-                            <LogOut className="h-5 w-5 mr-2" /> Logout
+                        <Button variant="ghost" className="text-red-500 hover:bg-red-500/10 h-14 px-8 rounded-[1.2rem] font-black uppercase tracking-[0.2em] text-[10px] border border-red-500/10" onClick={logout}>
+                            <LogOut className="h-4 w-4 mr-2" /> {t.logout}
                         </Button>
                     </div>
                 )}
             </Card>
 
-            {/* Shop Profile Section */}
-            <Card className="p-6">
-                <div className="flex items-center justify-between mb-6">
-                    <div className="flex items-center space-x-2 text-[var(--color-primary)]">
-                        <Store className="h-5 w-5" />
-                        <h2 className="font-bold text-lg text-[var(--color-text-white)]">Shop Profile</h2>
-                    </div>
-                </div>
-
-                <form onSubmit={handleSaveShopDetails} className="space-y-4">
-                    <div className="space-y-2">
-                        <label className="text-[10px] font-bold uppercase tracking-widest text-[var(--color-text-gray)] ml-1">Company Name</label>
-                        <input
-                            type="text"
-                            value={formData.shopName}
-                            onChange={(e) => setFormData({ ...formData, shopName: e.target.value })}
-                            className="w-full bg-[var(--color-bg-dark)] border border-[var(--color-border)] rounded-xl h-11 px-4 focus:ring-2 focus:ring-[var(--color-primary)] outline-none text-sm transition-all"
-                            placeholder="Your Shop Name"
-                            required
-                        />
-                    </div>
-                    <div className="space-y-2">
-                        <label className="text-[10px] font-bold uppercase tracking-widest text-[var(--color-text-gray)] ml-1">Shop Address</label>
-                        <textarea
-                            value={formData.shopAddress}
-                            onChange={(e) => setFormData({ ...formData, shopAddress: e.target.value })}
-                            className="w-full bg-[var(--color-bg-dark)] border border-[var(--color-border)] rounded-xl p-4 focus:ring-2 focus:ring-[var(--color-primary)] outline-none text-sm transition-all min-h-[80px]"
-                            placeholder="Full Shop Address"
-                            required
-                        />
-                    </div>
-                    <div className="space-y-2">
-                        <label className="text-[10px] font-bold uppercase tracking-widest text-[var(--color-text-gray)] ml-1">Contact Phone</label>
-                        <input
-                            type="text"
-                            value={formData.shopPhone}
-                            onChange={(e) => setFormData({ ...formData, shopPhone: e.target.value })}
-                            className="w-full bg-[var(--color-bg-dark)] border border-[var(--color-border)] rounded-xl h-11 px-4 focus:ring-2 focus:ring-[var(--color-primary)] outline-none text-sm transition-all"
-                            placeholder="+91 00000 00000"
-                            required
-                        />
+            {/* Shop Profile Section (Admin Only) */}
+            {isAdmin && (
+                <Card className="p-8 bg-[var(--color-bg-card)]/40 backdrop-blur-xl border border-[var(--color-border)] rounded-[2.5rem] shadow-2xl overflow-hidden relative group transition-all hover:bg-[var(--color-bg-card)]/60">
+                    <div className="absolute top-0 right-0 p-8 opacity-[0.03] transform group-hover:scale-110 transition-transform duration-1000">
+                        <Store className="h-32 w-32" />
                     </div>
 
-                    <div className="flex items-center justify-between pt-2">
-                        {saveMessage && (
-                            <p className={`text-xs font-bold ${saveMessage.includes('successfully') ? 'text-green-500' : 'text-red-500'}`}>
-                                {saveMessage}
-                            </p>
-                        )}
-                        <Button
-                            type="submit"
-                            disabled={isSaving}
-                            className="ml-auto bg-[var(--color-primary)] hover:bg-blue-600 rounded-xl px-6"
-                        >
+                    <div className="flex items-center space-x-3 text-[var(--color-primary)] mb-8 relative z-10">
+                        <div className="h-10 w-10 rounded-2xl bg-[var(--color-primary)]/10 flex items-center justify-center">
+                            <Store className="h-5 w-5" />
+                        </div>
+                        <h2 className="font-black text-xl uppercase tracking-tight">{t.shop_details}</h2>
+                    </div>
+
+                    <form onSubmit={handleSaveShopDetails} className="space-y-6 relative z-10">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="space-y-2.5">
+                                <label className="text-[10px] font-black text-white/50 uppercase tracking-[0.2em] block px-1">
+                                    {t.app_name}
+                                </label>
+                                <input
+                                    name="shopName"
+                                    defaultValue={shopDetails?.shopName}
+                                    className="w-full bg-[var(--color-bg-dark)] border border-[var(--color-border)] rounded-[1.5rem] px-5 py-4 text-sm font-bold focus:outline-none focus:ring-4 focus:ring-[var(--color-primary)]/10 focus:border-[var(--color-primary)] shadow-inner transition-all text-white placeholder:text-white/10"
+                                />
+                            </div>
+                            <div className="space-y-2.5">
+                                <label className="text-[10px] font-black text-white/50 uppercase tracking-[0.2em] block px-1">
+                                    {t.shop_phone}
+                                </label>
+                                <input
+                                    name="shopPhone"
+                                    defaultValue={shopDetails?.shopPhone}
+                                    className="w-full bg-[var(--color-bg-dark)] border border-[var(--color-border)] rounded-[1.5rem] px-5 py-4 text-sm font-bold focus:outline-none focus:ring-4 focus:ring-[var(--color-primary)]/10 focus:border-[var(--color-primary)] shadow-inner transition-all text-white placeholder:text-white/10"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="space-y-2.5">
+                            <label className="text-[10px] font-black text-white/50 uppercase tracking-[0.2em] block px-1">
+                                {t.shop_address}
+                            </label>
+                            <textarea
+                                name="shopAddress"
+                                defaultValue={shopDetails?.shopAddress}
+                                rows={3}
+                                className="w-full bg-[var(--color-bg-dark)] border border-[var(--color-border)] rounded-[2rem] px-5 py-5 text-sm font-bold focus:outline-none focus:ring-4 focus:ring-[var(--color-primary)]/10 focus:border-[var(--color-primary)] shadow-inner transition-all text-white resize-none placeholder:text-white/10"
+                            />
+                        </div>
+
+                        <Button type="submit" className="w-full h-18 py-5 bg-[var(--color-primary)] hover:bg-blue-600 shadow-2xl shadow-blue-500/30 text-[11px] font-black uppercase tracking-[0.25em] rounded-[1.5rem] transition-all active:scale-95 border-none mt-2" disabled={isSaving}>
                             {isSaving ? (
-                                <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                <div className="h-6 w-6 border-3 border-white border-t-transparent rounded-full animate-spin mx-auto"></div>
                             ) : (
-                                <><Save className="h-4 w-4 mr-2" /> Save Details</>
+                                <div className="flex items-center justify-center gap-3">
+                                    <Save className="h-5 w-5" />
+                                    {t.save}
+                                </div>
                             )}
                         </Button>
-                    </div>
-                </form>
-            </Card>
+
+                        {saveMessage && (
+                            <div className={cn(
+                                "flex items-center justify-center py-5 px-8 rounded-[1.5rem] border animate-in slide-in-from-top duration-300 shadow-lg",
+                                saveMessage.includes('successfully') ? "bg-green-500/10 border-green-500/20 text-green-500" : "bg-red-500/10 border-red-500/20 text-red-500"
+                            )}>
+                                <p className="text-[10px] font-black uppercase tracking-[0.1em]">{saveMessage}</p>
+                            </div>
+                        )}
+                    </form>
+                </Card>
+            )}
 
             {/* Appearance Section */}
-            <Card className="p-6">
-                <div className="flex items-center space-x-2 text-[var(--color-secondary)] mb-6">
-                    <Sun className="h-5 w-5" />
-                    <h2 className="font-bold text-lg">Appearance</h2>
+            <Card className="p-8 bg-[var(--color-bg-card)]/40 backdrop-blur-xl border border-[var(--color-border)] rounded-[2.5rem] shadow-2xl overflow-hidden relative group transition-all hover:bg-[var(--color-bg-card)]/60">
+                <div className="absolute top-0 right-0 p-8 opacity-[0.03] transform group-hover:scale-110 transition-transform duration-1000">
+                    <Monitor className="h-32 w-32" />
                 </div>
 
-                <div className="flex items-center justify-between p-4 bg-[var(--color-bg-dark)] rounded-xl border border-[var(--color-border)]">
-                    <div className="flex items-center space-x-3">
-                        {theme === 'dark' ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
+                <div className="flex items-center space-x-3 mb-8 relative z-10">
+                    <div className="h-10 w-10 rounded-2xl bg-purple-500/10 flex items-center justify-center text-purple-500">
+                        <Monitor className="h-5 w-5" />
+                    </div>
+                    <div>
+                        <h2 className="text-xl font-black uppercase tracking-tight text-white">{t.appearance}</h2>
+                        <p className="text-[9px] font-bold text-[var(--color-text-gray)] uppercase tracking-[0.2em] opacity-40 mt-0.5">{t.customize_your_view}</p>
+                    </div>
+                </div>
+
+                <div className="space-y-6 relative z-10">
+                    {/* Dark Mode Toggle */}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-6 rounded-[2rem] bg-[var(--color-bg-dark)]/40 border border-white/5 shadow-inner">
                         <div>
-                            <p className="font-bold text-sm">Dark Mode</p>
-                            <p className="text-[10px] text-[var(--color-text-gray)] font-medium">Switch between dark and light appearance</p>
+                            <p className="font-black text-xs uppercase tracking-widest text-white">{t.dark_mode}</p>
+                            <p className="text-[10px] text-[var(--color-text-gray)] font-medium mt-1 opacity-70">{t.switch_dark_light}</p>
+                        </div>
+                        <button
+                            onClick={toggleTheme}
+                            className={cn(
+                                "w-16 h-9 rounded-full p-1.5 transition-all duration-500 relative shadow-inner overflow-hidden",
+                                theme === 'dark' ? 'bg-[var(--color-primary)]' : 'bg-gray-700'
+                            )}
+                        >
+                            <div className={cn(
+                                "w-6 h-6 bg-white rounded-full transition-all duration-500 shadow-xl flex items-center justify-center",
+                                theme === 'dark' ? 'translate-x-[1.75rem]' : 'translate-x-0'
+                            )}>
+                                {theme === 'dark' ? <Moon className="h-3.5 w-3.5 text-[var(--color-primary)]" /> : <Sun className="h-3.5 w-3.5 text-gray-700" />}
+                            </div>
+                        </button>
+                    </div>
+
+                    {/* Language Selection */}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-6 rounded-[2rem] bg-[var(--color-bg-dark)]/40 border border-white/5 shadow-inner">
+                        <div>
+                            <p className="font-black text-xs uppercase tracking-widest text-white">{t.language}</p>
+                            <p className="text-[10px] text-[var(--color-text-gray)] font-medium mt-1 opacity-70">{t.select_preferred_language}</p>
+                        </div>
+                        <div className="flex bg-[var(--color-bg-dark)] p-1.5 rounded-[1.5rem] border border-[var(--color-border)] shadow-inner">
+                            {['ta', 'en'].map(l => (
+                                <button
+                                    key={l}
+                                    onClick={() => handleLanguageChange(l)}
+                                    className={cn(
+                                        "px-8 py-3 rounded-[1rem] text-[11px] font-black transition-all uppercase tracking-[0.05em]",
+                                        shopDetails?.appLanguage === l
+                                            ? "bg-[var(--color-primary)] text-white shadow-xl"
+                                            : "text-[var(--color-text-gray)] hover:text-white"
+                                    )}
+                                >
+                                    {l === 'ta' ? 'தமிழ்' : 'English'}
+                                </button>
+                            ))}
                         </div>
                     </div>
-                    <button
-                        onClick={toggleTheme}
-                        className={`w-12 h-6 rounded-full p-1 transition-colors relative ${theme === 'dark' ? 'bg-[var(--color-primary)]' : 'bg-gray-400'}`}
-                    >
-                        <div className={`w-4 h-4 bg-[var(--color-bg-card)] rounded-full transition-transform ${theme === 'dark' ? 'translate-x-6' : 'translate-x-0'}`} />
-                    </button>
+
+                    {/* Font Size */}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-6 rounded-[2rem] bg-[var(--color-bg-dark)]/40 border border-white/5 shadow-inner">
+                        <div className="flex-shrink-0">
+                            <p className="font-black text-xs uppercase tracking-widest text-white">{t.font_size}</p>
+                            <p className="text-[10px] text-[var(--color-text-gray)] font-medium mt-1 opacity-70">{t.adjust_text_readability}</p>
+                        </div>
+                        <div className="flex bg-[var(--color-bg-dark)] p-1.5 rounded-[1.5rem] border border-[var(--color-border)] shadow-inner overflow-x-auto no-scrollbar max-w-full">
+                            {['small', 'medium', 'large', 'extra_large'].map((size) => (
+                                <button
+                                    key={size}
+                                    onClick={() => updateShopDetails({ appFontSize: size })}
+                                    className={cn(
+                                        "px-5 py-3 rounded-[1rem] text-[10px] border border-transparent font-black uppercase tracking-tight transition-all flex flex-col items-center flex-1 min-w-[70px]",
+                                        shopDetails?.appFontSize === size
+                                            ? "bg-[var(--color-primary)] text-white shadow-xl border-[var(--color-primary)]"
+                                            : "text-[var(--color-text-gray)] hover:text-white hover:bg-white/5"
+                                    )}
+                                >
+                                    <span className="text-xl leading-none transition-transform group-hover:scale-125">
+                                        {size === 'small' ? 'T' :
+                                            size === 'medium' ? 'TT' :
+                                                size === 'large' ? 'TTT' : 'TTTT'}
+                                    </span>
+                                    <span className="text-[7px] mt-1.5 opacity-60 uppercase tracking-widest font-black">
+                                        {size === 'small' ? t.small :
+                                            size === 'medium' ? t.medium :
+                                                size === 'large' ? t.large : t.extra_large}
+                                    </span>
+                                </button>
+                            ))}
+                        </div>
+                    </div>
                 </div>
             </Card>
 
             {/* About Section */}
-            <Card className="p-6">
-                <div className="flex items-center space-x-2 text-[var(--color-text-gray)] mb-6">
-                    <Info className="h-5 w-5" />
-                    <h2 className="font-bold text-lg text-[var(--color-text-white)]">About TurboTyre</h2>
+            <Card className="p-8 bg-[var(--color-bg-card)]/40 backdrop-blur-xl border border-[var(--color-border)] rounded-[2.5rem] shadow-2xl relative overflow-hidden group transition-all hover:bg-[var(--color-bg-card)]/40">
+                <div className="flex items-center space-x-3 text-[var(--color-text-gray)] mb-8 opacity-60">
+                    <div className="h-10 w-10 rounded-2xl bg-[var(--color-text-gray)]/10 flex items-center justify-center">
+                        <Info className="h-5 w-5" />
+                    </div>
+                    <h2 className="font-black text-xl uppercase tracking-tight text-white">{t.about_turbotyre || 'ABOUT APPLICATION'}</h2>
                 </div>
 
-                <div className="space-y-4">
-                    <div className="flex justify-between items-center text-sm border-b border-[var(--color-border)] pb-4">
-                        <span className="text-[var(--color-text-gray)]">App Version</span>
-                        <span className="font-mono bg-[var(--color-bg-dark)] px-2 py-0.5 rounded text-xs text-[var(--color-primary)]">v1.3.0 (Firebase Sync)</span>
+                <div className="space-y-6">
+                    <div className="flex justify-between items-center text-sm border-b border-[var(--color-border)]/50 pb-5">
+                        <span className="text-[var(--color-text-gray)] font-bold uppercase tracking-widest text-[10px] opacity-60">App Version</span>
+                        <span className="font-black bg-[var(--color-bg-dark)] px-4 py-2 rounded-xl text-[10px] text-[var(--color-primary)] tracking-widest border border-blue-500/10 shadow-inner">
+                            V1.5.0 (PREMIUM)
+                        </span>
                     </div>
-                    <div className="flex justify-between items-center text-sm border-b border-[var(--color-border)] pb-4">
-                        <span className="text-[var(--color-text-gray)]">Licence</span>
-                        <span className="text-white">Commercial</span>
+                    <div className="flex justify-between items-center text-sm border-b border-[var(--color-border)]/50 pb-5">
+                        <span className="text-[var(--color-text-gray)] font-bold uppercase tracking-widest text-[10px] opacity-60">Licence Status</span>
+                        <span className="text-white font-black uppercase text-[10px] tracking-widest flex items-center gap-2">
+                            Commercial
+                            <Shield className="h-3 w-3 text-green-500" />
+                        </span>
                     </div>
-                    <div className="text-center pt-4">
-                        <p className="text-xs text-[var(--color-text-gray)] font-medium">© 2026 TurboTyre Tech Solutions. All rights reserved.</p>
-                        <p className="text-[10px] text-[var(--color-text-gray)] opacity-50 mt-1">Cloud Sync powered by Firebase</p>
+                    <div className="text-center pt-4 space-y-2">
+                        <p className="text-[10px] text-[var(--color-text-gray)] font-black uppercase tracking-[0.2em] opacity-40">© 2026 TurboTyre Tech Solutions Inc.</p>
+                        <p className="text-[9px] text-[var(--color-primary)] font-black uppercase tracking-[0.3em] opacity-60">Cloud Sync Active</p>
                     </div>
                 </div>
             </Card>

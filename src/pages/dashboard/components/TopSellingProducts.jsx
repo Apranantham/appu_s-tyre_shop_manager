@@ -32,7 +32,7 @@ const TopSellingProducts = ({ invoices = [] }) => {
     const maxSales = topProducts.length > 0 ? topProducts[0].sales : 100;
 
     return (
-        <Card className="rounded-3xl p-6 bg-[var(--color-bg-card)] border-none md:border border-[var(--color-border)]">
+        <Card className="rounded-3xl p-4 md:p-6 bg-[var(--color-bg-card)] border-none md:border border-[var(--color-border)]">
             <div className="flex items-center space-x-2 mb-6">
                 <Star className="text-yellow-500 h-5 w-5" />
                 <h3 className="font-bold text-lg text-[var(--color-text-white)]">Top Selling Products</h3>

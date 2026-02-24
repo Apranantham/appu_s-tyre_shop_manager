@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Plus, Settings, Edit2, Trash2, Power } from 'lucide-react';
 import { useServices } from '../../context/ServiceContext';
+import { useSettings } from '../../context/SettingsContext';
+import { translations } from '../../utils/translations';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
 import { cn } from '../../utils/cn';
@@ -18,7 +20,7 @@ const iconMap = {
     tool: Wrench
 };
 
-const ServiceForm = ({ onSubmit, initialData, onCancel }) => {
+const ServiceForm = ({ onSubmit, initialData, onCancel, t }) => {
     const [formData, setFormData] = useState(initialData || { name: '', price: '', icon: 'tool', category: 'maintenance' });
 
     const handleSubmit = (e) => {
@@ -29,7 +31,7 @@ const ServiceForm = ({ onSubmit, initialData, onCancel }) => {
     return (
         <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-                <label className="text-sm font-medium text-[var(--color-text-gray)]">Service Name</label>
+                <label className="text-sm font-medium text-[var(--color-text-gray)]">{t.service_name}</label>
                 <input
                     required
                     value={formData.name}
@@ -38,7 +40,7 @@ const ServiceForm = ({ onSubmit, initialData, onCancel }) => {
                 />
             </div>
             <div className="space-y-2">
-                <label className="text-sm font-medium text-[var(--color-text-gray)]">Price (₹)</label>
+                <label className="text-sm font-medium text-[var(--color-text-gray)]">{t.price} (₹)</label>
                 <input
                     required
                     type="number"
@@ -48,7 +50,7 @@ const ServiceForm = ({ onSubmit, initialData, onCancel }) => {
                 />
             </div>
             <div className="space-y-2">
-                <label className="text-sm font-medium text-[var(--color-text-gray)]">Icon</label>
+                <label className="text-sm font-medium text-[var(--color-text-gray)]">{t.service_icon}</label>
                 <select
                     value={formData.icon}
                     onChange={(e) => setFormData({ ...formData, icon: e.target.value })}
@@ -62,8 +64,8 @@ const ServiceForm = ({ onSubmit, initialData, onCancel }) => {
                 </select>
             </div>
             <div className="flex justify-end space-x-2 pt-4">
-                <Button type="button" variant="outline" onClick={onCancel}>Cancel</Button>
-                <Button type="submit" variant="primary">Save Service</Button>
+                <Button type="button" variant="outline" onClick={onCancel}>{t.cancel}</Button>
+                <Button type="submit" variant="primary">{t.save}</Button>
             </div>
         </form>
     );
@@ -71,6 +73,9 @@ const ServiceForm = ({ onSubmit, initialData, onCancel }) => {
 
 const ServicePage = () => {
     const { services, addService, updateService, deleteService, toggleService, loading } = useServices();
+    const { shopDetails } = useSettings();
+    const lang = shopDetails?.appLanguage || 'ta';
+    const t = translations[lang];
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingService, setEditingService] = useState(null);
@@ -95,11 +100,11 @@ const ServicePage = () => {
         <div className="space-y-6">
             <div className="flex justify-between items-center">
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight">Services</h1>
-                    <p className="text-[var(--color-text-gray)]">Manage service offerings and pricing</p>
+                    <h1 className="text-3xl font-bold tracking-tight uppercase">{t.services}</h1>
+                    <p className="text-[var(--color-text-gray)] uppercase tracking-widest text-[10px] opacity-60">Manage service offerings and pricing</p>
                 </div>
                 <Button onClick={() => { setEditingService(null); setIsModalOpen(true); }}>
-                    <Plus className="mr-2 h-4 w-4" /> Add Service
+                    <Plus className="mr-2 h-4 w-4" /> {t.add_service}
                 </Button>
             </div>
 
@@ -130,7 +135,7 @@ const ServicePage = () => {
                                     </div>
                                     <div className="shrink-0">
                                         <div className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-widest border ${service.active ? 'bg-green-500/10 text-green-500 border-green-500/20' : 'bg-[var(--color-text-gray)]/10 text-[var(--color-text-gray)] border-[var(--color-text-gray)]/20'}`}>
-                                            <span className="hidden sm:inline">{service.active ? 'Active' : 'Disabled'}</span>
+                                            <span className="hidden sm:inline">{service.active ? t.active : t.disabled}</span>
                                             <span className="sm:hidden">{service.active ? 'A' : 'D'}</span>
                                         </div>
                                     </div>
@@ -140,11 +145,11 @@ const ServicePage = () => {
                                     <div className="flex gap-1 overflow-visible">
                                         <Button size="sm" variant="ghost" onClick={() => openEdit(service)} className="h-9 w-9 sm:h-8 sm:w-auto px-0 sm:px-2 text-xs hover:bg-[var(--color-bg-dark)]">
                                             <Edit2 className="h-4 w-4 sm:h-3.5 sm:w-3.5 sm:mr-1" />
-                                            <span className="hidden sm:inline">Edit</span>
+                                            <span className="hidden sm:inline">{t.edit}</span>
                                         </Button>
                                         <Button size="sm" variant="ghost" className="h-9 w-9 sm:h-8 sm:w-auto px-0 sm:px-2 text-red-500 text-xs hover:bg-red-500/10" onClick={() => deleteService(service.id)}>
                                             <Trash2 className="h-4 w-4 sm:h-3.5 sm:w-3.5 sm:mr-1" />
-                                            <span className="hidden sm:inline">Delete</span>
+                                            <span className="hidden sm:inline">{t.delete}</span>
                                         </Button>
                                     </div>
                                     <Button
@@ -154,7 +159,7 @@ const ServicePage = () => {
                                         className={`h-9 sm:h-8 px-2 sm:px-3 text-[10px] uppercase font-bold tracking-widest border-2 whitespace-nowrap ${service.active ? 'text-orange-500 border-orange-500/20 hover:bg-orange-500/10' : 'text-green-500 border-green-500/20 hover:bg-green-500/10'}`}
                                     >
                                         <Power className="h-4 w-4 sm:h-3 sm:w-3 sm:mr-1.5" />
-                                        <span className="hidden sm:inline">{service.active ? 'Disable' : 'Enable'}</span>
+                                        <span className="hidden sm:inline">{service.active ? t.disable : t.enable}</span>
                                     </Button>
                                 </div>
                             </Card>
@@ -166,9 +171,10 @@ const ServicePage = () => {
             <Modal
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
-                title={editingService ? 'Edit Service' : 'Add New Service'}
+                title={editingService ? t.edit_service : t.add_service}
             >
                 <ServiceForm
+                    t={t}
                     initialData={editingService}
                     onSubmit={editingService ? handleEdit : handleAdd}
                     onCancel={() => setIsModalOpen(false)}

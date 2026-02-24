@@ -132,25 +132,25 @@ const SalesChart = () => {
     };
 
     return (
-        <Card className="h-full flex flex-col p-4 md:p-6 bg-[var(--color-bg-card)] border-none md:border border-[var(--color-border)] rounded-3xl overflow-hidden shadow-none md:shadow-sm">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-                <div>
+        <Card className="flex flex-col p-4 md:p-6 bg-[var(--color-bg-card)] border-none md:border border-[var(--color-border)] rounded-3xl overflow-hidden shadow-none md:shadow-sm h-full">
+            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 gap-4">
+                <div className="w-full lg:w-auto">
                     <h3 className="text-xl font-bold flex items-center">
                         <Calendar className="h-5 w-5 mr-2 text-[#3B82F6]" />
                         Revenue Analytics
                     </h3>
-                    <p className="text-sm text-[var(--color-text-gray)]">{getRangeLabel()}</p>
+                    <p className="text-sm text-[var(--color-text-gray)] whitespace-nowrap">{getRangeLabel()}</p>
                 </div>
 
-                <div className="flex flex-col items-end">
+                <div className="flex flex-col items-start lg:items-end w-full lg:w-auto">
                     <div className="text-[#3B82F6] font-bold text-2xl">₹{totalRevenue.toLocaleString()}</div>
-                    <div className="flex items-center space-x-2 mt-2">
-                        <div className="flex bg-[var(--color-bg-dark)] rounded-lg p-1 border-none md:border border-[var(--color-border)]">
+                    <div className="flex items-center space-x-2 mt-2 w-full justify-between lg:justify-end">
+                        <div className="flex bg-[var(--color-bg-dark)] rounded-lg p-1 border border-[var(--color-border)] overflow-x-auto no-scrollbar">
                             {['days', 'weeks', 'months', 'years'].map((r) => (
                                 <button
                                     key={r}
                                     onClick={() => { setRange(r); setOffset(0); }}
-                                    className={`px-3 py-1 text-[10px] uppercase font-bold rounded-md transition-all ${range === r
+                                    className={`px-3 py-1 text-[10px] uppercase font-bold rounded-md transition-all whitespace-nowrap ${range === r
                                         ? 'bg-[#3B82F6] text-white shadow-lg shadow-blue-500/20'
                                         : 'text-[var(--color-text-gray)] hover:text-[var(--color-text-white)]'
                                         }`}
@@ -159,11 +159,11 @@ const SalesChart = () => {
                                 </button>
                             ))}
                         </div>
-                        <div className="flex space-x-1">
+                        <div className="flex space-x-1 shrink-0">
                             <Button
                                 variant="ghost"
                                 size="sm"
-                                className="h-8 w-8 p-0 bg-[var(--color-bg-dark)] rounded-lg border-none md:border border-[var(--color-border)]"
+                                className="h-8 w-8 p-0 bg-[var(--color-bg-dark)] rounded-lg border border-[var(--color-border)]"
                                 onClick={() => setOffset(prev => prev - 1)}
                             >
                                 <ChevronLeft className="h-4 w-4" />
@@ -171,7 +171,7 @@ const SalesChart = () => {
                             <Button
                                 variant="ghost"
                                 size="sm"
-                                className="h-8 w-8 p-0 bg-[var(--color-bg-dark)] rounded-lg border-none md:border border-[var(--color-border)]"
+                                className="h-8 w-8 p-0 bg-[var(--color-bg-dark)] rounded-lg border border-[var(--color-border)]"
                                 onClick={() => setOffset(prev => prev + 1)}
                             >
                                 <ChevronRight className="h-4 w-4" />
@@ -181,16 +181,17 @@ const SalesChart = () => {
                 </div>
             </div>
 
-            <div className="flex-1 w-full min-h-[300px]">
-                <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
-                    <BarChart data={chartData}>
+            <div className="flex-1 w-full min-h-[400px] mt-4 min-w-0">
+                <ResponsiveContainer width="100%" height="100%" minWidth={0}>
+                    <BarChart data={chartData} margin={{ top: 10, right: 30, left: 10, bottom: 60 }}>
                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isDark ? '#374151' : '#E5E7EB'} />
                         <XAxis
                             dataKey="name"
                             axisLine={false}
                             tickLine={false}
-                            tick={{ fill: isDark ? '#9CA3AF' : '#1E293B', fontSize: 10, fontWeight: 'bold' }}
+                            tick={{ fill: isDark ? '#9CA3AF' : '#1E293B', fontSize: 11, fontWeight: 'bold' }}
                             dy={10}
+                            interval={0}
                         />
                         <YAxis
                             axisLine={false}
@@ -212,7 +213,7 @@ const SalesChart = () => {
                             dataKey="sales"
                             fill="#3B82F6"
                             radius={[6, 6, 0, 0]}
-                            barSize={range === 'months' ? 20 : range === 'days' ? 12 : 30}
+                            barSize={range === 'months' ? 16 : range === 'days' ? 8 : 24}
                             activeBar={false}
                             style={{ outline: 'none' }}
                         >

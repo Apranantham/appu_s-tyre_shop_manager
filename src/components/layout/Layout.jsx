@@ -4,15 +4,28 @@ import { Bell, Settings, Menu, X } from 'lucide-react';
 import Sidebar from './Sidebar';
 import BottomNav from './BottomNav';
 import { useAuth } from '../../context/AuthContext';
+import { useSettings } from '../../context/SettingsContext';
+import { translations } from '../../utils/translations';
 import { cn } from '../../utils/cn';
 
 const Layout = () => {
     const { user, isAuthenticated } = useAuth();
+    const { shopDetails } = useSettings();
+    const lang = shopDetails?.appLanguage || 'ta';
+    const t = translations[lang];
     const navigate = useNavigate();
     const [isSidebarOpen, setIsSidebarOpen] = React.useState(false);
 
+    // Apply global font size to the root element
+    React.useEffect(() => {
+        const fontSize = shopDetails?.appFontSize || 'medium';
+        document.documentElement.setAttribute('data-font-size', fontSize);
+    }, [shopDetails?.appFontSize]);
+
     return (
-        <div className="flex min-h-screen bg-[var(--color-bg-dark)] text-[var(--color-text-white)] w-full">
+        <div
+            className="flex min-h-screen bg-[var(--color-bg-dark)] text-[var(--color-text-white)] w-full"
+        >
             {/* Mobile Sidebar Overlay */}
             {isSidebarOpen && (
                 <div
@@ -28,7 +41,7 @@ const Layout = () => {
             )}>
                 <div className="flex flex-col h-full">
                     <div className="h-16 flex items-center justify-between px-6 border-b border-[var(--color-border)]">
-                        <span className="text-xl font-bold tracking-tight">Menu</span>
+                        <span className="text-xl font-bold tracking-tight uppercase">{t.menu}</span>
                         <button
                             onClick={() => setIsSidebarOpen(false)}
                             className="p-2 hover:bg-[var(--color-bg-dark)] rounded-lg text-[var(--color-text-gray)]"
@@ -69,7 +82,7 @@ const Layout = () => {
                                 {isAuthenticated ? user.name : "TurboTyre Central"}
                             </h1>
                             <p className="text-[10px] font-bold text-[#3B82F6] tracking-wide uppercase">
-                                {isAuthenticated ? "Store Manager" : "Guest Mode"}
+                                {isAuthenticated ? t.store_manager : t.guest_mode}
                             </p>
                         </div>
                     </div>

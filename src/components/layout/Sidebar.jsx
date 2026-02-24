@@ -15,21 +15,26 @@ import {
 } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
+import { useSettings } from '../../context/SettingsContext';
+import { translations } from '../../utils/translations';
 import { cn } from '../../utils/cn';
 
 const Sidebar = ({ isMobile }) => {
     const { theme, toggleTheme } = useTheme();
     const { user, logout, isAuthenticated } = useAuth();
+    const { shopDetails } = useSettings();
+    const lang = shopDetails?.appLanguage || 'ta';
+    const t = translations[lang];
 
     const navItems = [
-        { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
-        { icon: ShoppingCart, label: 'Billing', path: '/billing' },
-        { icon: Package, label: 'Inventory', path: '/inventory' },
-        { icon: Wrench, label: 'Services', path: '/services' },
-        { icon: Users, label: 'Customer', path: '/customers' },
-        { icon: History, label: 'History', path: '/history' },
-        { icon: Settings, label: 'Settings', path: '/settings' },
-        ...(user?.isAdmin ? [{ icon: ShieldCheck, label: 'Admin Panel', path: '/admin' }] : []),
+        { icon: LayoutDashboard, label: t.dashboard, path: '/dashboard' },
+        { icon: ShoppingCart, label: t.billing, path: '/billing' },
+        { icon: Package, label: t.inventory, path: '/inventory' },
+        { icon: Wrench, label: t.services, path: '/services' },
+        { icon: Users, label: t.customers, path: '/customers' },
+        { icon: History, label: t.history, path: '/history' },
+        { icon: Settings, label: t.settings, path: '/settings' },
+        ...(user?.isAdmin ? [{ icon: ShieldCheck, label: t.admin_panel, path: '/admin' }] : []),
     ];
 
     return (
@@ -41,8 +46,8 @@ const Sidebar = ({ isMobile }) => {
                 {/* Logo Area */}
                 <div className="flex h-16 items-center border-b border-[var(--color-border)] px-6">
                     <Wrench className="h-8 w-8 text-[var(--color-primary)] mr-3" />
-                    <span className="text-xl font-bold tracking-tight text-[var(--color-text-white)]">
-                        TurboTyre
+                    <span className="text-xl font-bold tracking-tight text-[var(--color-text-white)] truncate">
+                        {shopDetails?.shopName || 'TurboTyre'}
                     </span>
                 </div>
 
@@ -84,9 +89,9 @@ const Sidebar = ({ isMobile }) => {
                         className="flex w-full items-center rounded-lg px-3 py-2.5 text-sm font-medium text-[var(--color-text-gray)] hover:bg-[var(--color-bg-dark)] hover:text-[var(--color-text-white)] transition-colors"
                     >
                         {theme === 'dark' ? (
-                            <><Sun className="mr-3 h-5 w-5" /> Light Mode</>
+                            <><Sun className="mr-3 h-5 w-5" /> {t.light_mode}</>
                         ) : (
-                            <><Moon className="mr-3 h-5 w-5" /> Dark Mode</>
+                            <><Moon className="mr-3 h-5 w-5" /> {t.dark_mode}</>
                         )}
                     </button>
 
@@ -96,7 +101,7 @@ const Sidebar = ({ isMobile }) => {
                             className="flex w-full items-center rounded-lg px-3 py-2.5 text-sm font-medium text-red-500 hover:bg-red-500/10 transition-colors"
                         >
                             <LogOut className="mr-3 h-5 w-5" />
-                            Logout
+                            {t.logout}
                         </button>
                     )}
                 </div>

@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { Search, FileText, User, Calendar, ArrowRight } from 'lucide-react';
 import { cn } from '../../utils/cn';
 import { useInvoices } from '../../context/InvoiceContext';
+import { useSettings } from '../../context/SettingsContext';
+import { translations } from '../../utils/translations';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { CustomerCardSkeleton } from '../../components/ui/SkeletonVariants';
@@ -10,6 +12,9 @@ import { CustomerCardSkeleton } from '../../components/ui/SkeletonVariants';
 const CustomerHistory = () => {
     const navigate = useNavigate();
     const { invoices, loading } = useInvoices();
+    const { shopDetails } = useSettings();
+    const lang = shopDetails?.appLanguage || 'ta';
+    const t = translations[lang];
 
     const [searchTerm, setSearchTerm] = useState('');
 
@@ -41,15 +46,15 @@ const CustomerHistory = () => {
         <div className="space-y-6">
             <div className="flex justify-between items-center">
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight">Customers</h1>
-                    <p className="text-[var(--color-text-gray)]">Manage your customer database and records</p>
+                    <h1 className="text-3xl font-bold tracking-tight uppercase">{t.customers}</h1>
+                    <p className="text-[var(--color-text-gray)] uppercase tracking-widest text-[10px] opacity-60">Manage your customer database and records</p>
                 </div>
             </div>
 
             <div className="relative max-w-md">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--color-text-gray)]" />
                 <input
-                    placeholder="Search name, phone or vehicle..."
+                    placeholder={t.search_customer}
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="w-full bg-[var(--color-bg-dark)] border border-[var(--color-border)] rounded-lg pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[var(--color-primary)]"
@@ -64,7 +69,7 @@ const CustomerHistory = () => {
                 ) : filteredCustomers.length === 0 ? (
                     <div className="text-center py-12 text-[var(--color-text-gray)]">
                         <User className="h-12 w-12 mx-auto mb-4 opacity-20" />
-                        <p>No customers found</p>
+                        <p>{lang === 'ta' ? 'வாடிக்கையாளர்கள் யாரும் இல்லை' : 'No customers found'}</p>
                     </div>
                 ) : (
                     filteredCustomers.map((invoice) => {
@@ -82,7 +87,7 @@ const CustomerHistory = () => {
                                     <div>
                                         <h3 className="font-bold text-lg">{invoice.customer.name}</h3>
                                         <div className="flex items-center text-sm text-[var(--color-text-gray)] space-x-4">
-                                            <span className="flex items-center"><Calendar className="h-3 w-3 mr-1" /> Last Visit: {new Date(invoice.date).toLocaleDateString()}</span>
+                                            <span className="flex items-center"><Calendar className="h-3 w-3 mr-1" /> {t.last_visit}: {new Date(invoice.date).toLocaleDateString(lang === 'ta' ? 'ta-IN' : 'en-IN')}</span>
                                             <span>{invoice.customer.phone}</span>
                                             <span className="uppercase font-mono bg-[var(--color-bg-dark)] px-2 rounded text-xs">{invoice.customer.vehicle}</span>
                                         </div>
@@ -91,7 +96,7 @@ const CustomerHistory = () => {
 
                                 <div className="flex items-center justify-between md:justify-end gap-6 flex-1">
                                     <div className="text-right">
-                                        <p className="text-xs text-[var(--color-text-gray)]">Lifetime Value</p>
+                                        <p className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-gray)]">{t.lifetime_value}</p>
                                         <p className="font-bold text-xl text-[var(--color-primary)]">
                                             ₹{invoices
                                                 .filter(i => (i.customer?.phone && i.customer?.phone === invoice.customer?.phone) || (i.customer?.name === invoice.customer?.name))
@@ -100,13 +105,13 @@ const CustomerHistory = () => {
                                         </p>
                                     </div>
                                     <div className="text-right">
-                                        <p className="text-xs text-[var(--color-text-gray)]">Visits</p>
+                                        <p className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-gray)]">{t.visits}</p>
                                         <p className="font-medium">
                                             {invoices.filter(i => (i.customer?.phone && i.customer?.phone === invoice.customer?.phone) || (i.customer?.name === invoice.customer?.name)).length}
                                         </p>
                                     </div>
-                                    <Button variant="outline" size="sm">
-                                        View Profile <ArrowRight className="ml-2 h-4 w-4" />
+                                    <Button variant="outline" size="sm" className="font-black uppercase tracking-tighter text-[10px]">
+                                        {t.view_profile} <ArrowRight className="ml-2 h-4 w-4" />
                                     </Button>
                                 </div>
                             </Card>

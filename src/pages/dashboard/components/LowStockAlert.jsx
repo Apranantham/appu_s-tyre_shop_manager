@@ -19,8 +19,8 @@ const LowStockAlert = () => {
     }, [products]);
 
     return (
-        <div className="space-y-4">
-            <div className="flex items-center justify-between px-1">
+        <div className="space-y-4 mb-6">
+            <div className="flex items-center justify-between px-4 md:px-1">
                 <div className="flex items-center space-x-2">
                     <AlertCircle className="text-red-500 h-5 w-5" />
                     <h3 className="font-bold text-lg text-[var(--color-text-white)]">Low Stock Alert</h3>
@@ -35,9 +35,9 @@ const LowStockAlert = () => {
                 </Button>
             </div>
 
-            <div className="flex space-x-4 overflow-x-auto pb-4 -mx-4 px-4 md:mx-0 md:px-0 md:grid md:grid-cols-2 md:gap-4 md:space-x-0 md:overflow-visible">
+            <div className="flex space-x-4 overflow-x-auto pb-4 no-scrollbar -mx-4 px-4 md:mx-0 md:px-0 md:grid md:grid-cols-2 md:gap-4 md:space-x-0 md:overflow-visible">
                 {lowStockItems.map((item) => (
-                    <div key={item.id} className="min-w-[200px] p-4 rounded-3xl bg-[var(--color-bg-card)] border-none md:border border-[var(--color-border)] flex flex-col items-center text-center space-y-3 relative group">
+                    <div key={item.id} className="min-w-[220px] p-4 rounded-3xl bg-[var(--color-bg-card)] border border-[var(--color-border)] flex flex-col items-center text-center space-y-3 relative group transition-all hover:border-[var(--color-primary)]/50">
                         <div className="h-24 w-full rounded-2xl bg-[var(--color-bg-dark)] overflow-hidden">
                             <img src={item.image || FALLBACK_IMAGE} alt={item.name} className="h-full w-full object-cover group-hover:scale-110 transition-transform" />
                         </div>

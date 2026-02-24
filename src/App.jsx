@@ -4,6 +4,7 @@ import { ThemeProvider } from './context/ThemeContext';
 import { AuthProvider } from './context/AuthContext';
 import Layout from './components/layout/Layout';
 import ProtectedRoute from './components/auth/ProtectedRoute';
+import ScrollToTop from './components/common/ScrollToTop';
 import LoginPage from './pages/auth/LoginPage';
 
 import { ProductProvider } from './context/ProductContext';
@@ -29,6 +30,7 @@ function App() {
             <ServiceProvider>
               <InvoiceProvider>
                 <Router>
+                  <ScrollToTop />
                   <Routes>
                     {/* Public Route */}
                     <Route path="/login" element={<LoginPage />} />

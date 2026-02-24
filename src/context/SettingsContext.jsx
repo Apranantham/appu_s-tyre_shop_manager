@@ -7,10 +7,16 @@ const SettingsContext = createContext();
 
 export const SettingsProvider = ({ children }) => {
     const { user } = useAuth();
-    const [shopDetails, setShopDetails] = useState({
-        shopName: 'TurboTyre Central',
-        shopAddress: '123, Auto Garage Street, Chennai, TN 600001',
-        shopPhone: '+91 98765 43210'
+    const [shopDetails, setShopDetails] = useState(() => {
+        const saved = localStorage.getItem('turbotyre_settings');
+        return saved ? JSON.parse(saved) : {
+            shopName: 'TurboTyre Central',
+            shopAddress: '123, Auto Garage Street, Chennai, TN 600001',
+            shopPhone: '+91 98765 43210',
+            appFontSize: 'medium',
+            appLanguage: 'en',
+            nextInvoiceNumber: 101
+        };
     });
     const [loading, setLoading] = useState(true);
 
@@ -27,7 +33,9 @@ export const SettingsProvider = ({ children }) => {
 
         const unsubscribe = onSnapshot(settingsRef, (docSnap) => {
             if (docSnap.exists()) {
-                setShopDetails(docSnap.data());
+                const data = docSnap.data();
+                setShopDetails(data);
+                localStorage.setItem('turbotyre_settings', JSON.stringify(data));
             } else {
                 // If it doesn't exist yet, we can initialize it with defaults
                 // OR just leave the default state
@@ -44,7 +52,10 @@ export const SettingsProvider = ({ children }) => {
     const updateShopDetails = async (newDetails) => {
         try {
             const settingsRef = doc(db, 'settings', 'shopProfile');
-            await setDoc(settingsRef, newDetails, { merge: true });
+            const updatedDetails = { ...shopDetails, ...newDetails };
+            setShopDetails(updatedDetails); // Optimistic update
+            localStorage.setItem('turbotyre_settings', JSON.stringify(updatedDetails));
+            await setDoc(settingsRef, updatedDetails, { merge: true });
         } catch (error) {
             console.error("Error updating shop details:", error);
             throw error;

@@ -7,9 +7,11 @@ const InvoiceTemplate = React.forwardRef(({ invoice, showPreview = false }, ref)
     if (!invoice) return null;
 
     // Helper to format ID for a "Reference No" feel
-    const formattedId = invoice.id.toString().length > 10
-        ? `REF-${invoice.id.toString().slice(-8).toUpperCase()}`
-        : `#${invoice.id}`;
+    const formattedId = invoice.invoiceNo
+        ? `#${invoice.invoiceNo}`
+        : (invoice.id.toString().length > 10
+            ? `REF-${invoice.id.toString().slice(-8).toUpperCase()}`
+            : `#${invoice.id}`);
 
     return (
         <div
@@ -115,18 +117,40 @@ const InvoiceTemplate = React.forwardRef(({ invoice, showPreview = false }, ref)
                 </table>
             </div>
 
-            {/* Totals Section */}
-            <div className="flex justify-between items-end border-t-2 border-slate-100 pt-10">
-                <div className="space-y-4">
-                    <div className="p-4 bg-green-50 border border-green-100 rounded-xl inline-block">
-                        <div className="flex items-center text-green-700">
-                            <CreditCard className="h-4 w-4 mr-2" />
-                            <p className="text-xs font-black uppercase tracking-widest">Paid via {invoice.paymentMode}</p>
+            {/* Totals and Payment History Section */}
+            <div className="grid grid-cols-2 gap-10 border-t-2 border-slate-100 pt-10">
+                <div className="space-y-6">
+                    {invoice.payments && invoice.payments.length > 0 && (
+                        <div>
+                            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3">Payment History</p>
+                            <div className="space-y-2">
+                                {invoice.payments.map((p, i) => (
+                                    <div key={i} className="flex justify-between items-center text-xs bg-slate-50 p-2 rounded-lg">
+                                        <div className="flex items-center gap-2">
+                                            <Calendar className="h-3 w-3 text-slate-400" />
+                                            <span className="text-slate-600 font-medium">
+                                                {new Date(p.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
+                                            </span>
+                                            <span className="px-1.5 py-0.5 bg-slate-200 rounded text-[8px] font-black uppercase tracking-widest">{p.mode}</span>
+                                        </div>
+                                        <span className="font-bold text-slate-900">₹{p.amount.toLocaleString('en-IN')}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    <div className="p-4 bg-slate-50 border border-slate-100 rounded-xl">
+                        <div className="flex items-center text-slate-700">
+                            <CreditCard className="h-4 w-4 mr-2 text-[var(--color-primary)]" />
+                            <p className="text-[10px] font-black uppercase tracking-widest">
+                                Initial Payment: <span className="text-slate-900">₹{(invoice.paidAmount - (invoice.payments?.reduce((sum, p) => sum + p.amount, 0) || 0)).toLocaleString('en-IN')}</span> ({invoice.paymentMode})
+                            </p>
                         </div>
                     </div>
                 </div>
 
-                <div className="w-64 space-y-3">
+                <div className="space-y-3">
                     <div className="flex justify-between text-sm text-slate-500">
                         <span>Subtotal</span>
                         <span className="font-bold text-slate-900">₹{(invoice.subtotal || invoice.total + (invoice.discount || 0)).toLocaleString('en-IN')}</span>
@@ -139,8 +163,18 @@ const InvoiceTemplate = React.forwardRef(({ invoice, showPreview = false }, ref)
                     )}
                     <div className="flex justify-between items-center pt-2 border-t border-slate-200">
                         <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Grand Total</span>
-                        <span className="text-3xl font-black text-[var(--color-primary)]">₹{invoice.total.toLocaleString('en-IN')}</span>
+                        <span className="text-2xl font-black text-slate-900">₹{invoice.total.toLocaleString('en-IN')}</span>
                     </div>
+                    <div className="flex justify-between text-sm text-green-600 font-bold bg-green-50 px-3 py-2 rounded-lg">
+                        <span>Total Paid</span>
+                        <span>₹{invoice.paidAmount.toLocaleString('en-IN')}</span>
+                    </div>
+                    {invoice.balanceAmount > 0 && (
+                        <div className="flex justify-between text-sm text-orange-600 font-bold bg-orange-50 px-3 py-2 rounded-lg border border-orange-100">
+                            <span>Balance Due</span>
+                            <span>₹{invoice.balanceAmount.toLocaleString('en-IN')}</span>
+                        </div>
+                    )}
                 </div>
             </div>
 

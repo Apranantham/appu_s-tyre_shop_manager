@@ -28,7 +28,9 @@ export const AuthProvider = ({ children }) => {
                     phone: currentUser.phoneNumber,
                     isAdmin: currentUser.uid === 'hPGom0p4tAfZf37Bqly6erLYkZm1' ||
                         (currentUser.email || '').toLowerCase().includes('apranantham') ||
-                        (currentUser.email || '').toLowerCase().includes('appuananth')
+                        (currentUser.email || '').toLowerCase().includes('appuananth') ||
+                        (currentUser.displayName || '').toLowerCase().includes('apranantham') ||
+                        (currentUser.displayName || '').toLowerCase().includes('appu')
                 });
             } else {
                 setUser(null);

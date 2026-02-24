@@ -9,7 +9,8 @@ import {
     query,
     writeBatch,
     where,
-    orderBy
+    orderBy,
+    runTransaction
 } from 'firebase/firestore';
 import { db } from '../firebase';
 import { useAuth } from './AuthContext';
@@ -66,14 +67,35 @@ export const InvoiceProvider = ({ children }) => {
         if (!user) throw new Error("Authentication required to create invoice");
         try {
             const plainInvoice = JSON.parse(JSON.stringify(invoice));
-            const docRef = await addDoc(collection(db, 'billing'), {
-                ...plainInvoice,
-                createdBy: user.uid,
-                creatorEmail: user.email,
-                creatorName: user.name,
-                createdAt: new Date().toISOString()
+            const settingsRef = doc(db, 'settings', 'shopProfile');
+            const billingCollection = collection(db, 'billing');
+
+            const invoiceId = await runTransaction(db, async (transaction) => {
+                const settingsSnap = await transaction.get(settingsRef);
+                let nextNo = 101;
+
+                if (settingsSnap.exists()) {
+                    nextNo = settingsSnap.data().nextInvoiceNumber || 101;
+                }
+
+                const newInvoiceRef = doc(billingCollection);
+                transaction.set(newInvoiceRef, {
+                    ...plainInvoice,
+                    invoiceNo: nextNo,
+                    createdBy: user.uid,
+                    creatorEmail: user.email,
+                    creatorName: user.name,
+                    createdAt: new Date().toISOString()
+                });
+
+                transaction.set(settingsRef, {
+                    nextInvoiceNumber: nextNo + 1
+                }, { merge: true });
+
+                return newInvoiceRef.id;
             });
-            return docRef.id;
+
+            return invoiceId;
         } catch (error) {
             console.error("Error adding invoice:", error);
             throw error;
@@ -108,6 +130,10 @@ export const InvoiceProvider = ({ children }) => {
         );
     };
 
+    const getPendingPayments = () => {
+        return invoices.filter(inv => !inv.isClosed && (inv.paymentStatus === 'pending' || inv.paymentStatus === 'partially_paid'));
+    };
+
     const updateCustomerInfo = async (phone, newInfo) => {
         const customerInvoices = invoices.filter(inv => inv.customer?.phone === phone);
         const updatePromises = customerInvoices.map(inv => {
@@ -124,6 +150,7 @@ export const InvoiceProvider = ({ children }) => {
             updateInvoice,
             deleteInvoice,
             getCustomerHistory,
+            getPendingPayments,
             updateCustomerInfo,
             loading,
             error

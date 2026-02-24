@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import {
     ArrowLeft,
     Share2,
@@ -23,6 +24,8 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
 import { useInvoices } from '../../context/InvoiceContext';
+import { useSettings } from '../../context/SettingsContext';
+import { translations } from '../../utils/translations';
 import { useReactToPrint } from 'react-to-print';
 import InvoiceTemplate from '../billing/components/InvoiceTemplate';
 import Modal from '../../components/ui/Modal';
@@ -31,6 +34,9 @@ const CustomerProfile = () => {
     const navigate = useNavigate();
     const { id: customerPhone } = useParams();
     const { getCustomerHistory, deleteInvoice, updateCustomerInfo } = useInvoices();
+    const { shopDetails } = useSettings();
+    const lang = shopDetails?.appLanguage || 'ta';
+    const t = translations[lang];
 
     const customerInvoices = getCustomerHistory(customerPhone).sort((a, b) => new Date(b.date) - new Date(a.date));
     const mostRecent = customerInvoices[0];
@@ -84,29 +90,29 @@ const CustomerProfile = () => {
     const printRef = useRef();
 
     const handlePrint = useReactToPrint({
-        content: () => printRef.current,
+        contentRef: printRef,
     });
 
     if (!mostRecent && customerInvoices.length === 0) {
         return (
             <div className="flex flex-col items-center justify-center h-full py-20 text-[var(--color-text-gray)]">
                 <FileText className="h-16 w-16 mb-4 opacity-20" />
-                <h2 className="text-xl font-bold">Customer not found</h2>
+                <h2 className="text-xl font-bold">{t.customer_not_found}</h2>
                 <Button variant="ghost" className="mt-4" onClick={() => navigate('/customers')}>
-                    Back to History
+                    {t.back_to_history}
                 </Button>
             </div>
         );
     }
 
     const customer = {
-        name: mostRecent?.customer?.name || "Customer",
+        name: mostRecent?.customer?.name || (lang === 'ta' ? "வாடிக்கையாளர்" : "Customer"),
         phone: mostRecent?.customer?.phone || customerPhone,
         car: mostRecent?.customer?.vehicle || "N/A",
         spend: `₹${customerInvoices.reduce((sum, inv) => sum + inv.total, 0).toFixed(2)}`,
         spendGrowth,
         visits: customerInvoices.length,
-        lastVisit: mostRecent ? new Date(mostRecent.date).toLocaleDateString() : 'N/A',
+        lastVisit: mostRecent ? new Date(mostRecent.date).toLocaleDateString(lang === 'ta' ? 'ta-IN' : 'en-IN') : 'N/A',
         topBrand
     };
 
@@ -181,7 +187,7 @@ const CustomerProfile = () => {
                     <button onClick={() => navigate(-1)} className="text-[var(--color-text-white)]">
                         <ArrowLeft className="h-6 w-6" />
                     </button>
-                    <h1 className="text-xl font-bold">Customer Profile</h1>
+                    <h1 className="text-xl font-black uppercase tracking-tight">{t.customer_profile}</h1>
                 </div>
                 <div className="flex items-center space-x-2 relative">
                     <button
@@ -209,18 +215,18 @@ const CustomerProfile = () => {
                                             setShowEditModal(true);
                                             setShowOptions(false);
                                         }}
-                                        className="w-full text-left px-4 py-2 text-sm hover:bg-[var(--color-bg-dark)] flex items-center"
+                                        className="w-full text-left px-4 py-2 text-sm hover:bg-[var(--color-bg-dark)] flex items-center font-bold"
                                     >
-                                        <Edit3 className="h-4 w-4 mr-2" /> Edit Customer
+                                        <Edit3 className="h-4 w-4 mr-2" /> {t.edit_customer}
                                     </button>
                                     <button
                                         onClick={() => {
                                             downloadHistoryCSV();
                                             setShowOptions(false);
                                         }}
-                                        className="w-full text-left px-4 py-2 text-sm hover:bg-[var(--color-bg-dark)] flex items-center"
+                                        className="w-full text-left px-4 py-2 text-sm hover:bg-[var(--color-bg-dark)] flex items-center font-bold"
                                     >
-                                        <Download className="h-4 w-4 mr-2" /> Export History (CSV)
+                                        <Download className="h-4 w-4 mr-2" /> {t.export_history}
                                     </button>
                                 </div>
                             </>
@@ -250,11 +256,11 @@ const CustomerProfile = () => {
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
-                    <Button className="w-full bg-[#3B82F6] hover:bg-blue-600 rounded-xl py-6 shadow-lg shadow-blue-500/20" onClick={() => window.open(`tel:${customer.phone}`)}>
-                        <Phone className="h-4 w-4 mr-2" /> Call
+                    <Button className="w-full bg-[#3B82F6] hover:bg-blue-600 rounded-xl py-6 shadow-lg shadow-blue-500/20 font-black uppercase tracking-widest text-xs" onClick={() => window.open(`tel:${customer.phone}`)}>
+                        <Phone className="h-4 w-4 mr-2" /> {t.call}
                     </Button>
-                    <Button variant="outline" className="w-full border-[var(--color-border)] hover:bg-[var(--color-bg-dark)] rounded-xl py-6" onClick={() => window.open(`sms:${customer.phone}`)}>
-                        <MessageSquare className="h-4 w-4 mr-2" /> Message
+                    <Button variant="outline" className="w-full border-[var(--color-border)] hover:bg-[var(--color-bg-dark)] rounded-xl py-6 font-black uppercase tracking-widest text-xs" onClick={() => window.open(`sms:${customer.phone}`)}>
+                        <MessageSquare className="h-4 w-4 mr-2" /> {t.message}
                     </Button>
                 </div>
             </Card>
@@ -262,7 +268,7 @@ const CustomerProfile = () => {
             {/* Stats Grid */}
             <div className="space-y-4">
                 <Card className="rounded-3xl p-5 bg-[var(--color-bg-card)] border border-[var(--color-border)]">
-                    <p className="text-[var(--color-text-gray)] text-xs font-bold uppercase tracking-wider mb-1">LIFETIME SPEND</p>
+                    <p className="text-[var(--color-text-gray)] text-xs font-black uppercase tracking-widest mb-1">{t.lifetime_spend}</p>
                     <div className="flex items-baseline space-x-2">
                         <h3 className="text-3xl font-bold text-[#3B82F6]">{customer.spend}</h3>
                         <span className="text-green-500 text-sm font-bold">{customer.spendGrowth}</span>
@@ -271,14 +277,14 @@ const CustomerProfile = () => {
 
                 <div className="grid grid-cols-2 gap-4">
                     <Card className="rounded-3xl p-5 bg-[var(--color-bg-card)] border border-[var(--color-border)]">
-                        <p className="text-[var(--color-text-gray)] text-[10px] font-bold uppercase tracking-wider mb-1">TOTAL VISITS</p>
+                        <p className="text-[var(--color-text-gray)] text-[10px] font-black uppercase tracking-widest mb-1">{t.total_visits}</p>
                         <div className="flex items-baseline space-x-2">
                             <h3 className="text-2xl font-bold text-white">{customer.visits}</h3>
-                            <span className="text-[var(--color-text-gray)] text-[10px]">Last: {customer.lastVisit}</span>
+                            <span className="text-[var(--color-text-gray)] text-[10px]">{lang === 'ta' ? 'கடைசி' : 'Last'}: {customer.lastVisit}</span>
                         </div>
                     </Card>
                     <Card className="rounded-3xl p-5 bg-[var(--color-bg-card)] border border-[var(--color-border)]">
-                        <p className="text-[var(--color-text-gray)] text-[10px] font-bold uppercase tracking-wider mb-1">FAV BRAND</p>
+                        <p className="text-[var(--color-text-gray)] text-[10px] font-black uppercase tracking-widest mb-1">{t.fav_brand}</p>
                         <div className="flex items-center space-x-1">
                             <h3 className="text-lg font-bold text-white truncate">{customer.topBrand}</h3>
                             <CheckCircle2 className="h-4 w-4 text-[#3B82F6]" />
@@ -291,7 +297,7 @@ const CustomerProfile = () => {
             <div>
                 <div className="flex items-center mb-6">
                     <FileText className="h-5 w-5 mr-2 text-[#3B82F6]" />
-                    <h3 className="font-bold text-lg">Billing Records</h3>
+                    <h3 className="font-black text-lg uppercase tracking-tight">{t.billing_records}</h3>
                 </div>
 
                 <div className="space-y-6 relative ml-4">
@@ -307,7 +313,7 @@ const CustomerProfile = () => {
                                 <div className="flex justify-between items-start">
                                     <div>
                                         <h4 className="font-bold text-[#3B82F6] text-sm">
-                                            {new Date(item.date).toLocaleString('en-IN', {
+                                            {new Date(item.date).toLocaleString(lang === 'ta' ? 'ta-IN' : 'en-IN', {
                                                 day: '2-digit',
                                                 month: 'short',
                                                 hour: '2-digit',
@@ -315,7 +321,9 @@ const CustomerProfile = () => {
                                                 hour12: true
                                             })}
                                         </h4>
-                                        <p className="text-[10px] text-[var(--color-text-gray)] font-mono">Invoice #{item.id}</p>
+                                        <p className="text-[10px] text-[var(--color-primary)] font-black">
+                                            {item.invoiceNo ? `#${item.invoiceNo}` : `Invoice #${item.id}`}
+                                        </p>
                                     </div>
                                     <div className="flex space-x-2">
                                         <button
@@ -353,7 +361,7 @@ const CustomerProfile = () => {
                                     </div>
                                     <div className="flex items-center text-[var(--color-text-gray)] text-[10px] space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                         <Eye className="h-3 w-3" />
-                                        <span>Click to view details</span>
+                                        <span>{t.view_details}</span>
                                     </div>
                                 </div>
                             </Card>
@@ -363,7 +371,7 @@ const CustomerProfile = () => {
             </div>
 
             {/* Invoice Preview Modal */}
-            {showPreview && selectedInvoice && (
+            {showPreview && selectedInvoice && createPortal(
                 <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
                     <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setShowPreview(false)}></div>
                     <div className="relative w-full max-w-3xl max-h-[90vh] overflow-y-auto bg-[var(--color-bg-card)] rounded-2xl shadow-2xl">
@@ -406,11 +414,12 @@ const CustomerProfile = () => {
                             <InvoiceTemplate invoice={selectedInvoice} showPreview={true} />
                         </div>
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
 
             {/* Delete Confirmation Modal */}
-            {invoiceToDelete && (
+            {invoiceToDelete && createPortal(
                 <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
                     <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setInvoiceToDelete(null)}></div>
                     <Card className="relative w-full max-w-sm p-6 space-y-6 text-center animate-in zoom-in-95 duration-200">
@@ -418,26 +427,27 @@ const CustomerProfile = () => {
                             <Trash2 className="h-8 w-8" />
                         </div>
                         <div>
-                            <h3 className="text-xl font-bold">Delete Invoice?</h3>
-                            <p className="text-[var(--color-text-gray)] text-sm">This action cannot be undone. Are you sure you want to delete invoice #{invoiceToDelete.id}?</p>
+                            <h3 className="text-xl font-bold">{t.delete_invoice}?</h3>
+                            <p className="text-[var(--color-text-gray)] text-sm">{t.delete_invoice_confirm} #{invoiceToDelete.id}</p>
                         </div>
                         <div className="flex space-x-3">
-                            <Button variant="outline" className="flex-1" onClick={() => setInvoiceToDelete(null)}>Cancel</Button>
-                            <Button className="flex-1 bg-red-600 hover:bg-red-700" onClick={handleDelete}>Delete</Button>
+                            <Button variant="outline" className="flex-1" onClick={() => setInvoiceToDelete(null)}>{t.cancel}</Button>
+                            <Button className="flex-1 bg-red-600 hover:bg-red-700" onClick={handleDelete}>{t.delete}</Button>
                         </div>
                     </Card>
-                </div>
+                </div>,
+                document.body
             )}
 
             {/* Edit Customer Modal */}
             <Modal
                 isOpen={showEditModal}
                 onClose={() => setShowEditModal(false)}
-                title="Edit Customer Details"
+                title={t.edit_customer}
             >
                 <form onSubmit={handleUpdateCustomer} className="space-y-4">
                     <div className="space-y-2">
-                        <label className="text-sm font-medium text-[var(--color-text-gray)]">Customer Name</label>
+                        <label className="text-sm font-medium text-[var(--color-text-gray)]">{t.name}</label>
                         <input
                             required
                             value={editData.name}
@@ -446,17 +456,17 @@ const CustomerProfile = () => {
                         />
                     </div>
                     <div className="space-y-2">
-                        <label className="text-sm font-medium text-[var(--color-text-gray)]">Phone Number</label>
+                        <label className="text-sm font-medium text-[var(--color-text-gray)]">{t.phone}</label>
                         <input
                             required
                             value={editData.phone}
                             onChange={(e) => setEditData({ ...editData, phone: e.target.value })}
                             className="w-full rounded-md border border-[var(--color-border)] bg-[var(--color-bg-dark)] px-3 py-2 text-sm text-[var(--color-text-white)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] placeholder:opacity-30"
-                            placeholder="Phone Number"
+                            placeholder={t.phone}
                         />
                     </div>
                     <div className="space-y-2">
-                        <label className="text-sm font-medium text-[var(--color-text-gray)]">Vehicle / Model</label>
+                        <label className="text-sm font-medium text-[var(--color-text-gray)]">{t.vehicle}</label>
                         <input
                             required
                             value={editData.vehicle}
@@ -465,8 +475,8 @@ const CustomerProfile = () => {
                         />
                     </div>
                     <div className="flex justify-end space-x-2 pt-4">
-                        <Button type="button" variant="outline" onClick={() => setShowEditModal(false)}>Cancel</Button>
-                        <Button type="submit" variant="primary">Update All Records</Button>
+                        <Button type="button" variant="outline" onClick={() => setShowEditModal(false)}>{t.cancel}</Button>
+                        <Button type="submit" variant="primary">{t.update_records}</Button>
                     </div>
                 </form>
             </Modal>
