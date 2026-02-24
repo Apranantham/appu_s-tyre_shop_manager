@@ -1,17 +1,14 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
 import {
     collection,
     onSnapshot,
-    addDoc,
-    updateDoc,
-    deleteDoc,
     doc,
     query,
-    writeBatch,
     where,
-    orderBy,
     runTransaction,
-    increment
+    increment,
+    deleteDoc,
+    updateDoc
 } from 'firebase/firestore';
 import { db } from '../firebase';
 import { useAuth } from './AuthContext';
@@ -28,6 +25,7 @@ export const InvoiceProvider = ({ children }) => {
     useEffect(() => {
         if (!user) {
             setInvoices([]);
+            setDeletedInvoices([]);
             setLoading(false);
             return;
         }
@@ -39,7 +37,7 @@ export const InvoiceProvider = ({ children }) => {
             // Admin sees everything
             q = query(billingCollection);
         } else {
-            // Regular user sees only their own
+            // Regular user sees only their own bills/customers
             q = query(
                 billingCollection,
                 where('createdBy', '==', user.uid)
@@ -47,13 +45,16 @@ export const InvoiceProvider = ({ children }) => {
         }
 
         const unsubscribe = onSnapshot(q, (snapshot) => {
-            const allInvoices = snapshot.docs.map(doc => ({
+            const allFetched = snapshot.docs.map(doc => ({
                 id: doc.id,
                 ...doc.data()
-            })).sort((a, b) => new Date(b.date) - new Date(a.date));
+            }));
 
-            setInvoices(allInvoices.filter(inv => !inv.isDeleted));
-            setDeletedInvoices(allInvoices.filter(inv => inv.isDeleted));
+            // Sort client-side to avoid complex Firestore indexes
+            const sorted = allFetched.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+            setInvoices(sorted.filter(inv => !inv.isDeleted));
+            setDeletedInvoices(sorted.filter(inv => inv.isDeleted));
             setLoading(false);
         }, (err) => {
             console.error("Invoice listener error:", err);
@@ -65,16 +66,15 @@ export const InvoiceProvider = ({ children }) => {
     }, [user]);
 
     const addInvoice = async (invoice) => {
-        if (!user) throw new Error("Authentication required to create invoice");
+        if (!user) throw new Error("Auth required");
         try {
             const plainInvoice = JSON.parse(JSON.stringify(invoice));
             const settingsRef = doc(db, 'settings', 'shopProfile');
             const billingCollection = collection(db, 'billing');
 
-            const invoiceId = await runTransaction(db, async (transaction) => {
+            return await runTransaction(db, async (transaction) => {
                 const settingsSnap = await transaction.get(settingsRef);
                 let nextNo = 101;
-
                 if (settingsSnap.exists()) {
                     nextNo = settingsSnap.data().nextInvoiceNumber || 101;
                 }
@@ -87,7 +87,7 @@ export const InvoiceProvider = ({ children }) => {
                     creatorEmail: user.email,
                     creatorName: user.name,
                     createdAt: new Date().toISOString(),
-                    isDeleted: false // Ensure new invoices are not marked as deleted
+                    isDeleted: false
                 });
 
                 transaction.set(settingsRef, {
@@ -96,33 +96,28 @@ export const InvoiceProvider = ({ children }) => {
 
                 return newInvoiceRef.id;
             });
-
-            return invoiceId;
-        } catch (error) {
-            console.error("Error adding invoice:", error);
-            throw error;
+        } catch (err) {
+            console.error("Add invoice error:", err);
+            throw err;
         }
     };
 
     const updateInvoice = async (id, updatedData) => {
         try {
             const invoiceRef = doc(db, 'billing', String(id));
-            const plainData = JSON.parse(JSON.stringify(updatedData));
-            await updateDoc(invoiceRef, plainData);
-        } catch (error) {
-            console.error("Error updating invoice:", error);
-            throw error;
+            await updateDoc(invoiceRef, JSON.parse(JSON.stringify(updatedData)));
+        } catch (err) {
+            console.error("Update invoice error:", err);
+            throw err;
         }
     };
 
     const deleteInvoice = async (id) => {
         try {
             const invoiceRef = doc(db, 'billing', String(id));
-
             await runTransaction(db, async (transaction) => {
                 const invSnap = await transaction.get(invoiceRef);
                 if (!invSnap.exists()) return;
-
                 const invData = invSnap.data();
 
                 // Restore Stock
@@ -130,68 +125,59 @@ export const InvoiceProvider = ({ children }) => {
                     for (const item of invData.items) {
                         if (item.type === 'product' && item.id) {
                             const productRef = doc(db, 'inventory', String(item.id));
-                            transaction.update(productRef, {
-                                stock: increment(item.quantity || 0)
-                            });
+                            transaction.update(productRef, { stock: increment(item.quantity || 0) });
                         }
                     }
                 }
 
-                // Soft Delete
                 transaction.update(invoiceRef, {
                     isDeleted: true,
                     deletedAt: new Date().toISOString(),
                     deletedBy: user?.uid || 'unknown'
                 });
             });
-        } catch (error) {
-            console.error("Error trashing invoice:", error);
-            throw error;
+        } catch (err) {
+            console.error("Delete invoice error:", err);
+            throw err;
         }
     };
 
     const restoreInvoice = async (id) => {
         try {
             const invoiceRef = doc(db, 'billing', String(id));
-
             await runTransaction(db, async (transaction) => {
                 const invSnap = await transaction.get(invoiceRef);
                 if (!invSnap.exists()) return;
-
                 const invData = invSnap.data();
 
-                // Deduct Stock again (must check availability first in a real scenario, 
-                // but for simplicity here we just decrement)
+                // Deduct Stock
                 if (invData.items && Array.isArray(invData.items)) {
                     for (const item of invData.items) {
                         if (item.type === 'product' && item.id) {
                             const productRef = doc(db, 'inventory', String(item.id));
-                            transaction.update(productRef, {
-                                stock: increment(-(item.quantity || 0))
-                            });
+                            transaction.update(productRef, { stock: increment(-(item.quantity || 0)) });
                         }
                     }
                 }
 
-                // Restore
                 transaction.update(invoiceRef, {
                     isDeleted: false,
                     restoredAt: new Date().toISOString(),
                     restoredBy: user?.uid || 'unknown'
                 });
             });
-        } catch (error) {
-            console.error("Error restoring invoice:", error);
-            throw error;
+        } catch (err) {
+            console.error("Restore invoice error:", err);
+            throw err;
         }
     };
 
     const permanentlyDeleteInvoice = async (id) => {
         try {
             await deleteDoc(doc(db, 'billing', String(id)));
-        } catch (error) {
-            console.error("Error permanently deleting invoice:", error);
-            throw error;
+        } catch (err) {
+            console.error("Permanent delete error:", err);
+            throw err;
         }
     };
 
