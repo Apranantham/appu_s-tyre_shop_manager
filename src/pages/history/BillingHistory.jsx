@@ -587,6 +587,39 @@ const BillingHistory = () => {
                 </div>,
                 document.body
             )}
+
+            {/* Delete Confirmation Modal */}
+            {invoiceToDelete && createPortal(
+                <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
+                    <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setInvoiceToDelete(null)}></div>
+                    <Card className="relative w-full max-w-sm p-6 space-y-6 text-center animate-in zoom-in-95 duration-200 border border-[var(--color-border)]">
+                        <div className="mx-auto h-16 w-16 rounded-full bg-red-100 flex items-center justify-center text-red-600">
+                            <Trash2 className="h-8 w-8" />
+                        </div>
+                        <div>
+                            <h3 className="text-xl font-bold">{t.delete_invoice || 'Delete Invoice'}?</h3>
+                            <p className="text-[var(--color-text-gray)] text-sm">{t.delete_invoice_confirm || 'Are you sure you want to delete this invoice?'} #{invoiceToDelete.invoiceNo || invoiceToDelete.id}</p>
+                        </div>
+                        <div className="flex space-x-3">
+                            <Button variant="outline" className="flex-1 py-4 rounded-xl" onClick={() => setInvoiceToDelete(null)}>{t.cancel}</Button>
+                            <Button
+                                className="flex-1 py-4 bg-red-600 hover:bg-red-700 text-white rounded-xl shadow-lg shadow-red-500/20 border-none"
+                                onClick={async () => {
+                                    try {
+                                        await deleteInvoice(invoiceToDelete.id);
+                                        setInvoiceToDelete(null);
+                                    } catch (err) {
+                                        alert("Delete failed: " + err.message);
+                                    }
+                                }}
+                            >
+                                {t.delete}
+                            </Button>
+                        </div>
+                    </Card>
+                </div>,
+                document.body
+            )}
         </div>
     );
 };
