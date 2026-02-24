@@ -100,7 +100,7 @@ const InventoryPage = () => {
                                 "px-5 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap border",
                                 activeCategory === cat.id
                                     ? "bg-[var(--color-primary)] text-white border-[var(--color-primary)] shadow-lg shadow-blue-500/20"
-                                    : "bg-[var(--color-bg-dark)] text-[var(--color-text-gray)] border-[var(--color-border)] hover:text-white"
+                                    : "bg-[var(--color-bg-dark)] text-[var(--color-text-gray)] border-[var(--color-border)] hover:text-[var(--color-primary)]"
                             )}
                         >
                             {lang === 'ta' && cat.label_ta ? cat.label_ta : cat.label}
@@ -178,7 +178,7 @@ const InventoryPage = () => {
                             <div className="p-6 space-y-4">
                                 <div className="flex justify-between items-start gap-4">
                                     <div className="min-w-0">
-                                        <h3 className="font-black text-xl leading-tight text-white tracking-tight truncate group-hover:text-[var(--color-primary)] transition-colors">{product.name}</h3>
+                                        <h3 className="font-black text-xl leading-tight text-[var(--color-text-white)] tracking-tight truncate group-hover:text-[var(--color-primary)] transition-colors">{product.name}</h3>
                                         <p className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-gray)] mt-1 opacity-60">{product.brand}</p>
                                     </div>
                                     <div className="text-right flex-shrink-0">
@@ -218,7 +218,7 @@ const InventoryPage = () => {
                 {!loading && filteredProducts.length === 0 && (
                     <div className="col-span-full py-20 text-center bg-[var(--color-bg-card)] rounded-[3rem] border-2 border-dashed border-[var(--color-border)]">
                         <Package className="h-16 w-16 mx-auto mb-4 text-[var(--color-text-gray)] opacity-20" />
-                        <h3 className="text-xl font-black text-white mb-2">{t.no_products_found}</h3>
+                        <h3 className="text-xl font-black text-[var(--color-text-white)] mb-2">{t.no_products_found}</h3>
                         <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-6">Try adjusting your filters or search term</p>
                         <Button variant="outline" className="rounded-2xl px-8" onClick={() => { setSearchTerm(''); setActiveCategory('all'); }}>{t.clear}</Button>
                     </div>

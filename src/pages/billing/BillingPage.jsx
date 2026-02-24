@@ -15,7 +15,7 @@ import Loader from '../../components/ui/Loader';
 import { CheckCircle2, Download, MessageSquare, Printer, X, Plus, Home, ShoppingCart, Edit2 } from 'lucide-react';
 
 const BillingPage = () => {
-    const { updateStock } = useProducts();
+    const { products, updateStock } = useProducts();
     const { addInvoice, updateInvoice, deleteInvoice } = useInvoices();
     const { shopDetails } = useSettings();
     const lang = shopDetails?.appLanguage || 'ta';
@@ -103,20 +103,54 @@ const BillingPage = () => {
     });
 
     const addToCart = (item, type) => {
-        setCart(prev => {
-            const existing = prev.find(i => i.id === item.id && i.type === type);
-            if (existing) {
-                return prev.map(i => i.id === item.id && i.type === type ? { ...i, quantity: i.quantity + 1 } : i);
+        if (type === 'product') {
+            const liveProduct = products.find(p => p.id === item.id);
+            const currentStock = liveProduct?.stock || 0;
+
+            if (currentStock <= 0) {
+                alert(lang === 'ta' ? 'இந்த தயாரிப்பு கையிருப்பில் இல்லை!' : 'This product is out of stock!');
+                return;
             }
-            return [...prev, { ...item, type, quantity: 1 }];
-        });
+
+            setCart(prev => {
+                const existing = prev.find(i => i.id === item.id && i.type === type);
+                if (existing) {
+                    if (existing.quantity + 1 > currentStock) {
+                        alert(lang === 'ta' ? `போதிய இருப்பு இல்லை! மீதமுள்ள இருப்பு: ${currentStock}` : `Insufficient stock! Available stock: ${currentStock}`);
+                        return prev;
+                    }
+                    return prev.map(i => i.id === item.id && i.type === type ? { ...i, quantity: i.quantity + 1 } : i);
+                }
+                return [...prev, { ...item, type, quantity: 1, stock: currentStock }];
+            });
+        } else {
+            setCart(prev => {
+                const existing = prev.find(i => i.id === item.id && i.type === type);
+                if (existing) {
+                    return prev.map(i => i.id === item.id && i.type === type ? { ...i, quantity: i.quantity + 1 } : i);
+                }
+                return [...prev, { ...item, type, quantity: 1 }];
+            });
+        }
     };
 
     const updateQuantity = (id, type, change) => {
         setCart(prev => prev.map(i => {
             if (i.id === id && i.type === type) {
-                const newQty = Math.max(0, i.quantity + change);
-                return { ...i, quantity: newQty };
+                const newQty = i.quantity + change;
+
+                // Stock validation for increment
+                if (type === 'product' && change > 0) {
+                    const liveProduct = products.find(p => p.id === id);
+                    const currentStock = liveProduct?.stock || 0;
+
+                    if (newQty > currentStock) {
+                        alert(lang === 'ta' ? `போதிய இருப்பு இல்லை! மீதமுள்ள இருப்பு: ${currentStock}` : `Insufficient stock! Available stock: ${currentStock}`);
+                        return i;
+                    }
+                }
+
+                return { ...i, quantity: Math.max(0, newQty) };
             }
             return i;
         }).filter(i => i.quantity > 0));

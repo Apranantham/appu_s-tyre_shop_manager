@@ -1,5 +1,6 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { IndianRupee, TrendingUp, Package, AlertTriangle, Calendar, ShoppingCart, Clock } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import StatCard from './components/StatCard';
 import SalesChart from './components/SalesChart';
 import LowStockAlert from './components/LowStockAlert';
@@ -11,13 +12,14 @@ import { translations } from '../../utils/translations';
 import { StatSkeleton, CompactStatSkeleton } from '../../components/ui/SkeletonVariants';
 
 const DashboardPage = () => {
+    const navigate = useNavigate();
     const { invoices, loading: invoicesLoading } = useInvoices();
     const { products, loading: productsLoading } = useProducts();
     const { shopDetails } = useSettings();
     const lang = shopDetails?.appLanguage || 'ta';
     const t = translations[lang];
 
-    const stats = useMemo(() => {
+    const stats = React.useMemo(() => {
         if (invoicesLoading || productsLoading) return null;
         const now = new Date();
         const today = now.toDateString();

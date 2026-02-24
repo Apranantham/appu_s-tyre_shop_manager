@@ -131,7 +131,7 @@ const BillingItems = ({ onAddToCart, onUpdateQuantity, onRemoveItem, cart = [] }
 
                                         <div className="mt-auto flex justify-between items-center">
                                             <span className={`text-[9px] font-black tracking-widest px-2 py-1 rounded-md ${product.stock > 0 ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'}`}>
-                                                {product.stock > 0 ? t.in_stock.toUpperCase() : t.out_of_stock.toUpperCase()}
+                                                {product.stock > 0 ? `${t.in_stock.toUpperCase()}: ${product.stock}` : t.out_of_stock.toUpperCase()}
                                             </span>
 
                                             {qtyInCart > 0 && (
@@ -164,7 +164,7 @@ const BillingItems = ({ onAddToCart, onUpdateQuantity, onRemoveItem, cart = [] }
                                     variant="outline"
                                     size="sm"
                                     onClick={() => setSearchTerm('')}
-                                    className="border-2 border-[var(--color-primary)] text-[var(--color-primary)] hover:bg-[var(--color-primary)] hover:text-white rounded-full px-8 py-6 font-black uppercase text-xs"
+                                    className="border-2 border-[var(--color-primary)] text-[var(--color-primary)] hover:bg-[var(--color-primary)] hover:text-[var(--color-text-white)] rounded-full px-8 py-6 font-black uppercase text-xs"
                                 >
                                     Clear / அழி
                                 </Button>
@@ -265,7 +265,7 @@ const BillingItems = ({ onAddToCart, onUpdateQuantity, onRemoveItem, cart = [] }
                                     variant="outline"
                                     size="sm"
                                     onClick={() => setSearchTerm('')}
-                                    className="border-2 border-orange-500 text-orange-500 hover:bg-orange-500 hover:text-white rounded-full px-8 py-6 font-black uppercase text-xs"
+                                    className="border-2 border-orange-500 text-orange-500 hover:bg-orange-500 hover:text-[var(--color-text-white)] rounded-full px-8 py-6 font-black uppercase text-xs"
                                 >
                                     {t.clear}
                                 </Button>

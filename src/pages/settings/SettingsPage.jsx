@@ -70,8 +70,8 @@ const SettingsPage = () => {
 
             {/* Account Section */}
             <Card className="p-8 space-y-8 bg-[var(--color-bg-card)]/40 backdrop-blur-xl border border-[var(--color-border)] rounded-[2.5rem] shadow-2xl relative overflow-hidden group transition-all hover:bg-[var(--color-bg-card)]/60">
-                <div className="absolute top-0 right-0 p-8 opacity-[0.03] transform group-hover:scale-110 transition-transform duration-1000">
-                    <User className="h-32 w-32" />
+                <div className="absolute top-0 right-0 p-8 opacity-[0.05] transform group-hover:scale-125 group-hover:rotate-12 transition-all duration-1000">
+                    <User className="h-40 w-40 text-[var(--color-primary)]" />
                 </div>
 
                 <div className="flex items-center space-x-3 text-[var(--color-primary)] relative z-10">
@@ -117,8 +117,12 @@ const SettingsPage = () => {
                                 <p className="text-[10px] font-bold text-[var(--color-text-gray)] uppercase tracking-widest mt-1 opacity-60">{user.email}</p>
                             </div>
                         </div>
-                        <Button variant="ghost" className="text-red-500 hover:bg-red-500/10 h-14 px-8 rounded-[1.2rem] font-black uppercase tracking-[0.2em] text-[10px] border border-red-500/10" onClick={logout}>
-                            <LogOut className="h-4 w-4 mr-2" /> {t.logout}
+                        <Button
+                            variant="ghost"
+                            className="text-red-500 hover:bg-red-500/10 h-14 px-8 rounded-[1.5rem] font-black uppercase tracking-[0.2em] text-[10px] border border-red-500/10 active:scale-95 transition-all shadow-sm hover:shadow-red-500/5 group/logout"
+                            onClick={logout}
+                        >
+                            <LogOut className="h-4 w-4 mr-2 group-hover/logout:-translate-x-1 transition-transform" /> {t.logout}
                         </Button>
                     </div>
                 )}
@@ -141,7 +145,7 @@ const SettingsPage = () => {
                     <form onSubmit={handleSaveShopDetails} className="space-y-6 relative z-10">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="space-y-2.5">
-                                <label className="text-[10px] font-black text-[var(--color-text-gray)] uppercase tracking-[0.2em] block px-1">
+                                <label className="text-[11px] font-black text-[var(--color-text-gray)]/80 uppercase tracking-[0.2em] block px-1">
                                     {t.app_name}
                                 </label>
                                 <input
@@ -151,7 +155,7 @@ const SettingsPage = () => {
                                 />
                             </div>
                             <div className="space-y-2.5">
-                                <label className="text-[10px] font-black text-[var(--color-text-gray)] uppercase tracking-[0.2em] block px-1">
+                                <label className="text-[11px] font-black text-[var(--color-text-gray)]/80 uppercase tracking-[0.2em] block px-1">
                                     {t.shop_phone}
                                 </label>
                                 <input
@@ -163,7 +167,7 @@ const SettingsPage = () => {
                         </div>
 
                         <div className="space-y-2.5">
-                            <label className="text-[10px] font-black text-[var(--color-text-gray)] uppercase tracking-[0.2em] block px-1">
+                            <label className="text-[11px] font-black text-[var(--color-text-gray)]/80 uppercase tracking-[0.2em] block px-1">
                                 {t.shop_address}
                             </label>
                             <textarea

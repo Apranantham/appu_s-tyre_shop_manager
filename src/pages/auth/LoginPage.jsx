@@ -42,7 +42,7 @@ const LoginPage = () => {
     const [phonePassword, setPhonePassword] = useState('');
     const [phoneConfirmPassword, setPhoneConfirmPassword] = useState('');
 
-    const from = location.state?.from?.pathname || "/dashboard";
+    const from = "/dashboard";
 
     useEffect(() => {
         if (isAuthenticated && !loading) {
@@ -140,7 +140,7 @@ const LoginPage = () => {
     }
 
     return (
-        <div className="min-h-screen bg-[var(--color-bg-dark)] text-white flex items-center justify-center p-4 relative overflow-hidden">
+        <div className="min-h-screen bg-[var(--color-bg-dark)] text-[var(--color-text)] flex items-center justify-center p-4 relative overflow-hidden">
             <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none opacity-20 text-[var(--color-primary)]">
                 <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-current rounded-full blur-[120px] animate-pulse"></div>
                 <div className="absolute bottom-[-10%] right-[-10%] w-[30%] h-[30%] bg-blue-500 rounded-full blur-[100px] animate-pulse delay-700"></div>
@@ -151,7 +151,7 @@ const LoginPage = () => {
                     <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-[var(--color-primary)] to-blue-900 rounded-2xl mb-4 shadow-xl transform -rotate-3">
                         <Shield className="h-8 w-8 text-white" />
                     </div>
-                    <h1 className="text-3xl font-black tracking-tighter italic">TURBO<span className="text-[var(--color-primary)]">TYRE</span></h1>
+                    <h1 className="text-3xl font-black tracking-tighter italic text-[var(--color-text)]">TURBO<span className="text-[var(--color-primary)]">TYRE</span></h1>
                     <p className="text-[var(--color-text-gray)] font-bold uppercase tracking-[0.2em] text-[8px] mt-1">Professional Management Suite</p>
                 </div>
 
@@ -170,7 +170,7 @@ const LoginPage = () => {
                                     "flex-1 py-3 rounded-[1.2rem] text-[10px] font-black uppercase tracking-widest flex items-center justify-center transition-all duration-300",
                                     authMode === tab.id
                                         ? "bg-[var(--color-primary)] text-white shadow-lg shadow-blue-500/20 scale-[1.02]"
-                                        : "text-[var(--color-text-gray)] hover:text-white"
+                                        : "text-[var(--color-text-gray)] hover:text-[var(--color-text-white)]"
                                 )}
                             >
                                 <tab.icon className="h-3 w-3 mr-2 opacity-50" />
@@ -196,7 +196,7 @@ const LoginPage = () => {
                         {authMode === 'google' && (
                             <div className="space-y-8 py-6 text-center">
                                 <div className="space-y-2">
-                                    <h2 className="text-2xl font-black tracking-tight text-white italic underline decoration-[var(--color-primary)] decoration-4 underline-offset-4">WELCOME BACK</h2>
+                                    <h2 className="text-2xl font-black tracking-tight text-[var(--color-text)] italic underline decoration-[var(--color-primary)] decoration-4 underline-offset-4">WELCOME BACK</h2>
                                     <p className="text-[10px] font-black text-[var(--color-text-gray)] uppercase tracking-widest opacity-60">Access your manager suite instantly</p>
                                 </div>
 
@@ -225,7 +225,7 @@ const LoginPage = () => {
                         {authMode === 'email' && (
                             <form onSubmit={isForgotPassword ? handleForgotPassword : handleEmailAuth} className="space-y-5">
                                 <div className="text-center mb-8">
-                                    <h2 className="text-2xl font-black tracking-tight text-white italic">
+                                    <h2 className="text-2xl font-black tracking-tight text-[var(--color-text)] italic">
                                         {isForgotPassword ? 'RECOVERY' : (isSignup ? 'NEW AGENT' : 'SYSTEM LOGIN')}
                                     </h2>
                                     <p className="text-[9px] font-black text-[var(--color-text-gray)] uppercase tracking-[0.3em] opacity-50 mt-2">
@@ -339,7 +339,7 @@ const LoginPage = () => {
                                         setError('');
                                         setSuccessMessage('');
                                     }}
-                                    className="w-full text-center text-[10px] font-black uppercase tracking-widest text-[var(--color-text-gray)] hover:text-white mt-6 transition-colors"
+                                    className="w-full text-center text-[10px] font-black uppercase tracking-widest text-[var(--color-text-gray)] hover:text-[var(--color-primary)] mt-6 transition-colors"
                                 >
                                     {isForgotPassword
                                         ? '← RETURN TO LOGIN'
@@ -436,7 +436,7 @@ const LoginPage = () => {
                                 <button
                                     type="button"
                                     onClick={() => { setIsSignup(!isSignup); setError(''); setSuccessMessage(''); }}
-                                    className="w-full text-center text-xs text-[var(--color-text-gray)] hover:text-white mt-4"
+                                    className="w-full text-center text-xs text-[var(--color-text-gray)] hover:text-[var(--color-text)] mt-4"
                                 >
                                     {isSignup ? 'Already registered? Login' : "First time? Register your phone"}
                                 </button>

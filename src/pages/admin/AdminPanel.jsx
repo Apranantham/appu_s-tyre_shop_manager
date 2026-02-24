@@ -71,7 +71,7 @@ const AdminPanel = () => {
                 </div>
                 <div className="bg-[var(--color-bg-dark)]/50 p-3 rounded-xl border border-[var(--color-border)] text-right">
                     <div className="text-[10px] text-[var(--color-primary)] font-bold uppercase tracking-widest mb-1">{t.auth_as}</div>
-                    <div className="text-xs font-bold text-white mb-0.5">{user?.email || 'No Email'}</div>
+                    <div className="text-xs font-bold text-[var(--color-text)] mb-0.5">{user?.email || 'No Email'}</div>
                     <div className="text-[9px] text-[var(--color-text-gray)] font-mono">{user?.uid}</div>
                 </div>
             </div>

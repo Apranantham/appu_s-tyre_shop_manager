@@ -51,6 +51,17 @@ const BillingHistory = () => {
     const [settleDate, setSettleDate] = useState(new Date().toISOString().split('T')[0]);
     const [settleMode, setSettleMode] = useState('cash');
 
+    // Sync user and status filters from navigation state
+    useEffect(() => {
+        if (location.state?.creatorId) {
+            setActiveUserFilter(location.state.creatorId);
+            setActiveUserLabel(location.state.creatorLabel || '');
+        }
+        if (location.state?.statusFilter) {
+            setStatusFilter(location.state.statusFilter);
+        }
+    }, [location.state]);
+
     const printRef = useRef();
     const handlePrint = useReactToPrint({
         contentRef: printRef,
@@ -72,6 +83,7 @@ const BillingHistory = () => {
             const search = searchTerm.toLowerCase();
 
             const matchesSearch = name.includes(search) || phone.includes(search) || id.includes(search) || invNo.includes(search);
+            if (!matchesSearch) return false;
 
             if (statusFilter !== 'all') {
                 if (statusFilter === 'pending' && inv.paymentStatus !== 'pending' && inv.paymentStatus !== 'partially_paid') return false;
@@ -83,28 +95,43 @@ const BillingHistory = () => {
             const now = new Date();
 
             if (dateFilter === 'today') {
-                return invDate.toDateString() === now.toDateString();
+                if (invDate.toDateString() !== now.toDateString()) return false;
             } else if (dateFilter === 'week') {
                 const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-                return invDate >= weekAgo;
+                if (invDate < weekAgo) return false;
             } else if (dateFilter === 'month') {
-                return invDate.getMonth() === now.getMonth() && invDate.getFullYear() === now.getFullYear();
+                if (invDate.getMonth() !== now.getMonth() || invDate.getFullYear() !== now.getFullYear()) return false;
+            }
+
+            // Admin Panel Filter (View Sales)
+            if (activeUserFilter) {
+                // Handle 'Unknown' case for legacy invoices
+                const invCreator = inv.createdBy || 'Unknown';
+                if (invCreator !== activeUserFilter) return false;
             }
 
             return true;
         });
 
         return [...filtered].sort((a, b) => {
-            let aVal = a[sortConfig.key];
-            let bVal = b[sortConfig.key];
+            const direction = sortConfig.direction === 'asc' ? 1 : -1;
 
             if (sortConfig.key === 'date') {
-                aVal = new Date(a.date).getTime();
-                bVal = new Date(b.date).getTime();
+                // Sort by date (newest first by default)
+                const aTime = new Date(a.date || 0).getTime();
+                const bTime = new Date(b.date || 0).getTime();
+                if (aTime !== bTime) {
+                    return (aTime - bTime) * direction;
+                }
+                // Fallback to ID if dates are identical
+                return (String(a.id).localeCompare(String(b.id))) * direction;
             }
 
-            if (aVal < bVal) return sortConfig.direction === 'asc' ? -1 : 1;
-            if (aVal > bVal) return sortConfig.direction === 'asc' ? 1 : -1;
+            let aVal = a[sortConfig.key] || 0;
+            let bVal = b[sortConfig.key] || 0;
+
+            if (aVal < bVal) return -1 * direction;
+            if (aVal > bVal) return 1 * direction;
             return 0;
         });
     };
@@ -117,7 +144,7 @@ const BillingHistory = () => {
             {/* Header section with title and date filters */}
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
                 <div>
-                    <h1 className="text-3xl font-black tracking-tight uppercase text-white">{t.history}</h1>
+                    <h1 className="text-3xl font-black tracking-tight uppercase text-[var(--color-text-white)]">{t.history}</h1>
                     <p className="text-[var(--color-text-gray)] text-xs font-bold uppercase tracking-widest opacity-60 mt-1">{t.real_time_overview}</p>
                 </div>
                 <div className="flex bg-[var(--color-bg-dark)] p-1 rounded-2xl border border-[var(--color-border)] overflow-x-auto no-scrollbar shadow-inner">
@@ -129,7 +156,7 @@ const BillingHistory = () => {
                                 "px-5 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest whitespace-nowrap transition-all",
                                 dateFilter === period
                                     ? "bg-[var(--color-primary)] text-white shadow-lg shadow-blue-500/20"
-                                    : "text-[var(--color-text-gray)] hover:text-white"
+                                    : "text-[var(--color-text-gray)] hover:text-[var(--color-primary)]"
                             )}
                         >
                             {period === 'all' ? (lang === 'ta' ? 'அனைத்தும்' : 'ALL') :
@@ -175,7 +202,7 @@ const BillingHistory = () => {
                                 "px-5 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest whitespace-nowrap transition-all border",
                                 statusFilter === status
                                     ? "bg-[var(--color-primary)] text-white border-[var(--color-primary)] shadow-lg shadow-blue-500/20"
-                                    : "bg-transparent text-[var(--color-text-gray)] border-transparent hover:text-white"
+                                    : "bg-transparent text-[var(--color-text-gray)] border-transparent hover:text-[var(--color-primary)]"
                             )}
                         >
                             {status === 'all' ? (lang === 'ta' ? 'அனைத்தும்' : 'ALL') :
@@ -230,7 +257,7 @@ const BillingHistory = () => {
                                 filteredInvoices.map((inv) => (
                                     <tr key={inv.id} className="hover:bg-[var(--color-bg-dark)] transition-colors group">
                                         <td className="px-6 py-4">
-                                            <p className="font-bold text-sm tracking-tight text-white">
+                                            <p className="font-bold text-sm tracking-tight text-[var(--color-text-white)]">
                                                 {new Date(inv.date).toLocaleString(lang === 'ta' ? 'ta-IN' : 'en-IN', {
                                                     day: '2-digit',
                                                     month: 'short',
@@ -334,13 +361,13 @@ const BillingHistory = () => {
                                             <span className="text-[9px] font-black text-[var(--color-primary)] bg-[var(--color-primary)]/10 px-2 py-0.5 rounded-lg border border-[var(--color-primary)]/20 uppercase tracking-widest">#{inv.id}</span>
                                             <span className="text-[9px] font-black text-gray-500 uppercase tracking-widest">{new Date(inv.date).toLocaleDateString(lang === 'ta' ? 'ta-IN' : 'en-IN', { day: '2-digit', month: 'short' })}</span>
                                         </div>
-                                        <h3 className="text-lg font-black text-white leading-tight tracking-tight">{inv.customer?.name || (lang === 'ta' ? 'வாடிக்கையாளர்' : 'Walk-in')}</h3>
+                                        <h3 className="text-lg font-black text-[var(--color-text-white)] leading-tight tracking-tight">{inv.customer?.name || (lang === 'ta' ? 'வாடிக்கையாளர்' : 'Walk-in')}</h3>
                                         <div className="flex items-center gap-2 text-gray-500">
                                             <p className="text-[9px] font-bold uppercase tracking-widest truncate max-w-[120px]">{inv.customer?.vehicle || (lang === 'ta' ? 'வண்டி எண் இல்லை' : 'No Vehicle')}</p>
                                         </div>
                                     </div>
                                     <div className="text-right">
-                                        <p className="text-xl font-black text-white">₹{inv.total.toLocaleString()}</p>
+                                        <p className="text-xl font-black text-[var(--color-text-white)]">₹{inv.total.toLocaleString()}</p>
                                         <span className={cn(
                                             "inline-block mt-2 text-[8px] font-black uppercase tracking-[0.1em] px-2.5 py-1 rounded-lg border",
                                             inv.paymentStatus === 'paid' ? "bg-green-500/10 border-green-500/20 text-green-500" :
@@ -478,7 +505,7 @@ const BillingHistory = () => {
                                         type="date"
                                         value={settleDate}
                                         onChange={(e) => setSettleDate(e.target.value)}
-                                        className="w-full bg-[var(--color-bg-dark)] border border-[var(--color-border)] rounded-xl pl-10 pr-4 py-3 text-sm font-black focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all text-white"
+                                        className="w-full bg-[var(--color-bg-dark)] border border-[var(--color-border)] rounded-xl pl-10 pr-4 py-3 text-sm font-black focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all text-[var(--color-text-white)]"
                                     />
                                 </div>
                             </div>
