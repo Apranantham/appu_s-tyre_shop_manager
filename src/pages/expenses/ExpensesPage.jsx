@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { createPortal } from 'react-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {
     Plus, Search, Filter, Trash2, Edit3, X,
     Wallet, Banknote, CreditCard, QrCode, Calendar,
@@ -64,6 +65,8 @@ const ExpensesPage = () => {
     const { expenses, loading, addExpense, updateExpense, deleteExpense } = useExpenses();
     const { user, isAdmin } = useAuth();
     const { shopDetails } = useSettings();
+    const location = useLocation();
+    const navigate = useNavigate();
     const lang = shopDetails?.appLanguage || 'ta';
     const t = translations[lang];
 
@@ -73,7 +76,7 @@ const ExpensesPage = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [filterCategory, setFilterCategory] = useState('all');
     const [showCategoryFilter, setShowCategoryFilter] = useState(false);
-    const [dateFilter, setDateFilter] = useState('all');
+    const [dateFilter, setDateFilter] = useState(location.state?.dateFilter || 'all');
     const [customDateFrom, setCustomDateFrom] = useState('');
     const [customDateTo, setCustomDateTo] = useState('');
     const [staffFilter, setStaffFilter] = useState('all');

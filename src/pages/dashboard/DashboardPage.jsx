@@ -297,7 +297,7 @@ const DashboardPage = () => {
                                 className="min-h-[10rem] md:min-h-0"
                             />
                             <div
-                                onClick={() => navigate('/expenses')}
+                                onClick={() => navigate('/expenses', { state: { dateFilter: 'month' } })}
                                 className="cursor-pointer active:scale-[0.98] transition-all group/stat"
                             >
                                 <StatCard
