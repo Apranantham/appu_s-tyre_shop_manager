@@ -244,11 +244,42 @@ const BillingPage = () => {
         if (!lastInvoice) return;
 
         const emojiMap = { product: '📦', service: '🛠️' };
-        const itemsList = lastInvoice.items.map(item => `${emojiMap[item.type] || '🔹'} *${item.name}* (x${item.quantity}) - ₹${item.price.toFixed(2)}`).join('%0A');
+        const itemsList = lastInvoice.items.map(item => `${emojiMap[item.type] || '🔹'} *${item.name}* (x${item.quantity}) - ₹${item.price.toLocaleString()}`).join('%0A');
 
         const border = '━━━━━━━━━━━━━━━━';
-        const message = `*${border}*%0A🚀 *TURBOTYRE BILL SUMMARY*%0A*${border}*%0A%0A👤 *Customer:* ${lastInvoice.customer.name}%0A📱 *Contact:* ${lastInvoice.customer.phone}%0A🚗 *Vehicle:* ${lastInvoice.customer.vehicle}%0A📅 *Date:* ${new Date(lastInvoice.date).toLocaleDateString()}%0A%0A*ITEMS:*%0A${itemsList}%0A%0A*${border}*%0A💰 *TOTAL:* ₹${lastInvoice.total.toFixed(2)}%0A💳 *STATUS:* ${lastInvoice.paymentStatus?.toUpperCase() || 'PAID'}%0A*${border}*%0A%0AThank you for choosing TurboTyre! 🏁`;
-        const whatsappUrl = `https://wa.me/${lastInvoice.customer.phone.replace(/[^0-9]/g, '')}?text=${message}`;
+        const shopDisplayName = shopDetails?.shopName || 'TURBOTYRE';
+        const shopAddress = shopDetails?.shopAddress ? `📍 ${shopDetails.shopAddress}%0A` : '';
+        const shopPhone = shopDetails?.shopPhone ? `📞 ${shopDetails.shopPhone}%0A` : '';
+
+        const message =
+            `*${shopDisplayName}*
+${shopAddress}${shopPhone}
+*${border}*
+🚀 *INVOICE SUMMARY*
+*${border}*
+
+👤 *Customer:* ${lastInvoice.customer.name}
+${lastInvoice.customer.vehicle ? `🚗 *Vehicle:* ${lastInvoice.customer.vehicle}%0A` : ''}📅 *Date:* ${new Date(lastInvoice.date).toLocaleDateString()}
+
+*ITEMS:*
+${itemsList}
+
+*${border}*
+💰 *Subtotal:* ₹${lastInvoice.subtotal?.toLocaleString()}
+🏷️ *Discount:* -₹${lastInvoice.discount?.toLocaleString()}
+⭐ *TOTAL:* ₹${lastInvoice.total?.toLocaleString()}
+*${border}*
+
+💵 *Paid:* ₹${lastInvoice.paidAmount?.toLocaleString()}
+🛑 *Balance:* ₹${lastInvoice.balanceAmount?.toLocaleString()}
+💳 *Status:* ${lastInvoice.paymentStatus?.toUpperCase() || 'PAID'}
+
+*${border}*
+Thank you for your business! 🏁`;
+
+        const rawPhone = lastInvoice.customer.phone.replace(/[^0-9]/g, '');
+        const formattedPhone = rawPhone.length === 10 ? `91${rawPhone}` : rawPhone;
+        const whatsappUrl = `https://wa.me/${formattedPhone}?text=${message}`;
         window.open(whatsappUrl, '_blank');
     };
 

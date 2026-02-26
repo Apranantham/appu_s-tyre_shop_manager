@@ -35,6 +35,12 @@ service cloud.firestore {
       allow read, write: if request.auth != null;
     }
     
+    // Expenses: Admins see all, Staff see only what they created
+    match /expenses/{expenseId} {
+      allow create: if request.auth != null;
+      allow read, update, delete: if request.auth != null && (isAdmin() || resource.data.createdBy == request.auth.uid);
+    }
+
     // Shop Settings: Needed for invoice numbering!
     match /settings/shopProfile {
       allow read: if request.auth != null;

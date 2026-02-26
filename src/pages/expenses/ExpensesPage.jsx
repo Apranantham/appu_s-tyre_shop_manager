@@ -6,8 +6,11 @@ import {
     Zap, Home, Package, Users, Wrench, Truck, Coffee, FileText,
     TrendingDown, ChevronDown
 } from 'lucide-react';
+import { collection, onSnapshot, query } from 'firebase/firestore';
+import { db } from '../../firebase';
 import { cn } from '../../utils/cn';
 import { useExpenses } from '../../context/ExpenseContext';
+import { useAuth } from '../../context/AuthContext';
 import { useSettings } from '../../context/SettingsContext';
 import { translations } from '../../utils/translations';
 import { Card } from '../../components/ui/Card';
@@ -30,6 +33,14 @@ const PAYMENT_MODES = [
     { id: 'upi', icon: QrCode },
 ];
 
+const DATE_FILTERS = [
+    { id: 'all', label: 'All', labelTa: 'அனைத்தும்' },
+    { id: 'today', label: 'Today', labelTa: 'இன்று' },
+    { id: 'week', label: 'This Week', labelTa: 'இந்த வாரம்' },
+    { id: 'month', label: 'This Month', labelTa: 'இந்த மாதம்' },
+    { id: 'custom', label: 'Custom', labelTa: 'தேதி தேர்வு' },
+];
+
 const getLocalDateTime = () => {
     const now = new Date();
     const year = now.getFullYear();
@@ -40,8 +51,18 @@ const getLocalDateTime = () => {
     return `${year}-${month}-${day}T${hours}:${minutes}`;
 };
 
+const getStartOfWeek = (date) => {
+    const d = new Date(date);
+    const day = d.getDay();
+    const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+    d.setDate(diff);
+    d.setHours(0, 0, 0, 0);
+    return d;
+};
+
 const ExpensesPage = () => {
-    const { expenses, loading, addExpense, updateExpense, deleteExpense, monthlyExpenses } = useExpenses();
+    const { expenses, loading, addExpense, updateExpense, deleteExpense } = useExpenses();
+    const { user, isAdmin } = useAuth();
     const { shopDetails } = useSettings();
     const lang = shopDetails?.appLanguage || 'ta';
     const t = translations[lang];
@@ -52,6 +73,37 @@ const ExpensesPage = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [filterCategory, setFilterCategory] = useState('all');
     const [showCategoryFilter, setShowCategoryFilter] = useState(false);
+    const [dateFilter, setDateFilter] = useState('all');
+    const [customDateFrom, setCustomDateFrom] = useState('');
+    const [customDateTo, setCustomDateTo] = useState('');
+    const [staffFilter, setStaffFilter] = useState('all');
+    const [showStaffFilter, setShowStaffFilter] = useState(false);
+
+    // Fetch staff list for admin
+    const [allUsers, setAllUsers] = useState([]);
+    React.useEffect(() => {
+        if (!isAdmin) return;
+        const q = query(collection(db, 'users'));
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            setAllUsers(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+        });
+        return () => unsubscribe();
+    }, [isAdmin]);
+
+    const staffList = useMemo(() => {
+        if (!isAdmin) return [];
+        const map = new Map();
+        allUsers.forEach(u => map.set(u.id, { id: u.id, label: u.email || u.name || u.id }));
+        expenses.forEach(exp => {
+            const id = exp.createdBy;
+            if (id && !map.has(id)) map.set(id, { id, label: exp.creatorEmail || exp.creatorName || id });
+        });
+        return Array.from(map.values());
+    }, [isAdmin, allUsers, expenses]);
+
+    const selectedStaffLabel = staffFilter === 'all'
+        ? (lang === 'ta' ? 'அனைவரும்' : 'All Staff')
+        : (staffList.find(s => s.id === staffFilter)?.label || staffFilter);
 
     // Form state
     const [form, setForm] = useState({
@@ -64,21 +116,11 @@ const ExpensesPage = () => {
     });
 
     const resetForm = () => {
-        setForm({
-            category: 'stock_purchase',
-            customCategory: '',
-            description: '',
-            amount: '',
-            paymentMode: 'cash',
-            date: getLocalDateTime()
-        });
+        setForm({ category: 'stock_purchase', customCategory: '', description: '', amount: '', paymentMode: 'cash', date: getLocalDateTime() });
         setEditingExpense(null);
     };
 
-    const openAdd = () => {
-        resetForm();
-        setShowModal(true);
-    };
+    const openAdd = () => { resetForm(); setShowModal(true); };
 
     const openEdit = (expense) => {
         setEditingExpense(expense);
@@ -87,56 +129,76 @@ const ExpensesPage = () => {
         setForm({
             category: isCustom ? 'custom' : expense.category,
             customCategory: isCustom ? expense.category : '',
-            description: expense.description || '',
-            amount: expense.amount || '',
-            paymentMode: expense.paymentMode || 'cash',
-            date: dateStr
+            description: expense.description || '', amount: expense.amount || '',
+            paymentMode: expense.paymentMode || 'cash', date: dateStr
         });
         setShowModal(true);
     };
 
     const handleSave = async () => {
         if (!form.amount || Number(form.amount) <= 0) return;
-
-        const categoryName = form.category === 'custom'
-            ? (form.customCategory || 'Other')
-            : form.category;
-
+        const categoryName = form.category === 'custom' ? (form.customCategory || 'Other') : form.category;
         const data = {
-            category: categoryName,
-            description: form.description,
-            amount: Number(form.amount),
-            paymentMode: form.paymentMode,
+            category: categoryName, description: form.description,
+            amount: Number(form.amount), paymentMode: form.paymentMode,
             date: new Date(form.date).toISOString()
         };
-
-        if (editingExpense) {
-            await updateExpense(editingExpense.id, data);
-        } else {
-            await addExpense(data);
-        }
-
+        if (editingExpense) { await updateExpense(editingExpense.id, data); }
+        else { await addExpense(data); }
         setShowModal(false);
         resetForm();
     };
 
-    const handleDelete = async () => {
-        if (deleteTarget) {
-            await deleteExpense(deleteTarget.id);
-            setDeleteTarget(null);
-        }
-    };
+    const handleDelete = async () => { if (deleteTarget) { await deleteExpense(deleteTarget.id); setDeleteTarget(null); } };
+
+    // Active filter count
+    const activeFilterCount = [
+        filterCategory !== 'all',
+        dateFilter !== 'all',
+        staffFilter !== 'all'
+    ].filter(Boolean).length;
 
     // Filtered expenses
     const filteredExpenses = useMemo(() => {
+        const now = new Date();
+        const todayStr = now.toDateString();
+        const weekStart = getStartOfWeek(now);
+        const thisMonth = now.getMonth();
+        const thisYear = now.getFullYear();
+
         return expenses.filter(e => {
+            // Search
             const matchesSearch = !searchTerm ||
                 (e.description || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
                 (e.category || '').toLowerCase().includes(searchTerm.toLowerCase());
-            const matchesCategory = filterCategory === 'all' || e.category === filterCategory;
-            return matchesSearch && matchesCategory;
+            if (!matchesSearch) return false;
+
+            // Category
+            if (filterCategory !== 'all' && e.category !== filterCategory) return false;
+
+            // Staff (admin only)
+            if (staffFilter !== 'all' && e.createdBy !== staffFilter) return false;
+
+            // Date filter
+            if (dateFilter !== 'all') {
+                const eDate = new Date(e.date);
+                if (dateFilter === 'today' && eDate.toDateString() !== todayStr) return false;
+                if (dateFilter === 'week' && eDate < weekStart) return false;
+                if (dateFilter === 'month' && (eDate.getMonth() !== thisMonth || eDate.getFullYear() !== thisYear)) return false;
+                if (dateFilter === 'custom') {
+                    if (customDateFrom && eDate < new Date(customDateFrom + 'T00:00:00')) return false;
+                    if (customDateTo && eDate > new Date(customDateTo + 'T23:59:59')) return false;
+                }
+            }
+
+            return true;
         });
-    }, [expenses, searchTerm, filterCategory]);
+    }, [expenses, searchTerm, filterCategory, staffFilter, dateFilter, customDateFrom, customDateTo]);
+
+    // Filtered total
+    const filteredTotal = useMemo(() => {
+        return filteredExpenses.reduce((sum, e) => sum + (e.amount || 0), 0);
+    }, [filteredExpenses]);
 
     // Group by date
     const groupedExpenses = useMemo(() => {
@@ -151,28 +213,28 @@ const ExpensesPage = () => {
         return groups;
     }, [filteredExpenses, lang]);
 
-    // Category breakdown for this month
+    // Category breakdown (from filtered data)
     const categoryBreakdown = useMemo(() => {
-        const now = new Date();
-        const thisMonth = now.getMonth();
-        const thisYear = now.getFullYear();
         const breakdown = {};
-        expenses
-            .filter(e => {
-                const d = new Date(e.date);
-                return d.getMonth() === thisMonth && d.getFullYear() === thisYear;
-            })
-            .forEach(e => {
-                breakdown[e.category] = (breakdown[e.category] || 0) + (e.amount || 0);
-            });
-        return Object.entries(breakdown)
-            .sort((a, b) => b[1] - a[1]);
-    }, [expenses]);
+        filteredExpenses.forEach(e => {
+            breakdown[e.category] = (breakdown[e.category] || 0) + (e.amount || 0);
+        });
+        return Object.entries(breakdown).sort((a, b) => b[1] - a[1]);
+    }, [filteredExpenses]);
 
     const getCategoryInfo = (catId) => {
         return CATEGORIES.find(c => c.id === catId) || {
             label: catId, labelTa: catId, icon: Coffee, color: 'text-gray-500'
         };
+    };
+
+    const clearAllFilters = () => {
+        setFilterCategory('all');
+        setDateFilter('all');
+        setStaffFilter('all');
+        setCustomDateFrom('');
+        setCustomDateTo('');
+        setSearchTerm('');
     };
 
     return (
@@ -196,15 +258,21 @@ const ExpensesPage = () => {
                 </Button>
             </div>
 
-            {/* Monthly Summary */}
+            {/* Summary Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <Card className="rounded-3xl p-5 bg-[var(--color-bg-card)] border border-[var(--color-border)]">
                     <p className="text-[var(--color-text-gray)] text-xs font-black uppercase tracking-widest mb-1">
-                        {t.monthly_expenses || 'Monthly Expenses'}
+                        {activeFilterCount > 0
+                            ? (lang === 'ta' ? 'வடிகட்டிய மொத்தம்' : 'Filtered Total')
+                            : (t.monthly_expenses || 'Total Expenses')
+                        }
                     </p>
                     <h3 className="text-3xl font-bold text-red-500">
-                        ₹{monthlyExpenses.toLocaleString()}
+                        ₹{filteredTotal.toLocaleString()}
                     </h3>
+                    <p className="text-[10px] text-[var(--color-text-gray)] mt-1">
+                        {filteredExpenses.length} {lang === 'ta' ? 'பதிவுகள்' : 'records'}
+                    </p>
                 </Card>
 
                 <Card className="rounded-3xl p-5 bg-[var(--color-bg-card)] border border-[var(--color-border)] col-span-1 md:col-span-2">
@@ -214,18 +282,27 @@ const ExpensesPage = () => {
                     <div className="flex flex-wrap gap-3">
                         {categoryBreakdown.length === 0 ? (
                             <p className="text-[var(--color-text-gray)] text-sm opacity-50">
-                                {lang === 'ta' ? 'இம்மாதம் செலவுகள் இல்லை' : 'No expenses this month'}
+                                {lang === 'ta' ? 'செலவுகள் இல்லை' : 'No expenses found'}
                             </p>
                         ) : (
                             categoryBreakdown.map(([cat, amount]) => {
                                 const info = getCategoryInfo(cat);
                                 const Icon = info.icon;
                                 return (
-                                    <div key={cat} className="flex items-center gap-2 bg-[var(--color-bg-dark)] px-3 py-2 rounded-xl border border-[var(--color-border)]">
+                                    <button
+                                        key={cat}
+                                        onClick={() => setFilterCategory(filterCategory === cat ? 'all' : cat)}
+                                        className={cn(
+                                            "flex items-center gap-2 px-3 py-2 rounded-xl border transition-all cursor-pointer",
+                                            filterCategory === cat
+                                                ? "border-blue-500 bg-blue-500/10"
+                                                : "border-[var(--color-border)] bg-[var(--color-bg-dark)] hover:border-[var(--color-text-gray)]/40"
+                                        )}
+                                    >
                                         <Icon className={cn("h-4 w-4", info.color)} />
                                         <span className="text-xs font-bold">{lang === 'ta' ? info.labelTa : info.label}</span>
                                         <span className="text-xs font-black text-red-400">₹{amount.toLocaleString()}</span>
-                                    </div>
+                                    </button>
                                 );
                             })
                         )}
@@ -233,9 +310,10 @@ const ExpensesPage = () => {
                 </Card>
             </div>
 
-            {/* Search + Filter */}
-            <div className="flex gap-3 items-center">
-                <div className="relative flex-1 max-w-md">
+            {/* Filter Bar */}
+            <div className="flex flex-wrap gap-3 items-center">
+                {/* Search */}
+                <div className="relative flex-1 min-w-[200px] max-w-md">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--color-text-gray)]" />
                     <input
                         placeholder={t.search_expenses || 'Search expenses...'}
@@ -244,56 +322,152 @@ const ExpensesPage = () => {
                         className="w-full bg-[var(--color-bg-dark)] border border-[var(--color-border)] rounded-xl pl-9 pr-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                     />
                 </div>
-                <div className="relative">
-                    <button
-                        onClick={() => setShowCategoryFilter(!showCategoryFilter)}
-                        className={cn(
-                            "flex items-center gap-2 px-4 py-2.5 rounded-xl border text-sm font-bold transition-all",
-                            filterCategory !== 'all'
-                                ? "border-blue-500 bg-blue-500/10 text-blue-500"
-                                : "border-[var(--color-border)] bg-[var(--color-bg-dark)] text-[var(--color-text-gray)]"
-                        )}
-                    >
-                        <Filter className="h-4 w-4" />
-                        <span className="hidden sm:inline">
-                            {filterCategory === 'all'
-                                ? (t.all_categories || 'All')
-                                : getCategoryInfo(filterCategory).label
-                            }
-                        </span>
-                        <ChevronDown className="h-3 w-3" />
-                    </button>
-                    {showCategoryFilter && (
-                        <>
-                            <div className="fixed inset-0 z-40" onClick={() => setShowCategoryFilter(false)}></div>
-                            <div className="absolute right-0 mt-2 w-56 bg-[var(--color-bg-card)] border border-[var(--color-border)] rounded-2xl shadow-2xl z-50 py-2 animate-in fade-in slide-in-from-top-2 duration-200">
-                                <button
-                                    onClick={() => { setFilterCategory('all'); setShowCategoryFilter(false); }}
-                                    className={cn(
-                                        "w-full text-left px-4 py-2.5 text-sm font-bold hover:bg-[var(--color-bg-dark)] transition-colors",
-                                        filterCategory === 'all' && "text-blue-500"
-                                    )}
-                                >
-                                    {t.all_categories || 'All Categories'}
-                                </button>
-                                {CATEGORIES.map(cat => (
+
+                {/* Date Filter */}
+                <div className="flex bg-[var(--color-bg-dark)] rounded-xl p-1 border border-[var(--color-border)] overflow-x-auto no-scrollbar">
+                    {DATE_FILTERS.map(df => (
+                        <button
+                            key={df.id}
+                            onClick={() => setDateFilter(df.id)}
+                            className={cn(
+                                "px-3 py-1.5 text-[10px] uppercase font-bold rounded-lg transition-all whitespace-nowrap",
+                                dateFilter === df.id
+                                    ? "bg-[#3B82F6] text-white shadow-lg shadow-blue-500/20"
+                                    : "text-[var(--color-text-gray)] hover:text-[var(--color-text-white)]"
+                            )}
+                        >
+                            {lang === 'ta' ? df.labelTa : df.label}
+                        </button>
+                    ))}
+                </div>
+
+                {/* Action Filters Group */}
+                <div className="flex items-center gap-2 ml-auto sm:ml-0">
+                    {/* Category Filter */}
+                    <div className="relative">
+                        <button
+                            onClick={() => setShowCategoryFilter(!showCategoryFilter)}
+                            className={cn(
+                                "flex items-center gap-2 px-3 py-2.5 rounded-xl border text-xs font-bold transition-all",
+                                filterCategory !== 'all'
+                                    ? "border-blue-500 bg-blue-500/10 text-blue-500"
+                                    : "border-[var(--color-border)] bg-[var(--color-bg-dark)] text-[var(--color-text-gray)]"
+                            )}
+                        >
+                            <Filter className="h-4 w-4" />
+                            <span className="hidden sm:inline">
+                                {filterCategory === 'all'
+                                    ? (t.all_categories || 'Category')
+                                    : (lang === 'ta' ? getCategoryInfo(filterCategory).labelTa : getCategoryInfo(filterCategory).label)
+                                }
+                            </span>
+                            <ChevronDown className="h-3 w-3" />
+                        </button>
+                        {showCategoryFilter && (
+                            <>
+                                <div className="fixed inset-0 z-40" onClick={() => setShowCategoryFilter(false)}></div>
+                                <div className="absolute right-0 mt-2 w-56 bg-[var(--color-bg-card)] border border-[var(--color-border)] rounded-2xl shadow-2xl z-50 py-2 animate-in fade-in slide-in-from-top-2 duration-200">
                                     <button
-                                        key={cat.id}
-                                        onClick={() => { setFilterCategory(cat.id); setShowCategoryFilter(false); }}
-                                        className={cn(
-                                            "w-full text-left px-4 py-2.5 text-sm font-bold hover:bg-[var(--color-bg-dark)] transition-colors flex items-center gap-2",
-                                            filterCategory === cat.id && "text-blue-500"
-                                        )}
+                                        onClick={() => { setFilterCategory('all'); setShowCategoryFilter(false); }}
+                                        className={cn("w-full text-left px-4 py-2.5 text-sm font-bold hover:bg-[var(--color-bg-dark)] transition-colors", filterCategory === 'all' && "text-blue-500")}
                                     >
-                                        <cat.icon className={cn("h-4 w-4", cat.color)} />
-                                        {lang === 'ta' ? cat.labelTa : cat.label}
+                                        {t.all_categories || 'All Categories'}
                                     </button>
-                                ))}
-                            </div>
-                        </>
+                                    {CATEGORIES.map(cat => (
+                                        <button
+                                            key={cat.id}
+                                            onClick={() => { setFilterCategory(cat.id); setShowCategoryFilter(false); }}
+                                            className={cn("w-full text-left px-4 py-2.5 text-sm font-bold hover:bg-[var(--color-bg-dark)] transition-colors flex items-center gap-2", filterCategory === cat.id && "text-blue-500")}
+                                        >
+                                            <cat.icon className={cn("h-4 w-4", cat.color)} />
+                                            {lang === 'ta' ? cat.labelTa : cat.label}
+                                        </button>
+                                    ))}
+                                </div>
+                            </>
+                        )}
+                    </div>
+
+                    {/* Admin Staff Filter */}
+                    {isAdmin && (
+                        <div className="relative">
+                            <button
+                                onClick={() => setShowStaffFilter(!showStaffFilter)}
+                                className={cn(
+                                    "flex items-center gap-2 px-3 py-2.5 rounded-xl border text-xs font-bold transition-all",
+                                    staffFilter !== 'all'
+                                        ? "border-purple-500 bg-purple-500/10 text-purple-400"
+                                        : "border-[var(--color-border)] bg-[var(--color-bg-dark)] text-[var(--color-text-gray)]"
+                                )}
+                            >
+                                <Users className="h-4 w-4" />
+                                <span className="hidden sm:inline max-w-[100px] truncate">{selectedStaffLabel}</span>
+                                <ChevronDown className="h-3 w-3" />
+                            </button>
+                            {showStaffFilter && (
+                                <>
+                                    <div className="fixed inset-0 z-40" onClick={() => setShowStaffFilter(false)}></div>
+                                    <div className="absolute right-0 mt-2 w-64 bg-[var(--color-bg-card)] border border-[var(--color-border)] rounded-2xl shadow-2xl z-50 py-2 animate-in fade-in slide-in-from-top-2 duration-200 max-h-72 overflow-y-auto">
+                                        <button
+                                            onClick={() => { setStaffFilter('all'); setShowStaffFilter(false); }}
+                                            className={cn("w-full text-left px-4 py-2.5 text-sm font-bold hover:bg-[var(--color-bg-dark)] transition-colors flex items-center gap-2", staffFilter === 'all' && "text-purple-400")}
+                                        >
+                                            <Users className="h-4 w-4" />
+                                            {lang === 'ta' ? 'அனைவரும்' : 'All Staff'}
+                                        </button>
+                                        <div className="h-px bg-[var(--color-border)] my-1"></div>
+                                        {staffList.map(s => (
+                                            <button
+                                                key={s.id}
+                                                onClick={() => { setStaffFilter(s.id); setShowStaffFilter(false); }}
+                                                className={cn("w-full text-left px-4 py-2.5 text-sm font-bold hover:bg-[var(--color-bg-dark)] transition-colors truncate", staffFilter === s.id && "text-purple-400")}
+                                            >
+                                                {s.label}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </>
+                            )}
+                        </div>
+                    )}
+
+                    {/* Clear Filters */}
+                    {activeFilterCount > 0 && (
+                        <button
+                            onClick={clearAllFilters}
+                            className="flex items-center gap-1 px-3 py-2.5 rounded-xl text-xs font-bold text-red-400 hover:bg-red-500/10 transition-all border border-transparent hover:border-red-500/20"
+                        >
+                            <X className="h-3 w-3" />
+                            {lang === 'ta' ? 'அழி' : 'Clear'}
+                        </button>
                     )}
                 </div>
             </div>
+
+            {/* Custom Date Range */}
+            {dateFilter === 'custom' && (
+                <div className="flex flex-wrap gap-3 items-center bg-[var(--color-bg-dark)] p-3 rounded-xl border border-[var(--color-border)]">
+                    <Calendar className="h-4 w-4 text-[var(--color-text-gray)]" />
+                    <div className="flex items-center gap-2">
+                        <label className="text-[10px] font-bold uppercase text-[var(--color-text-gray)]">{lang === 'ta' ? 'தொடக்கம்' : 'From'}</label>
+                        <input
+                            type="date"
+                            value={customDateFrom}
+                            onChange={(e) => setCustomDateFrom(e.target.value)}
+                            className="bg-[var(--color-bg-card)] border border-[var(--color-border)] rounded-lg px-3 py-1.5 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                        />
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <label className="text-[10px] font-bold uppercase text-[var(--color-text-gray)]">{lang === 'ta' ? 'முடிவு' : 'To'}</label>
+                        <input
+                            type="date"
+                            value={customDateTo}
+                            onChange={(e) => setCustomDateTo(e.target.value)}
+                            className="bg-[var(--color-bg-card)] border border-[var(--color-border)] rounded-lg px-3 py-1.5 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                        />
+                    </div>
+                </div>
+            )}
 
             {/* Expense List */}
             <div className="space-y-6">
@@ -309,7 +483,10 @@ const ExpensesPage = () => {
                             {lang === 'ta' ? 'செலவுகள் எதுவும் இல்லை' : 'No expenses found'}
                         </p>
                         <p className="text-sm opacity-60">
-                            {lang === 'ta' ? 'செலவுகளை சேர்க்க மேலே உள்ள பொத்தானை அழுத்தவும்' : 'Tap the button above to add your first expense'}
+                            {activeFilterCount > 0
+                                ? (lang === 'ta' ? 'வடிகட்டி அமைப்புகளை மாற்றவும்' : 'Try adjusting your filters')
+                                : (lang === 'ta' ? 'செலவுகளை சேர்க்க மேலே உள்ள பொத்தானை அழுத்தவும்' : 'Tap the button above to add your first expense')
+                            }
                         </p>
                     </div>
                 ) : (
@@ -345,29 +522,28 @@ const ExpensesPage = () => {
                                                     {expense.description && (
                                                         <p className="text-xs text-[var(--color-text-gray)] truncate">{expense.description}</p>
                                                     )}
-                                                    <div className="flex items-center gap-2 mt-1">
+                                                    <div className="flex items-center gap-2 mt-1 flex-wrap">
                                                         <span className="text-[9px] font-bold uppercase tracking-widest text-[var(--color-text-gray)] bg-[var(--color-bg-dark)] px-2 py-0.5 rounded-full">
                                                             {expense.paymentMode}
                                                         </span>
                                                         <span className="text-[9px] text-[var(--color-text-gray)]">
                                                             {new Date(expense.date).toLocaleTimeString(lang === 'ta' ? 'ta-IN' : 'en-IN', { hour: '2-digit', minute: '2-digit', hour12: true })}
                                                         </span>
+                                                        {isAdmin && expense.creatorEmail && (
+                                                            <span className="text-[9px] font-bold text-purple-400 bg-purple-500/10 px-2 py-0.5 rounded-full truncate max-w-[120px]">
+                                                                {expense.creatorEmail}
+                                                            </span>
+                                                        )}
                                                     </div>
                                                 </div>
                                             </div>
                                             <div className="flex items-center gap-3">
                                                 <span className="font-black text-lg text-red-500">₹{(expense.amount || 0).toLocaleString()}</span>
                                                 <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                    <button
-                                                        onClick={() => openEdit(expense)}
-                                                        className="p-2 hover:bg-[var(--color-bg-dark)] rounded-lg text-[var(--color-text-gray)] hover:text-blue-500 transition-colors"
-                                                    >
+                                                    <button onClick={() => openEdit(expense)} className="p-2 hover:bg-[var(--color-bg-dark)] rounded-lg text-[var(--color-text-gray)] hover:text-blue-500 transition-colors">
                                                         <Edit3 className="h-4 w-4" />
                                                     </button>
-                                                    <button
-                                                        onClick={() => setDeleteTarget(expense)}
-                                                        className="p-2 hover:bg-[var(--color-bg-dark)] rounded-lg text-[var(--color-text-gray)] hover:text-red-500 transition-colors"
-                                                    >
+                                                    <button onClick={() => setDeleteTarget(expense)} className="p-2 hover:bg-[var(--color-bg-dark)] rounded-lg text-[var(--color-text-gray)] hover:text-red-500 transition-colors">
                                                         <Trash2 className="h-4 w-4" />
                                                     </button>
                                                 </div>
@@ -385,143 +561,79 @@ const ExpensesPage = () => {
             <Modal
                 isOpen={showModal}
                 onClose={() => { setShowModal(false); resetForm(); }}
-                title={editingExpense
-                    ? (t.edit_expense || 'Edit Expense')
-                    : (t.add_expense || 'Add Expense')
-                }
+                title={editingExpense ? (t.edit_expense || 'Edit Expense') : (t.add_expense || 'Add Expense')}
             >
                 <div className="space-y-5">
-                    {/* Category Selection */}
                     <div className="space-y-2">
-                        <label className="text-[9px] font-bold text-[var(--color-text-gray)]/60 uppercase tracking-widest">
-                            {t.category || 'Category'}
-                        </label>
+                        <label className="text-[9px] font-bold text-[var(--color-text-gray)]/60 uppercase tracking-widest">{t.category || 'Category'}</label>
                         <div className="grid grid-cols-4 gap-2">
                             {CATEGORIES.map(cat => (
-                                <button
-                                    key={cat.id}
-                                    onClick={() => setForm({ ...form, category: cat.id })}
-                                    className={cn(
-                                        "flex flex-col items-center justify-center py-3 px-1 rounded-xl border transition-all gap-1.5",
-                                        form.category === cat.id
-                                            ? "border-blue-500 bg-blue-50 shadow-sm ring-2 ring-blue-500/20"
-                                            : "border-[var(--color-border)] bg-[var(--color-bg-dark)]/50 hover:border-[var(--color-text-gray)]/40"
-                                    )}
-                                >
-                                    <cat.icon className={cn("h-5 w-5", form.category === cat.id ? "text-blue-600" : cat.color)} />
-                                    <span className={cn(
-                                        "text-[9px] font-black uppercase tracking-tighter leading-tight text-center",
-                                        form.category === cat.id ? "text-blue-600" : "text-[var(--color-text-gray)]"
+                                <button key={cat.id} onClick={() => setForm({ ...form, category: cat.id })}
+                                    className={cn("flex flex-col items-center justify-center py-3 px-1 rounded-xl border transition-all gap-1.5",
+                                        form.category === cat.id ? "border-blue-500 bg-blue-50 shadow-sm ring-2 ring-blue-500/20" : "border-[var(--color-border)] bg-[var(--color-bg-dark)]/50 hover:border-[var(--color-text-gray)]/40"
                                     )}>
+                                    <cat.icon className={cn("h-5 w-5", form.category === cat.id ? "text-blue-600" : cat.color)} />
+                                    <span className={cn("text-[9px] font-black uppercase tracking-tighter leading-tight text-center", form.category === cat.id ? "text-blue-600" : "text-[var(--color-text-gray)]")}>
                                         {lang === 'ta' ? cat.labelTa : cat.label}
                                     </span>
                                 </button>
                             ))}
-                            <button
-                                onClick={() => setForm({ ...form, category: 'custom' })}
-                                className={cn(
-                                    "flex flex-col items-center justify-center py-3 px-1 rounded-xl border transition-all gap-1.5",
-                                    form.category === 'custom'
-                                        ? "border-blue-500 bg-blue-50 shadow-sm ring-2 ring-blue-500/20"
-                                        : "border-[var(--color-border)] bg-[var(--color-bg-dark)]/50 hover:border-[var(--color-text-gray)]/40"
-                                )}
-                            >
-                                <FileText className={cn("h-5 w-5", form.category === 'custom' ? "text-blue-600" : "text-[var(--color-text-gray)]")} />
-                                <span className={cn(
-                                    "text-[9px] font-black uppercase tracking-tighter",
-                                    form.category === 'custom' ? "text-blue-600" : "text-[var(--color-text-gray)]"
+                            <button onClick={() => setForm({ ...form, category: 'custom' })}
+                                className={cn("flex flex-col items-center justify-center py-3 px-1 rounded-xl border transition-all gap-1.5",
+                                    form.category === 'custom' ? "border-blue-500 bg-blue-50 shadow-sm ring-2 ring-blue-500/20" : "border-[var(--color-border)] bg-[var(--color-bg-dark)]/50 hover:border-[var(--color-text-gray)]/40"
                                 )}>
+                                <FileText className={cn("h-5 w-5", form.category === 'custom' ? "text-blue-600" : "text-[var(--color-text-gray)]")} />
+                                <span className={cn("text-[9px] font-black uppercase tracking-tighter", form.category === 'custom' ? "text-blue-600" : "text-[var(--color-text-gray)]")}>
                                     {lang === 'ta' ? 'மற்றவை' : 'Custom'}
                                 </span>
                             </button>
                         </div>
                         {form.category === 'custom' && (
-                            <input
-                                placeholder={lang === 'ta' ? 'வகையை உள்ளிடவும்...' : 'Enter category name...'}
-                                value={form.customCategory}
+                            <input placeholder={lang === 'ta' ? 'வகையை உள்ளிடவும்...' : 'Enter category name...'} value={form.customCategory}
                                 onChange={(e) => setForm({ ...form, customCategory: e.target.value })}
                                 className="w-full mt-2 bg-[var(--color-bg-dark)] border border-[var(--color-border)] rounded-xl px-4 py-2.5 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500/20 text-[var(--color-text-white)]"
                             />
                         )}
                     </div>
-
-                    {/* Amount */}
                     <div className="space-y-2">
-                        <label className="text-[9px] font-bold text-[var(--color-text-gray)]/60 uppercase tracking-widest">
-                            {t.amount || 'Amount'}
-                        </label>
+                        <label className="text-[9px] font-bold text-[var(--color-text-gray)]/60 uppercase tracking-widest">{t.amount || 'Amount'}</label>
                         <div className="relative">
                             <span className="absolute left-4 top-1/2 -translate-y-1/2 text-lg font-black text-blue-500">₹</span>
-                            <input
-                                type="number"
-                                placeholder="0"
-                                value={form.amount}
-                                onChange={(e) => setForm({ ...form, amount: e.target.value })}
+                            <input type="number" placeholder="0" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })}
                                 className="w-full bg-[var(--color-bg-dark)] border border-[var(--color-border)] rounded-xl pl-10 pr-4 py-3 text-2xl font-black focus:outline-none focus:ring-2 focus:ring-blue-500/20 text-[var(--color-text-white)]"
                             />
                         </div>
                     </div>
-
-                    {/* Description */}
                     <div className="space-y-2">
-                        <label className="text-[9px] font-bold text-[var(--color-text-gray)]/60 uppercase tracking-widest">
-                            {t.description || 'Description'}
-                        </label>
-                        <input
-                            placeholder={lang === 'ta' ? 'விவரம் (விருப்பமானது)...' : 'Description (optional)...'}
-                            value={form.description}
+                        <label className="text-[9px] font-bold text-[var(--color-text-gray)]/60 uppercase tracking-widest">{t.description || 'Description'}</label>
+                        <input placeholder={lang === 'ta' ? 'விவரம் (விருப்பமானது)...' : 'Description (optional)...'} value={form.description}
                             onChange={(e) => setForm({ ...form, description: e.target.value })}
                             className="w-full bg-[var(--color-bg-dark)] border border-[var(--color-border)] rounded-xl px-4 py-2.5 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500/20 text-[var(--color-text-white)]"
                         />
                     </div>
-
-                    {/* Payment Mode */}
                     <div className="space-y-2">
-                        <label className="text-[9px] font-bold text-[var(--color-text-gray)]/60 uppercase tracking-widest">
-                            {t.payment_mode}
-                        </label>
+                        <label className="text-[9px] font-bold text-[var(--color-text-gray)]/60 uppercase tracking-widest">{t.payment_mode}</label>
                         <div className="grid grid-cols-3 gap-2">
                             {PAYMENT_MODES.map(mode => (
-                                <button
-                                    key={mode.id}
-                                    onClick={() => setForm({ ...form, paymentMode: mode.id })}
-                                    className={cn(
-                                        "flex flex-col items-center justify-center py-3 rounded-xl border transition-all h-14",
-                                        form.paymentMode === mode.id
-                                            ? "border-blue-500 bg-blue-50 text-blue-600 shadow-sm ring-2 ring-blue-500/20"
-                                            : "border-[var(--color-border)] bg-[var(--color-bg-dark)]/50 text-[var(--color-text-gray)]"
-                                    )}
-                                >
+                                <button key={mode.id} onClick={() => setForm({ ...form, paymentMode: mode.id })}
+                                    className={cn("flex flex-col items-center justify-center py-3 rounded-xl border transition-all h-14",
+                                        form.paymentMode === mode.id ? "border-blue-500 bg-blue-50 text-blue-600 shadow-sm ring-2 ring-blue-500/20" : "border-[var(--color-border)] bg-[var(--color-bg-dark)]/50 text-[var(--color-text-gray)]"
+                                    )}>
                                     <mode.icon className="h-5 w-5 mb-1" />
                                     <span className="text-[10px] font-black uppercase">{t[mode.id]}</span>
                                 </button>
                             ))}
                         </div>
                     </div>
-
-                    {/* Date */}
                     <div className="space-y-2">
-                        <label className="text-[9px] font-bold text-[var(--color-text-gray)]/60 uppercase tracking-widest">
-                            {t.date || 'Date'}
-                        </label>
-                        <input
-                            type="datetime-local"
-                            value={form.date}
-                            onChange={(e) => setForm({ ...form, date: e.target.value })}
+                        <label className="text-[9px] font-bold text-[var(--color-text-gray)]/60 uppercase tracking-widest">{t.date || 'Date'}</label>
+                        <input type="datetime-local" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })}
                             className="w-full bg-[var(--color-bg-dark)] border border-[var(--color-border)] rounded-xl px-4 py-2.5 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500/20 text-[var(--color-text-white)]"
                         />
                     </div>
-
-                    {/* Save Button */}
-                    <Button
-                        onClick={handleSave}
-                        disabled={!form.amount || Number(form.amount) <= 0}
-                        className="w-full h-14 bg-[#3B82F6] hover:bg-blue-700 text-white rounded-2xl shadow-lg shadow-blue-500/20 font-black uppercase tracking-widest text-sm border-none mt-2"
-                    >
-                        {editingExpense
-                            ? (t.save || 'Save')
-                            : (t.add_expense || 'Add Expense')
-                        }
+                    <Button onClick={handleSave} disabled={!form.amount || Number(form.amount) <= 0}
+                        className="w-full h-14 bg-[#3B82F6] hover:bg-blue-700 text-white rounded-2xl shadow-lg shadow-blue-500/20 font-black uppercase tracking-widest text-sm border-none mt-2">
+                        {editingExpense ? (t.save || 'Save') : (t.add_expense || 'Add Expense')}
                     </Button>
                 </div>
             </Modal>

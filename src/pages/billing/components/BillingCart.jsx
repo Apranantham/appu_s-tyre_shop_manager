@@ -159,12 +159,17 @@ const BillingCart = ({
 
                             <div className="space-y-1.5">
                                 <label className="text-[9px] font-bold text-[var(--color-text-gray)]/60 uppercase tracking-widest ml-1">{t.phone}</label>
-                                <input
-                                    placeholder="+91 00000 00000"
-                                    value={customer.phone}
-                                    onChange={(e) => onUpdateCustomer('phone', e.target.value)}
-                                    className="w-full bg-[var(--color-bg-dark)] border border-[var(--color-border)] rounded-xl px-4 py-2.5 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-[var(--color-text-white)] shadow-sm"
-                                />
+                                <div className="relative flex items-center group/input">
+                                    <div className="absolute left-4 text-xs font-black text-blue-500/60 pointer-events-none">
+                                        +91
+                                    </div>
+                                    <input
+                                        placeholder="00000 00000"
+                                        value={customer.phone}
+                                        onChange={(e) => onUpdateCustomer('phone', e.target.value)}
+                                        className="w-full bg-[var(--color-bg-dark)] border border-[var(--color-border)] rounded-xl pl-12 pr-4 py-2.5 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-[var(--color-text-white)] shadow-sm"
+                                    />
+                                </div>
                             </div>
 
 

@@ -118,9 +118,43 @@ const CustomerProfile = () => {
     };
 
     const shareOnWhatsApp = (invoice) => {
-        const itemsList = invoice.items.map(item => `- ${item.name} (${item.quantity}x)`).join('%0A');
-        const message = `*TurboTyre Central Invoice*%0A%0AHello ${invoice.customer.name}, here is your billing summary:%0A%0A*Invoice ID:* ${invoice.id}%0A*Total:* ₹${invoice.total.toFixed(2)}%0A%0A*Items:*%0A${itemsList}%0A%0AThank you!`;
-        const whatsappUrl = `https://wa.me/${invoice.customer.phone.replace(/[^0-9]/g, '')}?text=${message}`;
+        const emojiMap = { product: '📦', service: '🛠️' };
+        const itemsList = invoice.items.map(item => `${emojiMap[item.type] || '🔹'} *${item.name}* (x${item.quantity}) - ₹${item.price.toLocaleString()}`).join('%0A');
+
+        const border = '━━━━━━━━━━━━━━━━';
+        const shopDisplayName = shopDetails?.shopName || 'TURBOTYRE';
+        const shopAddress = shopDetails?.shopAddress ? `📍 ${shopDetails.shopAddress}%0A` : '';
+        const shopPhone = shopDetails?.shopPhone ? `📞 ${shopDetails.shopPhone}%0A` : '';
+
+        const message =
+            `*${shopDisplayName}*
+${shopAddress}${shopPhone}
+*${border}*
+🚀 *INVOICE SUMMARY*
+*${border}*
+
+👤 *Customer:* ${invoice.customer.name}
+${invoice.customer.vehicle ? `🚗 *Vehicle:* ${invoice.customer.vehicle}%0A` : ''}📅 *Date:* ${new Date(invoice.date).toLocaleDateString()}
+
+*ITEMS:*
+${itemsList}
+
+*${border}*
+💰 *Subtotal:* ₹${invoice.subtotal?.toLocaleString()}
+🏷️ *Discount:* -₹${invoice.discount?.toLocaleString()}
+⭐ *TOTAL:* ₹${invoice.total?.toLocaleString()}
+*${border}*
+
+💵 *Paid:* ₹${invoice.paidAmount?.toLocaleString()}
+🛑 *Balance:* ₹${invoice.balanceAmount?.toLocaleString()}
+💳 *Status:* ${invoice.paymentStatus?.toUpperCase() || 'PAID'}
+
+*${border}*
+Thank you for your business! 🏁`;
+
+        const rawPhone = invoice.customer.phone.replace(/[^0-9]/g, '');
+        const formattedPhone = rawPhone.length === 10 ? `91${rawPhone}` : rawPhone;
+        const whatsappUrl = `https://wa.me/${formattedPhone}?text=${message}`;
         window.open(whatsappUrl, '_blank');
     };
 
@@ -148,7 +182,31 @@ const CustomerProfile = () => {
     };
 
     const shareProfileSummary = () => {
-        const message = `*TurboTyre Customer Profile Summary*%0A%0A*Name:* ${customer.name}%0A*Phone:* ${customer.phone}%0A*Vehicle:* ${customer.car}%0A%0A*Stats:*%0A- Lifetime Spend: ${customer.spend}%0A- Total Visits: ${customer.visits}%0A- Last Visit: ${customer.lastVisit}%0A- Favourite Brand: ${customer.topBrand}%0A%0A_Generated via TurboTyre Central_`;
+        const border = '━━━━━━━━━━━━━━━━';
+        const shopDisplayName = shopDetails?.shopName || 'TURBOTYRE';
+        const shopAddress = shopDetails?.shopAddress ? `📍 ${shopDetails.shopAddress}%0A` : '';
+        const shopPhone = shopDetails?.shopPhone ? `📞 ${shopDetails.shopPhone}%0A` : '';
+
+        const message =
+            `*${shopDisplayName}*
+${shopAddress}${shopPhone}
+*${border}*
+👤 *CUSTOMER PROFILE*
+*${border}*
+
+*Name:* ${customer.name}
+*Phone:* ${customer.phone}
+*Vehicle:* ${customer.car}
+
+*STATS:*
+📈 Lifetime Spend: ${customer.spend}
+🏁 Total Visits: ${customer.visits}
+📅 Last Visit: ${customer.lastVisit}
+🏷️ Top Brand: ${customer.topBrand}
+
+*${border}*
+_Generated via ${shopDisplayName}_`;
+
         const whatsappUrl = `https://wa.me/?text=${message}`;
         window.open(whatsappUrl, '_blank');
     };
