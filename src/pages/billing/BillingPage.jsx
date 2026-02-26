@@ -255,7 +255,7 @@ const BillingPage = () => {
             `*${shopDisplayName}*
 ${shopAddress}${shopPhone}
 *${border}*
-🚀 *INVOICE SUMMARY*
+🚀 *INVOICE SUMMARY (*#${invoice.invoiceNo || invoice.id}*)*
 *${border}*
 
 👤 *Customer:* ${lastInvoice.customer.name}
@@ -330,7 +330,7 @@ Thank you for your business! 🏁`;
                         </div>
                         <div>
                             <h2 className="text-3xl font-bold mb-2">Payment Paid!</h2>
-                            <p className="text-[var(--color-text-gray)]">Invoice #{lastInvoice.id} generated successfully</p>
+                            <p className="text-[var(--color-text-gray)]">Invoice #{lastInvoice.invoiceNo || lastInvoice.id} generated successfully</p>
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">

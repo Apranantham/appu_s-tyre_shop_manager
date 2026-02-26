@@ -130,7 +130,7 @@ const CustomerProfile = () => {
             `*${shopDisplayName}*
 ${shopAddress}${shopPhone}
 *${border}*
-🚀 *INVOICE SUMMARY*
+🚀 *INVOICE SUMMARY (*#${invoice.invoiceNo || invoice.id}*)*
 *${border}*
 
 👤 *Customer:* ${invoice.customer.name}
@@ -505,7 +505,7 @@ _Generated via ${shopDisplayName}_`;
                         </div>
                         <div>
                             <h3 className="text-xl font-bold">{t.delete_invoice}?</h3>
-                            <p className="text-[var(--color-text-gray)] text-sm">{t.delete_invoice_confirm} #{invoiceToDelete.id}</p>
+                            <p className="text-[var(--color-text-gray)] text-sm">{t.delete_invoice_confirm} #{invoiceToDelete.invoiceNo || invoiceToDelete.id}</p>
                         </div>
                         <div className="flex space-x-3">
                             <Button variant="outline" className="flex-1" onClick={() => setInvoiceToDelete(null)}>{t.cancel}</Button>

@@ -142,6 +142,47 @@ const BillingHistory = () => {
 
     const filteredInvoices = getSortedInvoices();
 
+    const shareOnWhatsApp = (invoice) => {
+        const emojiMap = { product: '📦', service: '🛠️' };
+        const itemsList = invoice.items.map(item => `${emojiMap[item.type] || '🔹'} *${item.name}* (x${item.quantity}) - ₹${item.price.toLocaleString()}`).join('%0A');
+
+        const border = '━━━━━━━━━━━━━━━━';
+        const shopDisplayName = shopDetails?.shopName || 'TURBOTYRE';
+        const shopAddress = shopDetails?.shopAddress ? `📍 ${shopDetails.shopAddress}%0A` : '';
+        const shopPhone = shopDetails?.shopPhone ? `📞 ${shopDetails.shopPhone}%0A` : '';
+
+        const message =
+            `*${shopDisplayName}*
+${shopAddress}${shopPhone}
+*${border}*
+🚀 *INVOICE SUMMARY (*#${invoice.invoiceNo || invoice.id}*)*
+*${border}*
+
+👤 *Customer:* ${invoice.customer.name}
+${invoice.customer.vehicle ? `🚗 *Vehicle:* ${invoice.customer.vehicle}%0A` : ''}📅 *Date:* ${new Date(invoice.date).toLocaleDateString()}
+
+*ITEMS:*
+${itemsList}
+
+*${border}*
+💰 *Subtotal:* ₹${invoice.subtotal?.toLocaleString()}
+🏷️ *Discount:* -₹${invoice.discount?.toLocaleString()}
+⭐ *TOTAL:* ₹${invoice.total?.toLocaleString()}
+*${border}*
+
+💵 *Paid:* ₹${invoice.paidAmount?.toLocaleString()}
+🛑 *Balance:* ₹${invoice.balanceAmount?.toLocaleString()}
+💳 *Status:* ${invoice.paymentStatus?.toUpperCase() || 'PAID'}
+
+*${border}*
+Thank you for your business! 🏁`;
+
+        const rawPhone = invoice.customer.phone.replace(/[^0-9]/g, '');
+        const formattedPhone = rawPhone.length === 10 ? `91${rawPhone}` : rawPhone;
+        const whatsappUrl = `https://wa.me/${formattedPhone}?text=${message}`;
+        window.open(whatsappUrl, '_blank');
+    };
+
 
     return (
         <div className="space-y-6 pb-20">
@@ -362,7 +403,7 @@ const BillingHistory = () => {
                                 <div className="flex justify-between items-start">
                                     <div className="space-y-1.5">
                                         <div className="flex items-center gap-2">
-                                            <span className="text-[9px] font-black text-[var(--color-primary)] bg-[var(--color-primary)]/10 px-2 py-0.5 rounded-lg border border-[var(--color-primary)]/20 uppercase tracking-widest">#{inv.id}</span>
+                                            <span className="text-[9px] font-black text-[var(--color-primary)] bg-[var(--color-primary)]/10 px-2 py-0.5 rounded-lg border border-[var(--color-primary)]/20 uppercase tracking-widest">#{inv.invoiceNo || inv.id}</span>
                                             <span className="text-[9px] font-black text-gray-500 uppercase tracking-widest">{new Date(inv.date).toLocaleDateString(lang === 'ta' ? 'ta-IN' : 'en-IN', { day: '2-digit', month: 'short' })}</span>
                                         </div>
                                         <h3 className="text-lg font-black text-[var(--color-text-white)] leading-tight tracking-tight">{inv.customer?.name || (lang === 'ta' ? 'வாடிக்கையாளர்' : 'Walk-in')}</h3>
@@ -436,6 +477,13 @@ const BillingHistory = () => {
                     <div className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-[var(--color-bg-card)] rounded-2xl shadow-2xl animate-in zoom-in-95 duration-200 border border-[var(--color-border)]">
                         <div className="sticky top-0 right-0 p-4 flex justify-end z-10 bg-[var(--color-bg-card)]/80 backdrop-blur-md border-b border-[var(--color-border)]">
                             <div className="flex space-x-2">
+                                <Button
+                                    size="sm"
+                                    onClick={() => shareOnWhatsApp(selectedInvoice)}
+                                    className="bg-green-600 hover:bg-green-700 text-white rounded-xl px-4"
+                                >
+                                    WhatsApp
+                                </Button>
                                 <Button size="sm" onClick={handlePrint} className="bg-[#3B82F6] text-white rounded-xl px-6">
                                     <Printer className="h-4 w-4 mr-2" /> {t.print}
                                 </Button>
@@ -496,7 +544,7 @@ const BillingHistory = () => {
                             </div>
                             <div>
                                 <h3 className="text-xl font-black uppercase tracking-tight leading-tight">{lang === 'ta' ? 'பணத்தை செட்டில் செய்க' : 'Settle Payment'}</h3>
-                                <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Inv #{selectedInvoice.id} • Bal: ₹{(selectedInvoice.balanceAmount || 0).toLocaleString()}</p>
+                                <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Inv #{selectedInvoice.invoiceNo || selectedInvoice.id} • Bal: ₹{(selectedInvoice.balanceAmount || 0).toLocaleString()}</p>
                             </div>
                         </div>
 
