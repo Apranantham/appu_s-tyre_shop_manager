@@ -7,6 +7,7 @@ import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { useNavigate } from 'react-router-dom';
 import { createPortal } from 'react-dom';
+import { Trash2, RefreshCcw, ArrowLeft, History, AlertCircle } from 'lucide-react';
 import { cn } from '../../utils/cn';
 import Loader from '../../components/ui/Loader';
 
