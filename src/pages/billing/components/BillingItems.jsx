@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, Package, Wrench, ChevronRight, Plus, Minus, X } from 'lucide-react';
+import { Search, Package, Wrench, ChevronRight, Plus, Minus, X, ArrowLeft } from 'lucide-react';
 import { cn } from '../../../utils/cn';
 import { Card } from '../../../components/ui/Card';
 import { Button } from '../../../components/ui/Button';
@@ -9,7 +9,7 @@ import { useSettings } from '../../../context/SettingsContext';
 import { translations } from '../../../utils/translations';
 import { FALLBACK_IMAGE } from '../../../utils/constants';
 
-const BillingItems = ({ onAddToCart, onUpdateQuantity, onRemoveItem, cart = [] }) => {
+const BillingItems = ({ onAddToCart, onUpdateQuantity, onRemoveItem, cart = [], onBack }) => {
     const { products } = useProducts();
     const { services } = useServices();
     const { shopDetails } = useSettings();
@@ -38,6 +38,24 @@ const BillingItems = ({ onAddToCart, onUpdateQuantity, onRemoveItem, cart = [] }
 
     return (
         <div className="flex flex-col h-full bg-[var(--color-bg-card)] border border-[var(--color-border)] rounded-xl md:mr-4 overflow-hidden w-full max-w-full">
+            {/* Header with Exit button if onBack is provided */}
+            {onBack && (
+                <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--color-border)] bg-[var(--color-bg-card)] shrink-0">
+                    <button
+                        onClick={onBack}
+                        className="flex items-center gap-2 text-[var(--color-text-gray)] hover:text-[var(--color-primary)] transition-colors group"
+                    >
+                        <ArrowLeft className="h-5 w-5 group-hover:-translate-x-1 transition-transform" />
+                        <span className="text-xs font-black uppercase tracking-widest">{t.exit || 'Exit'}</span>
+                    </button>
+                    <div className="flex items-center gap-2">
+                        <span className="h-1.5 w-1.5 rounded-full bg-blue-500 animate-pulse"></span>
+                        <h2 className="text-[10px] font-black tracking-[0.2em] text-[var(--color-text-gray)] uppercase">
+                            {t.billing_mode || 'BILLING MODE'}
+                        </h2>
+                    </div>
+                </div>
+            )}
             {/* ... tabs ... */}
             <div className="p-4 border-b border-[var(--color-border)] space-y-4">
                 {/* ... existing tab buttons ... */}

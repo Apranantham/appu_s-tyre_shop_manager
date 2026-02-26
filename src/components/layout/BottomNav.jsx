@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { Home, Users, Package, Wrench, Plus } from 'lucide-react';
+import { Home, Users, Package, Wallet, Plus } from 'lucide-react';
 import { useSettings } from '../../context/SettingsContext';
 import { translations } from '../../utils/translations';
 import { cn } from '../../utils/cn';
@@ -39,11 +39,11 @@ const BottomNav = () => {
             </div>
 
             <NavLink
-                to="/services"
+                to="/expenses"
                 className={({ isActive }) => cn("flex flex-col items-center justify-center w-16 h-14 mb-1", isActive ? "text-[#3B82F6]" : "text-[var(--color-text-gray)]")}
             >
-                <Wrench className="h-6 w-6" />
-                <span className="text-[10px] mt-1 font-bold uppercase tracking-tighter">{t.services}</span>
+                <Wallet className="h-6 w-6" />
+                <span className="text-[10px] mt-1 font-bold uppercase tracking-tighter">{t.expenses || 'Expenses'}</span>
             </NavLink>
 
             <NavLink
@@ -54,6 +54,7 @@ const BottomNav = () => {
                 <span className="text-[10px] mt-1 font-bold uppercase tracking-tighter">{t.inventory}</span>
             </NavLink>
         </div>
+
     );
 };
 

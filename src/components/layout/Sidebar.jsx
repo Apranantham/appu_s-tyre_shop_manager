@@ -11,7 +11,8 @@ import {
     Moon,
     LogOut,
     History,
-    ShieldCheck
+    ShieldCheck,
+    Wallet
 } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
@@ -33,9 +34,11 @@ const Sidebar = ({ isMobile }) => {
         { icon: Wrench, label: t.services, path: '/services' },
         { icon: Users, label: t.customers, path: '/customers' },
         { icon: History, label: t.history, path: '/history' },
+        { icon: Wallet, label: t.expenses || 'Expenses', path: '/expenses' },
         { icon: Settings, label: t.settings, path: '/settings' },
         ...(user?.isAdmin ? [{ icon: ShieldCheck, label: t.admin_panel, path: '/admin' }] : []),
     ];
+
 
     return (
         <aside className={cn(

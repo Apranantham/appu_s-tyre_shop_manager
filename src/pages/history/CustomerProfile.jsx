@@ -21,6 +21,7 @@ import {
     Printer
 } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { cn } from '../../utils/cn';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
 import { useInvoices } from '../../context/InvoiceContext';
@@ -131,7 +132,12 @@ const CustomerProfile = () => {
 
     const handleEdit = (invoice) => {
         // We pass the invoice data to the billing page via state
-        navigate('/billing', { state: { editInvoice: invoice } });
+        navigate('/billing', {
+            state: {
+                editInvoice: invoice,
+                from: window.location.pathname
+            }
+        });
     };
 
     const handleDelete = () => {
@@ -291,7 +297,20 @@ const CustomerProfile = () => {
                         </div>
                     </Card>
                 </div>
+
+                <Card className="rounded-3xl p-5 bg-[var(--color-bg-card)] border border-[var(--color-border)]">
+                    <p className="text-[var(--color-text-gray)] text-xs font-black uppercase tracking-widest mb-1">{t.total_pending}</p>
+                    <div className="flex items-baseline space-x-2">
+                        <h3 className={cn(
+                            "text-3xl font-bold",
+                            customerInvoices.reduce((sum, inv) => sum + (inv.balanceAmount || 0), 0) > 0 ? "text-orange-500" : "text-green-500"
+                        )}>
+                            ₹{customerInvoices.reduce((sum, inv) => sum + (inv.balanceAmount || 0), 0).toLocaleString()}
+                        </h3>
+                    </div>
+                </Card>
             </div>
+
 
             {/* Timeline */}
             <div>

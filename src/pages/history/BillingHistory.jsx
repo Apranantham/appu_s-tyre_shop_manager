@@ -60,7 +60,11 @@ const BillingHistory = () => {
         if (location.state?.statusFilter) {
             setStatusFilter(location.state.statusFilter);
         }
+        if (location.state?.dateFilter) {
+            setDateFilter(location.state.dateFilter);
+        }
     }, [location.state]);
+
 
     const printRef = useRef();
     const handlePrint = useReactToPrint({

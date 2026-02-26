@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useState, useMemo } from 'react';
 import { X, Plus, Minus, User, Phone, Car, CreditCard, Banknote, QrCode, Calendar, FileText, CheckCircle2, Clock, Search, ShoppingCart, ArrowLeft, Coins, Wallet, History, Send } from 'lucide-react';
 import { cn } from '../../../utils/cn';
 import { Button } from '../../../components/ui/Button';
 import { Card } from '../../../components/ui/Card';
 import { useSettings } from '../../../context/SettingsContext';
+import { useInvoices } from '../../../context/InvoiceContext';
 import { translations } from '../../../utils/translations';
 
 const BillingCart = ({
@@ -28,6 +29,27 @@ const BillingCart = ({
     onToggleView
 }) => {
     const { shopDetails } = useSettings();
+    const { invoices } = useInvoices();
+    const [showSuggestions, setShowSuggestions] = useState(false);
+
+    const filteredHistory = useMemo(() => {
+        if (!customer.name) return [];
+
+        // Get unique customers from invoices
+        const customers = Object.values(invoices.reduce((acc, inv) => {
+            const key = inv.customer?.phone || inv.customer?.name;
+            if (key && (!acc[key] || new Date(inv.date) > new Date(acc[key].date))) {
+                acc[key] = inv.customer;
+            }
+            return acc;
+        }, {}));
+
+        return customers.filter(c =>
+            c.name.toLowerCase().includes(customer.name.toLowerCase()) ||
+            (c.phone && c.phone.includes(customer.name))
+        ).slice(0, 5); // Limit to 5 suggestions
+    }, [customer.name, invoices]);
+
     const lang = shopDetails?.appLanguage || 'ta';
     const t = translations[lang];
 
@@ -80,14 +102,59 @@ const BillingCart = ({
                         </div>
 
                         <div className="grid grid-cols-2 gap-4">
-                            <div className="col-span-2 space-y-1.5">
+                            <div className="col-span-2 space-y-1.5 relative">
                                 <label className="text-[9px] font-bold text-[var(--color-text-gray)]/60 uppercase tracking-widest ml-1">{t.name}</label>
-                                <input
-                                    placeholder={t.name_placeholder || "Enter customer name"}
-                                    value={customer.name}
-                                    onChange={(e) => onUpdateCustomer('name', e.target.value)}
-                                    className="w-full bg-[var(--color-bg-dark)] border border-[var(--color-border)] rounded-xl px-4 py-2.5 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-[var(--color-text-white)] shadow-sm"
-                                />
+                                <div className="relative group/input">
+                                    <input
+                                        placeholder={t.name_placeholder || "Enter customer name"}
+                                        value={customer.name}
+                                        onChange={(e) => {
+                                            const val = e.target.value;
+                                            onUpdateCustomer('name', val);
+                                            setShowSuggestions(true);
+                                        }}
+                                        onFocus={() => setShowSuggestions(true)}
+                                        className="w-full bg-[var(--color-bg-dark)] border border-[var(--color-border)] rounded-xl px-4 py-2.5 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-[var(--color-text-white)] shadow-sm"
+                                    />
+                                    {showSuggestions && customer.name && filteredHistory.length > 0 && (
+                                        <>
+                                            <div className="fixed inset-0 z-[60]" onClick={() => setShowSuggestions(false)}></div>
+                                            <div className="absolute left-0 right-0 top-full mt-2 bg-[var(--color-bg-card)] border border-[var(--color-border)] rounded-2xl shadow-2xl overflow-hidden z-[70] animate-in fade-in slide-in-from-top-2 duration-200 lg:max-h-60 overflow-y-auto custom-scrollbar">
+                                                <div className="p-2 border-b border-[var(--color-border)] bg-[var(--color-bg-dark)]/50">
+                                                    <p className="text-[9px] font-black uppercase tracking-widest text-[var(--color-text-gray)] px-2">Existing Customers</p>
+                                                </div>
+                                                {filteredHistory.map((cust, idx) => (
+                                                    <button
+                                                        key={idx}
+                                                        type="button"
+                                                        onClick={() => {
+                                                            onUpdateCustomer('name', cust.name);
+                                                            onUpdateCustomer('phone', cust.phone);
+                                                            onUpdateCustomer('vehicle', cust.vehicle);
+                                                            setShowSuggestions(false);
+                                                        }}
+                                                        className="w-full text-left px-4 py-3 hover:bg-blue-600/10 transition-colors flex items-center justify-between border-b border-[var(--color-border)]/50 last:border-none"
+                                                    >
+                                                        <div>
+                                                            <p className="font-bold text-sm text-[var(--color-text-white)]">{cust.name}</p>
+                                                            <div className="flex items-center gap-2 mt-0.5">
+                                                                <span className="text-[10px] text-[var(--color-text-gray)] flex items-center gap-1">
+                                                                    <Phone className="h-2.5 w-2.5" /> {cust.phone}
+                                                                </span>
+                                                                {cust.vehicle && (
+                                                                    <span className="text-[10px] text-[var(--color-text-gray)] flex items-center gap-1 uppercase">
+                                                                        <Car className="h-2.5 w-2.5" /> {cust.vehicle}
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                        <History className="h-4 w-4 text-[var(--color-text-gray)]/30" />
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </>
+                                    )}
+                                </div>
                             </div>
 
                             <div className="space-y-1.5">
@@ -99,6 +166,7 @@ const BillingCart = ({
                                     className="w-full bg-[var(--color-bg-dark)] border border-[var(--color-border)] rounded-xl px-4 py-2.5 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-[var(--color-text-white)] shadow-sm"
                                 />
                             </div>
+
 
                             <div className="space-y-1.5 text-blue-600">
                                 <label className="text-[9px] font-bold text-[var(--color-text-gray)]/60 uppercase tracking-widest ml-1">{t.date || 'DATE'}</label>

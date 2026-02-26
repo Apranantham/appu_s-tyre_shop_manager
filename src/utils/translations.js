@@ -36,6 +36,8 @@ export const translations = {
         edit_customer: 'Edit Customer',
         customer_not_found: 'Customer Not Found',
         back_to_history: 'Back to History',
+        exit: 'Exit',
+        billing_mode: 'Billing Mode',
 
         // Dashboard
         monthly_revenue: 'MONTHLY REVENUE',
@@ -136,6 +138,7 @@ export const translations = {
         edit_customer: 'Edit Customer',
         update_records: 'Update All Records',
         customer_not_found: 'Customer not found',
+        total_pending: 'Total Pending',
 
         // Admin
         admin_control_panel: 'Admin Control Panel',
@@ -146,7 +149,22 @@ export const translations = {
         performance_by_user: 'Performance by User',
         employee_email: 'Employee / Email',
         last_activity: 'Last Activity',
-        view_sales: 'View Sales'
+        view_sales: 'View Sales',
+
+        // Expenses
+        expenses: 'Expenses',
+        add_expense: 'Add Expense',
+        edit_expense: 'Edit Expense',
+        delete_expense: 'Delete Expense',
+        monthly_expenses: 'Monthly Expenses',
+        real_profit: 'Real Profit',
+        category: 'Category',
+        description: 'Description',
+        amount: 'Amount',
+        track_expenses: 'Track and manage your shop expenses',
+        search_expenses: 'Search expenses...',
+        all_categories: 'All Categories',
+        category_breakdown: 'Category Breakdown'
     },
     ta: {
         // Sidebar
@@ -285,6 +303,9 @@ export const translations = {
         edit_customer: 'வாடிக்கையாளர் விவரம் திருத்து',
         update_records: 'அனைத்து பதிவுகளையும் புதுப்பி',
         customer_not_found: 'வாடிக்கையாளர் காணப்படவில்லை',
+        total_pending: 'மொத்த நிலுவை',
+        exit: 'வெளியேறு',
+        billing_mode: 'பில்லிங் முறை',
 
         // Admin
         admin_control_panel: 'நிர்வாகக் கட்டுப்பாட்டுப் பலகம்',
@@ -295,6 +316,21 @@ export const translations = {
         performance_by_user: 'பயனர் வாரியான செயல்திறன்',
         employee_email: 'ஊழியர் / மின்னஞ்சல்',
         last_activity: 'கடைசி செயல்பாடு',
-        view_sales: 'விற்பனையைப் பார்'
+        view_sales: 'விற்பனையைப் பார்',
+
+        // Expenses
+        expenses: 'செலவுகள்',
+        add_expense: 'செலவு சேர்',
+        edit_expense: 'செலவு திருத்து',
+        delete_expense: 'செலவு நீக்கு',
+        monthly_expenses: 'மாதாந்திர செலவுகள்',
+        real_profit: 'உண்மையான லாபம்',
+        category: 'வகை',
+        description: 'விவரம்',
+        amount: 'தொகை',
+        track_expenses: 'கடை செலவுகளை கண்காணிக்கவும்',
+        search_expenses: 'செலவுகளைத் தேடு...',
+        all_categories: 'அனைத்து வகைகளும்',
+        category_breakdown: 'வகை வாரியான செலவு'
     }
 };

@@ -93,10 +93,19 @@ const BillingPage = () => {
             setIsAutoTime(false); // Don't auto-update when editing an old invoice
             setShowCart(true); // Switch to cart view immediately
 
-            // Clear location state to prevent reload on refresh
-            navigate(location.pathname, { replace: true, state: {} });
+            // Note: We keep the state here for a moment to capture 'from' if it exists
         }
     }, [location.state, navigate, location.pathname]);
+
+    const returnPath = location.state?.from;
+
+    const handleBackToSource = () => {
+        if (returnPath) {
+            navigate(returnPath);
+        } else {
+            navigate(-1);
+        }
+    };
 
     const handlePrint = useReactToPrint({
         contentRef: componentRef,
@@ -177,6 +186,14 @@ const BillingPage = () => {
         const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
         const total = subtotal - (Number(discount) || 0);
 
+        // Ensure paidAmount is synchronized with paymentStatus at final checkout
+        let finalPaidAmount = Number(paidAmount) || 0;
+        if (paymentStatus === 'paid') {
+            finalPaidAmount = total;
+        } else if (paymentStatus === 'pending') {
+            finalPaidAmount = 0;
+        }
+
         const invoiceData = {
             id: editingId || Date.now(),
             date: new Date(billingDate).toISOString(),
@@ -187,9 +204,9 @@ const BillingPage = () => {
             total,
             paymentMode,
             paymentStatus,
-            paidAmount: Number(paidAmount) || 0,
+            paidAmount: finalPaidAmount,
             paymentNote: paymentNote || '',
-            balanceAmount: total - (Number(paidAmount) || 0),
+            balanceAmount: total - finalPaidAmount,
             isClosed: paymentStatus === 'paid'
         };
 
@@ -337,6 +354,7 @@ const BillingPage = () => {
                     onUpdateQuantity={updateQuantity}
                     onRemoveItem={removeItem}
                     cart={cart}
+                    onBack={handleBackToSource}
                 />
             </div>
 

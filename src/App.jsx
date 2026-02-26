@@ -10,6 +10,7 @@ import LoginPage from './pages/auth/LoginPage';
 import { ProductProvider } from './context/ProductContext';
 import { ServiceProvider } from './context/ServiceContext';
 import { InvoiceProvider } from './context/InvoiceContext';
+import { ExpenseProvider } from './context/ExpenseContext';
 import { SettingsProvider } from './context/SettingsContext';
 import DashboardPage from './pages/dashboard/DashboardPage';
 import InventoryPage from './pages/inventory/InventoryPage';
@@ -21,6 +22,7 @@ import BillingPage from './pages/billing/BillingPage';
 import SettingsPage from './pages/settings/SettingsPage';
 import AdminPanel from './pages/admin/AdminPanel';
 import RecycleBin from './pages/admin/RecycleBin';
+import ExpensesPage from './pages/expenses/ExpensesPage';
 
 function App() {
   return (
@@ -30,38 +32,41 @@ function App() {
           <ProductProvider>
             <ServiceProvider>
               <InvoiceProvider>
-                <Router>
-                  <ScrollToTop />
-                  <Routes>
-                    {/* Public Route */}
-                    <Route path="/login" element={<LoginPage />} />
+                <ExpenseProvider>
+                  <Router>
+                    <ScrollToTop />
+                    <Routes>
+                      {/* Public Route */}
+                      <Route path="/login" element={<LoginPage />} />
 
-                    {/* Protected Routes */}
-                    <Route
-                      path="/"
-                      element={
-                        <ProtectedRoute>
-                          <Layout />
-                        </ProtectedRoute>
-                      }
-                    >
-                      <Route index element={<Navigate to="/dashboard" replace />} />
-                      <Route path="dashboard" element={<DashboardPage />} />
-                      <Route path="billing" element={<BillingPage />} />
-                      <Route path="inventory" element={<InventoryPage />} />
-                      <Route path="services" element={<ServicePage />} />
-                      <Route path="customers" element={<CustomerHistory />} />
-                      <Route path="customers/:id" element={<CustomerProfile />} />
-                      <Route path="history" element={<BillingHistory />} />
-                      <Route path="settings" element={<SettingsPage />} />
-                      <Route path="admin" element={<AdminPanel />} />
-                      <Route path="admin/recycle-bin" element={<RecycleBin />} />
-                    </Route>
+                      {/* Protected Routes */}
+                      <Route
+                        path="/"
+                        element={
+                          <ProtectedRoute>
+                            <Layout />
+                          </ProtectedRoute>
+                        }
+                      >
+                        <Route index element={<Navigate to="/dashboard" replace />} />
+                        <Route path="dashboard" element={<DashboardPage />} />
+                        <Route path="billing" element={<BillingPage />} />
+                        <Route path="inventory" element={<InventoryPage />} />
+                        <Route path="services" element={<ServicePage />} />
+                        <Route path="customers" element={<CustomerHistory />} />
+                        <Route path="customers/:id" element={<CustomerProfile />} />
+                        <Route path="history" element={<BillingHistory />} />
+                        <Route path="expenses" element={<ExpensesPage />} />
+                        <Route path="settings" element={<SettingsPage />} />
+                        <Route path="admin" element={<AdminPanel />} />
+                        <Route path="admin/recycle-bin" element={<RecycleBin />} />
+                      </Route>
 
-                    {/* Catch-all redirect */}
-                    <Route path="*" element={<Navigate to="/dashboard" replace />} />
-                  </Routes>
-                </Router>
+                      {/* Catch-all redirect */}
+                      <Route path="*" element={<Navigate to="/dashboard" replace />} />
+                    </Routes>
+                  </Router>
+                </ExpenseProvider>
               </InvoiceProvider>
             </ServiceProvider>
           </ProductProvider>

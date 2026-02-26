@@ -96,15 +96,29 @@ const CustomerHistory = () => {
 
                                 <div className="flex items-center justify-between md:justify-end gap-6 flex-1">
                                     <div className="text-right">
+                                        <p className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-gray)]">Total Pending</p>
+                                        <p className={cn(
+                                            "font-bold text-xl",
+                                            invoices
+                                                .filter(i => (i.customer?.phone && i.customer?.phone === invoice.customer?.phone) || (i.customer?.name === invoice.customer?.name))
+                                                .reduce((sum, i) => sum + (i.balanceAmount || 0), 0) > 0 ? "text-orange-500" : "text-green-500"
+                                        )}>
+                                            ₹{invoices
+                                                .filter(i => (i.customer?.phone && i.customer?.phone === invoice.customer?.phone) || (i.customer?.name === invoice.customer?.name))
+                                                .reduce((sum, i) => sum + (i.balanceAmount || 0), 0)
+                                                .toLocaleString()}
+                                        </p>
+                                    </div>
+                                    <div className="text-right">
                                         <p className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-gray)]">{t.lifetime_value}</p>
                                         <p className="font-bold text-xl text-[var(--color-primary)]">
                                             ₹{invoices
                                                 .filter(i => (i.customer?.phone && i.customer?.phone === invoice.customer?.phone) || (i.customer?.name === invoice.customer?.name))
                                                 .reduce((sum, i) => sum + i.total, 0)
-                                                .toFixed(2)}
+                                                .toLocaleString()}
                                         </p>
                                     </div>
-                                    <div className="text-right">
+                                    <div className="text-right hidden sm:block">
                                         <p className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-gray)]">{t.visits}</p>
                                         <p className="font-medium">
                                             {invoices.filter(i => (i.customer?.phone && i.customer?.phone === invoice.customer?.phone) || (i.customer?.name === invoice.customer?.name)).length}
@@ -114,6 +128,7 @@ const CustomerHistory = () => {
                                         {t.view_profile} <ArrowRight className="ml-2 h-4 w-4" />
                                     </Button>
                                 </div>
+
                             </Card>
                         )
                     })
