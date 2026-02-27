@@ -154,13 +154,13 @@ Thank you for your business! 🏁`;
 
         const rawPhone = invoice.customer.phone.replace(/[^0-9]/g, '');
         const formattedPhone = rawPhone.length === 10 ? `91${rawPhone}` : rawPhone;
-        const whatsappUrl = `https://wa.me/${formattedPhone}?text=${message}`;
+        const whatsappUrl = `https://wa.me/${formattedPhone}?text=${encodeURIComponent(message.replace(/%0A/g, '\n'))}`;
         window.open(whatsappUrl, '_blank');
     };
 
     const shareViaSMS = (invoice) => {
-        const message = `TurboTyre: Hello ${invoice.customer.name}, your bill of ₹${invoice.total.toFixed(2)} is paid. Invoice #${invoice.id}. Thank you!`;
-        const smsUrl = `sms:${invoice.customer.phone}?body=${message}`;
+        const message = `TurboTyre: Hello ${invoice.customer.name}, your bill of ₹${invoice.total.toFixed(2)} is paid. Invoice #${invoice.invoiceNo || invoice.id}. Thank you!`;
+        const smsUrl = `sms:${invoice.customer.phone}?body=${encodeURIComponent(message)}`;
         window.open(smsUrl);
     };
 
@@ -207,14 +207,14 @@ ${shopAddress}${shopPhone}
 *${border}*
 _Generated via ${shopDisplayName}_`;
 
-        const whatsappUrl = `https://wa.me/?text=${message}`;
+        const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message.replace(/%0A/g, '\n'))}`;
         window.open(whatsappUrl, '_blank');
     };
 
     const downloadHistoryCSV = () => {
         const headers = ["Invoice ID", "Date", "Total", "Items"];
         const rows = customerInvoices.map(inv => [
-            inv.id,
+            inv.invoiceNo || inv.id,
             new Date(inv.date).toLocaleDateString(),
             inv.total,
             `"${inv.items.map(i => `${i.name}(${i.quantity})`).join('; ')}"`
@@ -234,11 +234,11 @@ _Generated via ${shopDisplayName}_`;
 
     const handleUpdateCustomer = async (e) => {
         e.preventDefault();
-        const oldPhone = customer.phone;
         const newPhone = editData.phone;
-        await updateCustomerInfo(oldPhone, editData);
+        // Use customerPhone from params as the reliable identifier for all the customer's invoices
+        await updateCustomerInfo(customerPhone, editData);
         setShowEditModal(false);
-        if (oldPhone !== newPhone) {
+        if (customerPhone !== newPhone) {
             navigate(`/customers/${newPhone}`, { replace: true });
         }
     };

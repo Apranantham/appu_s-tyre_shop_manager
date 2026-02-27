@@ -179,7 +179,7 @@ Thank you for your business! 🏁`;
 
         const rawPhone = invoice.customer.phone.replace(/[^0-9]/g, '');
         const formattedPhone = rawPhone.length === 10 ? `91${rawPhone}` : rawPhone;
-        const whatsappUrl = `https://wa.me/${formattedPhone}?text=${message}`;
+        const whatsappUrl = `https://wa.me/${formattedPhone}?text=${encodeURIComponent(message.replace(/%0A/g, '\n'))}`;
         window.open(whatsappUrl, '_blank');
     };
 

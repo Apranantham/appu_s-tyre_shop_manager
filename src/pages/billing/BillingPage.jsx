@@ -255,7 +255,7 @@ const BillingPage = () => {
             `*${shopDisplayName}*
 ${shopAddress}${shopPhone}
 *${border}*
-🚀 *INVOICE SUMMARY (*#${invoice.invoiceNo || invoice.id}*)*
+🚀 *INVOICE SUMMARY (*#${lastInvoice.invoiceNo || lastInvoice.id}*)*
 *${border}*
 
 👤 *Customer:* ${lastInvoice.customer.name}
@@ -279,7 +279,8 @@ Thank you for your business! 🏁`;
 
         const rawPhone = lastInvoice.customer.phone.replace(/[^0-9]/g, '');
         const formattedPhone = rawPhone.length === 10 ? `91${rawPhone}` : rawPhone;
-        const whatsappUrl = `https://wa.me/${formattedPhone}?text=${message}`;
+        // Encode the message to prevent truncation from newlines/emojis
+        const whatsappUrl = `https://wa.me/${formattedPhone}?text=${encodeURIComponent(message.replace(/%0A/g, '\n'))}`;
         window.open(whatsappUrl, '_blank');
     };
 

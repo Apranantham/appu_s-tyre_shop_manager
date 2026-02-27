@@ -198,8 +198,8 @@ export const InvoiceProvider = ({ children }) => {
         return invoices.filter(inv => !inv.isClosed && (inv.paymentStatus === 'pending' || inv.paymentStatus === 'partially_paid'));
     };
 
-    const updateCustomerInfo = async (phone, newInfo) => {
-        const customerInvoices = invoices.filter(inv => inv.customer?.phone === phone);
+    const updateCustomerInfo = async (identifier, newInfo) => {
+        const customerInvoices = getCustomerHistory(identifier);
         const updatePromises = customerInvoices.map(inv => {
             const updatedCustomer = { ...inv.customer, ...newInfo };
             return updateInvoice(inv.id, { customer: updatedCustomer });
