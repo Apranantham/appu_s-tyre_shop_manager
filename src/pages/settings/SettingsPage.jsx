@@ -6,7 +6,7 @@ import { translations } from '../../utils/translations';
 import { cn } from '../../utils/cn'; // Assuming cn utility is available
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
-import { User, LogOut, Sun, Moon, Info, Shield, Store, Save, Type, Monitor } from 'lucide-react';
+import { User, LogOut, Sun, Moon, Info, Shield, Store, Save, Type, Monitor, Wallet } from 'lucide-react';
 
 const SettingsPage = () => {
     const { user, login, logout, isAuthenticated } = useAuth();
@@ -201,7 +201,82 @@ const SettingsPage = () => {
                 </Card>
             )}
 
-            {/* Appearance Section */}
+            {/* Payment Settings (UPI) Section - Admin Only */}
+            {isAdmin && (
+                <Card className="p-8 bg-[var(--color-bg-card)]/40 backdrop-blur-xl border border-[var(--color-border)] rounded-[2.5rem] shadow-2xl overflow-hidden relative group transition-all hover:bg-[var(--color-bg-card)]/60">
+                    <div className="absolute top-0 right-0 p-8 opacity-[0.03] transform group-hover:scale-110 transition-transform duration-1000">
+                        <Wallet className="h-32 w-32" />
+                    </div>
+
+                    <div className="flex items-center space-x-3 text-emerald-500 mb-8 relative z-10">
+                        <div className="h-10 w-10 rounded-2xl bg-emerald-500/10 flex items-center justify-center">
+                            <Wallet className="h-5 w-5" />
+                        </div>
+                        <h2 className="font-black text-xl uppercase tracking-tight text-[var(--color-text)]">{t.payment_settings || 'Payment Settings'}</h2>
+                    </div>
+
+                    <div className="space-y-6 relative z-10">
+                        <p className="text-[10px] font-bold text-[var(--color-text-gray)] uppercase tracking-[0.15em] opacity-60">
+                            {t.upi_settings_desc || 'Configure UPI IDs for QR code payments. These can be updated anytime.'}
+                        </p>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="space-y-2.5">
+                                <label className="text-[11px] font-black text-[var(--color-text-gray)]/80 uppercase tracking-[0.2em] block px-1">
+                                    {t.admin_upi_id || 'Admin UPI ID'}
+                                </label>
+                                <input
+                                    type="text"
+                                    value={formData.adminUpiId || ''}
+                                    onChange={(e) => setFormData(prev => ({ ...prev, adminUpiId: e.target.value }))}
+                                    placeholder="e.g. admin@upi"
+                                    className="w-full bg-[var(--color-bg-dark)] border border-[var(--color-border)] rounded-[1.5rem] px-5 py-4 text-sm font-bold focus:outline-none focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 shadow-inner transition-all text-[var(--color-text)] placeholder:text-[var(--color-text-gray)]/30"
+                                />
+                            </div>
+                            <div className="space-y-2.5">
+                                <label className="text-[11px] font-black text-[var(--color-text-gray)]/80 uppercase tracking-[0.2em] block px-1">
+                                    {t.user_upi_id || 'User UPI ID'}
+                                </label>
+                                <input
+                                    type="text"
+                                    value={formData.userUpiId || ''}
+                                    onChange={(e) => setFormData(prev => ({ ...prev, userUpiId: e.target.value }))}
+                                    placeholder="e.g. user@upi"
+                                    className="w-full bg-[var(--color-bg-dark)] border border-[var(--color-border)] rounded-[1.5rem] px-5 py-4 text-sm font-bold focus:outline-none focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 shadow-inner transition-all text-[var(--color-text)] placeholder:text-[var(--color-text-gray)]/30"
+                                />
+                            </div>
+                        </div>
+                        <Button
+                            onClick={async () => {
+                                setIsSaving(true);
+                                setSaveMessage('');
+                                try {
+                                    await updateShopDetails({
+                                        adminUpiId: formData.adminUpiId || '',
+                                        userUpiId: formData.userUpiId || ''
+                                    });
+                                    setSaveMessage('UPI settings saved successfully!');
+                                    setTimeout(() => setSaveMessage(''), 3000);
+                                } catch (error) {
+                                    setSaveMessage('Failed to save UPI settings.');
+                                } finally {
+                                    setIsSaving(false);
+                                }
+                            }}
+                            className="w-full h-18 py-5 bg-emerald-600 hover:bg-emerald-700 shadow-2xl shadow-emerald-500/30 text-[11px] font-black uppercase tracking-[0.25em] rounded-[1.5rem] transition-all active:scale-95 border-none mt-2"
+                            disabled={isSaving}
+                        >
+                            {isSaving ? (
+                                <div className="h-6 w-6 border-3 border-white border-t-transparent rounded-full animate-spin mx-auto"></div>
+                            ) : (
+                                <div className="flex items-center justify-center gap-3">
+                                    <Save className="h-5 w-5" />
+                                    {t.save_upi || 'Save UPI Settings'}
+                                </div>
+                            )}
+                        </Button>
+                    </div>
+                </Card>
+            )}
             <Card className="p-8 bg-[var(--color-bg-card)]/40 backdrop-blur-xl border border-[var(--color-border)] rounded-[2.5rem] shadow-2xl overflow-hidden relative group transition-all hover:bg-[var(--color-bg-card)]/60">
                 <div className="absolute top-0 right-0 p-8 opacity-[0.03] transform group-hover:scale-110 transition-transform duration-1000">
                     <Monitor className="h-32 w-32" />

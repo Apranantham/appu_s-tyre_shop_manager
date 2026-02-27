@@ -5,6 +5,7 @@ import { useReactToPrint } from 'react-to-print';
 import BillingItems from './components/BillingItems';
 import BillingCart from './components/BillingCart';
 import InvoiceTemplate from './components/InvoiceTemplate';
+import UpiQrModal from './components/UpiQrModal';
 import { useProducts } from '../../context/ProductContext';
 import { useInvoices } from '../../context/InvoiceContext';
 import { useSettings } from '../../context/SettingsContext';
@@ -12,7 +13,7 @@ import { translations } from '../../utils/translations';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import Loader from '../../components/ui/Loader';
-import { CheckCircle2, Download, MessageSquare, Printer, X, Plus, Home, ShoppingCart, Edit2 } from 'lucide-react';
+import { CheckCircle2, Download, MessageSquare, Printer, X, Plus, Home, ShoppingCart, Edit2, QrCode } from 'lucide-react';
 
 const BillingPage = () => {
     const { products, updateStock } = useProducts();
@@ -30,10 +31,12 @@ const BillingPage = () => {
     const [showCart, setShowCart] = useState(false);
     const [isCheckoutSuccess, setIsCheckoutSuccess] = useState(false);
     const [editingId, setEditingId] = useState(null);
+    const [editingInvoiceNo, setEditingInvoiceNo] = useState(null);
     const [paymentStatus, setPaymentStatus] = useState('paid');
     const [paidAmount, setPaidAmount] = useState(0);
     const [paymentNote, setPaymentNote] = useState('');
     const [discount, setDiscount] = useState(0);
+    const [showUpiQr, setShowUpiQr] = useState(false);
     const [isAutoTime, setIsAutoTime] = useState(true);
     const getLocalDateTime = () => {
         const now = new Date();
@@ -86,6 +89,7 @@ const BillingPage = () => {
             setPaymentMode(editInvoice.paymentMode || 'cash');
             setDiscount(editInvoice.discount || 0);
             setEditingId(editInvoice.id);
+            setEditingInvoiceNo(editInvoice.invoiceNo || null);
             setPaymentStatus(editInvoice.paymentStatus || 'paid');
             setPaidAmount(editInvoice.paidAmount || editInvoice.total || 0);
             setPaymentNote(editInvoice.paymentNote || '');
@@ -207,7 +211,8 @@ const BillingPage = () => {
             paidAmount: finalPaidAmount,
             paymentNote: paymentNote || '',
             balanceAmount: total - finalPaidAmount,
-            isClosed: paymentStatus === 'paid'
+            isClosed: paymentStatus === 'paid',
+            invoiceNo: editingInvoiceNo
         };
 
         let finalizedInvoice = { ...invoiceData };
@@ -241,6 +246,7 @@ const BillingPage = () => {
         setIsCheckoutSuccess(false);
         setLastInvoice(null);
         setEditingId(null);
+        setEditingInvoiceNo(null);
         setDiscount(0);
         setPaymentStatus('paid');
         setPaidAmount(0);
@@ -329,57 +335,146 @@ Thank you for your business! 🏁`;
         <div ref={pageRef} className="min-h-[calc(100vh-2rem)] lg:h-[calc(100vh-2rem)] flex flex-col lg:flex-row gap-4 overflow-y-auto lg:overflow-hidden relative pb-20 lg:pb-0">
             {/* Success Overlay */}
             {isCheckoutSuccess && lastInvoice && createPortal(
-                <div className="fixed inset-0 z-[100] bg-[var(--color-bg-dark)]/95 backdrop-blur-md flex items-center justify-center p-4">
-                    <Card className="max-w-md w-full p-8 text-center space-y-6 border-[var(--color-primary)] shadow-[0_0_50px_rgba(59,130,246,0.2)] animate-in zoom-in-95 duration-300">
-                        <div className="flex justify-center">
-                            <div className="h-20 w-20 rounded-full bg-green-500/20 flex items-center justify-center text-green-500 animate-bounce">
-                                <CheckCircle2 className="h-12 w-12" />
-                            </div>
-                        </div>
-                        <div>
-                            <h2 className="text-3xl font-bold mb-2">Payment Paid!</h2>
-                            <p className="text-[var(--color-text-gray)]">Invoice #{lastInvoice.invoiceNo || lastInvoice.id} generated successfully</p>
-                        </div>
+                <div className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-xl flex items-start justify-center overflow-y-auto p-4 py-8">
+                    <Card className="w-full max-w-md p-0 border-emerald-500/20 shadow-[0_0_80px_rgba(16,185,129,0.1)] animate-in zoom-in-95 fade-in slide-in-from-bottom-4 duration-500 overflow-hidden rounded-[2.5rem] shrink-0">
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
-                            <Button
-                                className="flex items-center justify-center h-20 space-x-3 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl shadow-lg border-none"
-                                onClick={() => handlePrint()}
-                            >
-                                <Printer className="h-8 w-8" />
-                                <div className="text-left">
-                                    <p className="font-black text-lg leading-tight uppercase">Print / PDF</p>
-                                    <p className="text-xs opacity-80 uppercase font-bold">Print Bill Now</p>
-                                </div>
-                            </Button>
-
-                            <Button
-                                className="flex items-center justify-center h-20 space-x-3 bg-green-600 hover:bg-green-700 text-white rounded-2xl shadow-xl shadow-green-500/20 border-none"
-                                onClick={shareOnWhatsApp}
-                            >
-                                <svg className="h-8 w-8" viewBox="0 0 24 24" fill="currentColor">
-                                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z" />
-                                </svg>
-                                <div className="text-left">
-                                    <p className="font-black text-lg leading-tight uppercase">WhatsApp</p>
-                                    <p className="text-xs opacity-80 uppercase font-bold">Share to Customer</p>
-                                </div>
-                            </Button>
-                        </div>
-
-                        <div className="pt-8 space-y-3">
-                            <div className="grid grid-cols-2 gap-3">
-                                <Button className="bg-green-500 py-6 rounded-2xl text-base font-black shadow-lg shadow-green-500/20 flex items-center justify-center uppercase tracking-widest border-none" onClick={resetBilling}>
-                                    <Plus className="h-5 w-5 mr-2 stroke-[3px]" /> {t.new_bill || 'Next Bill'}
-                                </Button>
-                                <Button variant="outline" className="py-6 rounded-2xl text-base font-black border-2 border-[var(--color-border)] hover:bg-[var(--color-bg-dark)]/50 flex items-center justify-center uppercase tracking-widest" onClick={handleEditAfterPaid}>
-                                    <Edit2 className="h-5 w-5 mr-2 stroke-[3px]" /> {t.edit_bill || 'Edit Bill'}
-                                </Button>
+                        {/* Hero Header with Gradient */}
+                        <div className="relative bg-gradient-to-br from-emerald-600 via-green-500 to-teal-400 px-8 pt-10 pb-14 text-white text-center overflow-hidden">
+                            {/* Animated Background Dots */}
+                            <div className="absolute inset-0 pointer-events-none overflow-hidden">
+                                <div className="absolute top-6 left-8 w-3 h-3 bg-white/15 rounded-full animate-ping" style={{ animationDuration: '3s' }} />
+                                <div className="absolute top-16 right-12 w-2 h-2 bg-white/20 rounded-full animate-ping" style={{ animationDuration: '2.5s', animationDelay: '0.5s' }} />
+                                <div className="absolute bottom-10 left-16 w-2.5 h-2.5 bg-white/10 rounded-full animate-ping" style={{ animationDuration: '4s', animationDelay: '1s' }} />
+                                <div className="absolute top-10 left-1/2 w-2 h-2 bg-white/15 rounded-full animate-ping" style={{ animationDuration: '3.5s', animationDelay: '1.5s' }} />
+                                <div className="absolute bottom-20 right-8 w-3 h-3 bg-white/10 rounded-full animate-ping" style={{ animationDuration: '2s', animationDelay: '0.8s' }} />
+                                <div className="absolute -top-10 -right-10 w-40 h-40 bg-white/5 rounded-full" />
+                                <div className="absolute -bottom-8 -left-8 w-32 h-32 bg-white/5 rounded-full" />
                             </div>
 
-                            <Button variant="ghost" className="w-full py-4 text-sm font-bold text-[var(--color-text-gray)] hover:text-[var(--color-text-white)] flex items-center justify-center" onClick={() => navigate('/dashboard')}>
-                                <Home className="h-5 w-5 mr-2" /> Back to Home
-                            </Button>
+                            {/* Success Icon */}
+                            <div className="relative z-10">
+                                <div className="h-20 w-20 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center mx-auto mb-4 shadow-2xl shadow-black/10 ring-4 ring-white/20">
+                                    <CheckCircle2 className="h-12 w-12 text-white drop-shadow-lg" />
+                                </div>
+                                <h2 className="text-2xl font-black tracking-tight mb-1 drop-shadow-sm">{t.payment_paid || 'Payment Successful!'}</h2>
+                                <p className="text-white/70 text-[10px] font-bold uppercase tracking-[0.2em]">
+                                    {lastInvoice.invoiceNo ? `#${lastInvoice.invoiceNo}` : `ID: ${lastInvoice.id}`}
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* Card Body */}
+                        <div className="bg-[var(--color-bg-card)]">
+
+                            {/* Amount Badge - Floating */}
+                            <div className="relative z-10 -mt-7 px-5">
+                                <div className="bg-[var(--color-bg-dark)] border border-emerald-500/20 rounded-2xl px-5 py-4 flex items-center justify-between shadow-xl">
+                                    <div>
+                                        <p className="text-[8px] font-black text-[var(--color-text-gray)] uppercase tracking-[0.25em] opacity-50">{t.total_amount || 'Total Amount'}</p>
+                                        <p className="text-2xl font-black text-[var(--color-text)] tracking-tight">₹{lastInvoice.total?.toLocaleString()}</p>
+                                    </div>
+                                    <div className="text-right">
+                                        <p className="text-[8px] font-black uppercase tracking-[0.2em] opacity-50 text-[var(--color-text-gray)]">{t.payment_status || 'Status'}</p>
+                                        <span className={`inline-block mt-1 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${lastInvoice.paymentStatus === 'paid'
+                                            ? 'bg-emerald-500/15 text-emerald-500 ring-1 ring-emerald-500/20'
+                                            : lastInvoice.paymentStatus === 'partial'
+                                                ? 'bg-amber-500/15 text-amber-500 ring-1 ring-amber-500/20'
+                                                : 'bg-red-500/15 text-red-500 ring-1 ring-red-500/20'
+                                            }`}>
+                                            {lastInvoice.paymentStatus === 'paid' ? (t.full_paid || 'Paid') : lastInvoice.paymentStatus === 'partial' ? (t.partial_paid || 'Partial') : (t.pay_later || 'Pending')}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Share Actions */}
+                            <div className="px-5 pt-5 pb-2">
+                                <p className="text-[8px] font-black text-[var(--color-text-gray)] uppercase tracking-[0.25em] opacity-40 mb-3 px-1">{t.share_invoice || 'Share Invoice'}</p>
+                                <div className="grid grid-cols-3 gap-2.5">
+                                    {/* Print */}
+                                    <button
+                                        onClick={() => handlePrint()}
+                                        className="group relative bg-blue-600 hover:bg-blue-700 text-white rounded-2xl p-3.5 flex flex-col items-center gap-2 transition-all active:scale-95 shadow-lg shadow-blue-500/20 overflow-hidden"
+                                    >
+                                        <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent pointer-events-none" />
+                                        <div className="h-10 w-10 rounded-xl bg-white/20 flex items-center justify-center group-hover:scale-110 transition-transform relative z-10">
+                                            <Printer className="h-5 w-5" />
+                                        </div>
+                                        <div className="text-center relative z-10">
+                                            <p className="text-[10px] font-black uppercase tracking-wide leading-tight">Print</p>
+                                            <p className="text-[7px] opacity-60 font-bold uppercase tracking-wider mt-0.5">PDF</p>
+                                        </div>
+                                    </button>
+
+                                    {/* WhatsApp */}
+                                    <button
+                                        onClick={shareOnWhatsApp}
+                                        className="group relative bg-[#25D366] hover:bg-[#1fb855] text-white rounded-2xl p-3.5 flex flex-col items-center gap-2 transition-all active:scale-95 shadow-lg shadow-green-500/20 overflow-hidden"
+                                    >
+                                        <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent pointer-events-none" />
+                                        <div className="h-10 w-10 rounded-xl bg-white/20 flex items-center justify-center group-hover:scale-110 transition-transform relative z-10">
+                                            <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
+                                                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z" />
+                                            </svg>
+                                        </div>
+                                        <div className="text-center relative z-10">
+                                            <p className="text-[10px] font-black uppercase tracking-wide leading-tight">WhatsApp</p>
+                                            <p className="text-[7px] opacity-60 font-bold uppercase tracking-wider mt-0.5">Share</p>
+                                        </div>
+                                    </button>
+
+                                    {/* UPI QR */}
+                                    <button
+                                        onClick={() => setShowUpiQr(true)}
+                                        className="group relative bg-gradient-to-br from-emerald-600 to-teal-500 hover:from-emerald-700 hover:to-teal-600 text-white rounded-2xl p-3.5 flex flex-col items-center gap-2 transition-all active:scale-95 shadow-lg shadow-emerald-500/20 overflow-hidden"
+                                    >
+                                        <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent pointer-events-none" />
+                                        <div className="h-10 w-10 rounded-xl bg-white/20 flex items-center justify-center group-hover:scale-110 transition-transform relative z-10">
+                                            <QrCode className="h-5 w-5" />
+                                        </div>
+                                        <div className="text-center relative z-10">
+                                            <p className="text-[10px] font-black uppercase tracking-wide leading-tight">{t.upi_qr_code || 'UPI QR'}</p>
+                                            <p className="text-[7px] opacity-60 font-bold uppercase tracking-wider mt-0.5">{t.scan_to_pay || 'Pay'}</p>
+                                        </div>
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Next Bill & Edit Bill */}
+                            <div className="px-5 pt-4">
+                                <div className="grid grid-cols-2 gap-2.5">
+                                    <Button
+                                        className="bg-emerald-500 hover:bg-emerald-600 py-4 rounded-2xl text-[10px] font-black shadow-lg shadow-emerald-500/20 flex items-center justify-center uppercase tracking-[0.15em] border-none active:scale-95 transition-all"
+                                        onClick={resetBilling}
+                                    >
+                                        <Plus className="h-4 w-4 mr-1.5 stroke-[3px]" /> {t.new_bill || 'Next Bill'}
+                                    </Button>
+                                    <Button
+                                        variant="outline"
+                                        className="py-4 rounded-2xl text-[10px] font-black border-2 border-[var(--color-border)] hover:bg-[var(--color-bg-dark)]/50 flex items-center justify-center uppercase tracking-[0.15em] active:scale-95 transition-all"
+                                        onClick={handleEditAfterPaid}
+                                    >
+                                        <Edit2 className="h-4 w-4 mr-1.5 stroke-[3px]" /> {t.edit_bill || 'Edit Bill'}
+                                    </Button>
+                                </div>
+                            </div>
+
+                            {/* Back to Home */}
+                            <div className="px-5 pt-3 pb-6">
+                                <button
+                                    onClick={() => navigate('/dashboard')}
+                                    className="w-full group flex items-center justify-center gap-3 py-4 px-5 rounded-2xl bg-[var(--color-bg-dark)]/60 border border-[var(--color-border)] hover:border-[var(--color-primary)]/30 hover:bg-[var(--color-bg-dark)] transition-all active:scale-[0.98]"
+                                >
+                                    <div className="h-9 w-9 rounded-xl bg-[var(--color-primary)]/10 flex items-center justify-center group-hover:bg-[var(--color-primary)]/20 transition-colors">
+                                        <Home className="h-4 w-4 text-[var(--color-primary)]" />
+                                    </div>
+                                    <div className="text-left">
+                                        <p className="text-xs font-black text-[var(--color-text)] uppercase tracking-tight">{t.back_to_home || 'Back to Home'}</p>
+                                        <p className="text-[8px] font-bold text-[var(--color-text-gray)] uppercase tracking-[0.15em] opacity-50">{t.return_to_dashboard || 'Return to Dashboard'}</p>
+                                    </div>
+                                </button>
+                            </div>
+
                         </div>
                     </Card>
                 </div>,
@@ -464,6 +559,17 @@ Thank you for your business! 🏁`;
             {/* Print Template (Hidden from UI, visible only for print) */}
             {/* Print Template (Hidden from UI, visible only for print) */}
             <InvoiceTemplate ref={componentRef} invoice={lastInvoice} />
+
+            {/* UPI QR Code Modal (portaled to body so it appears above the success overlay) */}
+            {showUpiQr && lastInvoice && createPortal(
+                <UpiQrModal
+                    amount={lastInvoice.total}
+                    onClose={() => setShowUpiQr(false)}
+                    shopName={shopDetails?.shopName}
+                    t={t}
+                />,
+                document.body
+            )}
         </div>
     );
 };

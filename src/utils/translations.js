@@ -164,7 +164,25 @@ export const translations = {
         track_expenses: 'Track and manage your shop expenses',
         search_expenses: 'Search expenses...',
         all_categories: 'All Categories',
-        category_breakdown: 'Category Breakdown'
+        category_breakdown: 'Category Breakdown',
+
+        // UPI QR Code
+        upi_qr_code: 'UPI QR',
+        scan_to_pay: 'Scan to Pay',
+        upi_payment: 'UPI Payment',
+        select_account: 'Select Account',
+        admin_account: 'Admin',
+        user_account: 'User',
+        no_upi_configured: 'No UPI ID Configured',
+        configure_upi_in_settings: 'Please add UPI IDs in Settings → Payment Settings',
+        select_account_to_generate: 'Select an account to generate QR code',
+        paying_to: 'Paying to',
+        payment_settings: 'Payment Settings',
+        upi_settings_desc: 'Configure UPI IDs for QR code payments. These can be updated anytime.',
+        admin_upi_id: 'Admin UPI ID',
+        user_upi_id: 'User UPI ID',
+        save_upi: 'Save UPI Settings',
+        close: 'Close'
     },
     ta: {
         // Sidebar
@@ -331,6 +349,24 @@ export const translations = {
         track_expenses: 'கடை செலவுகளை கண்காணிக்கவும்',
         search_expenses: 'செலவுகளைத் தேடு...',
         all_categories: 'அனைத்து வகைகளும்',
-        category_breakdown: 'வகை வாரியான செலவு'
+        category_breakdown: 'வகை வாரியான செலவு',
+
+        // UPI QR Code
+        upi_qr_code: 'UPI QR',
+        scan_to_pay: 'ஸ்கேன் செய்து செலுத்தவும்',
+        upi_payment: 'UPI பணம் செலுத்தல்',
+        select_account: 'கணக்கைத் தேர்ந்தெடுக்கவும்',
+        admin_account: 'நிர்வாகி',
+        user_account: 'பயனர்',
+        no_upi_configured: 'UPI ID அமைக்கப்படவில்லை',
+        configure_upi_in_settings: 'அமைப்புகள் → பணம் செலுத்தல் அமைப்புகளில் UPI ID சேர்க்கவும்',
+        select_account_to_generate: 'QR குறியீடு உருவாக்க கணக்கைத் தேர்ந்தெடுக்கவும்',
+        paying_to: 'செலுத்தப்படும்',
+        payment_settings: 'பணம் செலுத்தல் அமைப்புகள்',
+        upi_settings_desc: 'QR குறியீடு பணம் செலுத்தலுக்கு UPI ID-களை அமைக்கவும்.',
+        admin_upi_id: 'நிர்வாகி UPI ID',
+        user_upi_id: 'பயனர் UPI ID',
+        save_upi: 'UPI அமைப்புகளை சேமி',
+        close: 'மூடு'
     }
 };

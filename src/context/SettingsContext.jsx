@@ -13,6 +13,8 @@ export const SettingsProvider = ({ children }) => {
             shopName: 'TurboTyre Central',
             shopAddress: '123, Auto Garage Street, Chennai, TN 600001',
             shopPhone: '+91 98765 43210',
+            adminUpiId: '',
+            userUpiId: '',
             appFontSize: 'medium',
             appLanguage: 'en',
             nextInvoiceNumber: 101
