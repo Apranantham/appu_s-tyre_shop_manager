@@ -95,7 +95,7 @@ export const InvoiceProvider = ({ children }) => {
                     nextInvoiceNumber: nextNo + 1
                 }, { merge: true });
 
-                return newInvoiceRef.id;
+                return { id: newInvoiceRef.id, invoiceNo: nextNo };
             });
         } catch (err) {
             console.error("Add invoice error:", err);

@@ -33,7 +33,8 @@ import Modal from '../../components/ui/Modal';
 
 const CustomerProfile = () => {
     const navigate = useNavigate();
-    const { id: customerPhone } = useParams();
+    const { id: rawCustomerPhone } = useParams();
+    const customerPhone = decodeURIComponent(rawCustomerPhone);
     const { getCustomerHistory, deleteInvoice, updateCustomerInfo } = useInvoices();
     const { shopDetails } = useSettings();
     const lang = shopDetails?.appLanguage || 'ta';
@@ -433,8 +434,19 @@ _Generated via ${shopDisplayName}_`;
                                 </div>
 
                                 <div className="pt-3 border-t border-[var(--color-border)] flex justify-between items-center">
-                                    <div className="text-lg font-bold text-white group-hover:text-[var(--color-primary)] transition-colors">
-                                        ₹{item.total.toFixed(2)}
+                                    <div className="flex flex-col">
+                                        <div className="text-lg font-bold text-white group-hover:text-[var(--color-primary)] transition-colors">
+                                            ₹{item.total.toFixed(2)}
+                                        </div>
+                                        {item.balanceAmount > 0 ? (
+                                            <span className="text-[10px] font-bold text-orange-500 bg-orange-500/10 px-2 py-0.5 rounded-full inline-block mt-1 w-fit">
+                                                Balance: ₹{item.balanceAmount.toFixed(2)}
+                                            </span>
+                                        ) : (
+                                            <span className="text-[10px] font-bold text-green-500 bg-green-500/10 px-2 py-0.5 rounded-full inline-block mt-1 w-fit">
+                                                Paid
+                                            </span>
+                                        )}
                                     </div>
                                     <div className="flex items-center text-[var(--color-text-gray)] text-[10px] space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                         <Eye className="h-3 w-3" />

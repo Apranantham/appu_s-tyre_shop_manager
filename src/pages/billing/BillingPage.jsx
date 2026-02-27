@@ -215,8 +215,15 @@ const BillingPage = () => {
         if (editingId) {
             await updateInvoice(editingId, invoiceData);
         } else {
-            const newId = await addInvoice(invoiceData);
-            finalizedInvoice.id = newId;
+            const addedResult = await addInvoice(invoiceData);
+            // Handle new return format where addInvoice returns { id, invoiceNo }
+            if (typeof addedResult === 'object') {
+                finalizedInvoice.id = addedResult.id;
+                finalizedInvoice.invoiceNo = addedResult.invoiceNo;
+            } else {
+                // Fallback for older code that just returned the string ID
+                finalizedInvoice.id = addedResult;
+            }
         }
 
         setLastInvoice(finalizedInvoice);

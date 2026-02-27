@@ -77,7 +77,7 @@ const CustomerHistory = () => {
                         return (
                             <Card
                                 key={customerKey}
-                                onClick={() => navigate(`/customers/${customerKey}`)}
+                                onClick={() => navigate(`/customers/${encodeURIComponent(customerKey)}`)}
                                 className="flex flex-col md:flex-row md:items-center justify-between p-4 gap-4 transition-colors cursor-pointer hover:border-[var(--color-primary)]"
                             >
                                 <div className="flex items-start space-x-4">
