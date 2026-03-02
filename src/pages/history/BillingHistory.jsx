@@ -144,7 +144,7 @@ const BillingHistory = () => {
 
     const shareOnWhatsApp = (invoice) => {
         const emojiMap = { product: '📦', service: '🛠️' };
-        const itemsList = invoice.items.map(item => `${emojiMap[item.type] || '🔹'} *${item.name}* (x${item.quantity}) - ₹${item.price.toLocaleString()}`).join('%0A');
+        const itemsList = invoice.items.map(item => `${emojiMap[item.type] || '🔹'} *${item.name}* (x${item.quantity}) - ₹${item.price.toLocaleString()} (₹${(item.price * item.quantity).toLocaleString()})`).join('%0A');
 
         const border = '━━━━━━━━━━━━━━━━';
         const shopDisplayName = shopDetails?.shopName || 'TURBOTYRE';
@@ -421,6 +421,9 @@ Thank you for your business! 🏁`;
                                         )}>
                                             {(inv.paymentStatus || 'unknown').replace('_', ' ')}
                                         </span>
+                                        {inv.paymentStatus !== 'paid' && (
+                                            <p className="text-[9px] font-black text-orange-500 mt-2 italic">Bal: ₹{(inv.balanceAmount || 0).toLocaleString()}</p>
+                                        )}
                                     </div>
                                 </div>
 
