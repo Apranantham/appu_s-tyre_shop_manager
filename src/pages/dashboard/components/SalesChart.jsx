@@ -43,9 +43,9 @@ const SalesChart = ({ staffFilter = 'all' }) => {
             }
 
             invoices.forEach(inv => {
-                const invDate = new Date(inv.date);
-                if (invDate.toDateString() === targetDate.toDateString()) {
-                    dataMap[invDate.getHours()].revenue += inv.total;
+                const d = new Date(inv.paymentStatus === 'paid' && inv.settledDate ? inv.settledDate : inv.date);
+                if (d.toDateString() === targetDate.toDateString()) {
+                    dataMap[d.getHours()].revenue += inv.total;
                 }
             });
 
@@ -73,7 +73,8 @@ const SalesChart = ({ staffFilter = 'all' }) => {
             }
 
             invoices.forEach(inv => {
-                const dateStr = new Date(inv.date).toDateString();
+                const d = new Date(inv.paymentStatus === 'paid' && inv.settledDate ? inv.settledDate : inv.date);
+                const dateStr = d.toDateString();
                 if (dataMap[dateStr]) dataMap[dateStr].revenue += inv.total;
             });
 
@@ -96,7 +97,7 @@ const SalesChart = ({ staffFilter = 'all' }) => {
             months.forEach((_, idx) => { dataMap[idx] = { revenue: 0, expense: 0 }; });
 
             invoices.forEach(inv => {
-                const d = new Date(inv.date);
+                const d = new Date(inv.paymentStatus === 'paid' && inv.settledDate ? inv.settledDate : inv.date);
                 if (d.getFullYear() === targetYear) dataMap[d.getMonth()].revenue += inv.total;
             });
 
@@ -120,7 +121,8 @@ const SalesChart = ({ staffFilter = 'all' }) => {
             }
 
             invoices.forEach(inv => {
-                const year = new Date(inv.date).getFullYear();
+                const d = new Date(inv.paymentStatus === 'paid' && inv.settledDate ? inv.settledDate : inv.date);
+                const year = d.getFullYear();
                 if (dataMap[year] !== undefined) dataMap[year].revenue += inv.total;
             });
 
