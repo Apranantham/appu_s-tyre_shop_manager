@@ -127,7 +127,7 @@ const DashboardPage = () => {
             if (!inv.isClosed && (inv.paymentStatus === 'pending' || inv.paymentStatus === 'partially_paid')) {
                 pendingTotal += (inv.balanceAmount || 0);
             }
-            const d = new Date(inv.date);
+            const d = new Date(inv.paymentStatus === 'paid' && inv.settledDate ? inv.settledDate : inv.date);
             const invDay = d.toDateString();
             const invMonth = d.getMonth();
             const invYear = d.getFullYear();

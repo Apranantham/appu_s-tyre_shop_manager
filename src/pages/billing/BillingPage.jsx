@@ -101,19 +101,17 @@ const BillingPage = () => {
         }
     }, [location.state, navigate, location.pathname]);
 
-    const returnPath = location.state?.from;
+    const handlePrint = useReactToPrint({
+        contentRef: componentRef,
+    });
 
-    const handleBackToSource = () => {
-        if (returnPath) {
-            navigate(returnPath);
+    const handleExit = () => {
+        if (location.state?.from) {
+            navigate(location.state.from);
         } else {
             navigate(-1);
         }
     };
-
-    const handlePrint = useReactToPrint({
-        contentRef: componentRef,
-    });
 
     const addToCart = (item, type) => {
         if (type === 'product') {
@@ -147,7 +145,7 @@ const BillingPage = () => {
         }
     };
 
-    const updateQuantity = (id, type, change) => {
+    const handleUpdateQuantity = (id, type, change) => {
         setCart(prev => prev.map(i => {
             if (i.id === id && i.type === type) {
                 const newQty = i.quantity + change;
@@ -169,9 +167,11 @@ const BillingPage = () => {
         }).filter(i => i.quantity > 0));
     };
 
-    const removeItem = (id, type) => {
+    const handleRemoveItem = (id, type) => {
         setCart(prev => prev.filter(i => !(i.id === id && i.type === type)));
     };
+
+    const handleAddToCart = (item, type) => addToCart(item, type);
 
     const handleUpdateCustomer = (field, value) => {
         setCustomer(prev => ({ ...prev, [field]: value }));
@@ -212,7 +212,10 @@ const BillingPage = () => {
             paymentNote: paymentNote || '',
             balanceAmount: total - finalPaidAmount,
             isClosed: paymentStatus === 'paid',
-            invoiceNo: editingInvoiceNo
+            invoiceNo: editingInvoiceNo,
+            isDeleted: false,
+            deletedAt: null,
+            deletedBy: null
         };
 
         let finalizedInvoice = { ...invoiceData };
@@ -325,7 +328,8 @@ Thank you for your business! 🏁`;
                 // Optionally, handle the error (e.g., show a toast notification)
             }
             setEditingId(lastInvoice.id);
-            setLastInvoice(null);
+            setEditingInvoiceNo(lastInvoice.invoiceNo || null);
+            setCustomer(lastInvoice.customer);
         }
     };
 
@@ -484,11 +488,12 @@ Thank you for your business! 🏁`;
             {/* Left Side: Items (Search/Grid) */}
             <div className={`w-full lg:w-[60%] h-fit lg:h-full ${showCart ? 'hidden md:block' : 'block'}`}>
                 <BillingItems
-                    onAddToCart={addToCart}
-                    onUpdateQuantity={updateQuantity}
-                    onRemoveItem={removeItem}
+                    onAddToCart={handleAddToCart}
+                    onUpdateQuantity={handleUpdateQuantity}
+                    onRemoveItem={handleRemoveItem}
                     cart={cart}
-                    onBack={handleBackToSource}
+                    onBack={handleExit}
+                    editingInvoiceNo={editingInvoiceNo}
                 />
             </div>
 
@@ -500,15 +505,15 @@ Thank you for your business! 🏁`;
                             cart={cart}
                             customer={customer}
                             onUpdateCustomer={handleUpdateCustomer}
-                            onUpdateQuantity={updateQuantity}
-                            onRemoveItem={removeItem}
+                            onUpdateQuantity={handleUpdateQuantity}
+                            onRemoveItem={handleRemoveItem}
                             onCheckout={handleCheckout}
                             paymentMode={paymentMode}
                             setPaymentMode={setPaymentMode}
                             discount={discount}
                             setDiscount={setDiscount}
                             billingDate={billingDate}
-                            setBillingDate={handleDateChange}
+                            setBillingDate={setBillingDate}
                             paymentStatus={paymentStatus}
                             setPaymentStatus={setPaymentStatus}
                             paidAmount={paidAmount}
@@ -516,6 +521,7 @@ Thank you for your business! 🏁`;
                             paymentNote={paymentNote}
                             setPaymentNote={setPaymentNote}
                             onToggleView={() => setShowCart(false)}
+                            editingInvoiceNo={editingInvoiceNo}
                         />
                     </div>
                 </div>

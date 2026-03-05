@@ -114,7 +114,7 @@ const CustomerProfile = () => {
         spend: `₹${customerInvoices.reduce((sum, inv) => sum + inv.total, 0).toFixed(2)}`,
         spendGrowth,
         visits: customerInvoices.length,
-        lastVisit: mostRecent ? new Date(mostRecent.date).toLocaleDateString(lang === 'ta' ? 'ta-IN' : 'en-IN') : 'N/A',
+        lastVisit: mostRecent ? new Date(mostRecent.paymentStatus === 'paid' && mostRecent.settledDate ? mostRecent.settledDate : mostRecent.date).toLocaleDateString(lang === 'ta' ? 'ta-IN' : 'en-IN') : 'N/A',
         topBrand
     };
 
@@ -391,7 +391,7 @@ _Generated via ${shopDisplayName}_`;
                                 <div className="flex justify-between items-start">
                                     <div>
                                         <h4 className="font-bold text-[#3B82F6] text-sm">
-                                            {new Date(item.date).toLocaleString(lang === 'ta' ? 'ta-IN' : 'en-IN', {
+                                            {new Date(item.paymentStatus === 'paid' && item.settledDate ? item.settledDate : item.date).toLocaleString(lang === 'ta' ? 'ta-IN' : 'en-IN', {
                                                 day: '2-digit',
                                                 month: 'short',
                                                 hour: '2-digit',

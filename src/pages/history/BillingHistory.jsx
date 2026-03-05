@@ -3,22 +3,22 @@ import { createPortal } from 'react-dom';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
     Search,
-    FileText,
-    Calendar,
-    Download,
-    Printer,
-    Eye,
-    X,
     Filter,
-    ChevronRight,
-    ArrowLeft,
+    Plus,
+    FileText,
+    Printer,
     Trash2,
-    CheckCircle,
     Edit3,
+    CheckCircle2,
+    X,
+    ChevronRight,
     Coins,
+    Calendar,
+    History,
     Wallet,
-    Info,
-    ArrowUpRight
+    ArrowUpRight,
+    ArrowLeft,
+    Eye
 } from 'lucide-react';
 import { useInvoices } from '../../context/InvoiceContext';
 import { useSettings } from '../../context/SettingsContext';
@@ -50,6 +50,7 @@ const BillingHistory = () => {
     const [settleAmount, setSettleAmount] = useState(0);
     const [settleDate, setSettleDate] = useState(new Date().toISOString().split('T')[0]);
     const [settleMode, setSettleMode] = useState('cash');
+    const [paymentToDelete, setPaymentToDelete] = useState(null); // { idx, payment }
 
     // Sync user and status filters from navigation state
     useEffect(() => {
@@ -303,7 +304,7 @@ Thank you for your business! 🏁`;
                                     <tr key={inv.id} className="hover:bg-[var(--color-bg-dark)] transition-colors group">
                                         <td className="px-6 py-4">
                                             <p className="font-bold text-sm tracking-tight text-[var(--color-text-white)]">
-                                                {new Date(inv.date).toLocaleString(lang === 'ta' ? 'ta-IN' : 'en-IN', {
+                                                {new Date(inv.paymentStatus === 'paid' && inv.settledDate ? inv.settledDate : inv.date).toLocaleString(lang === 'ta' ? 'ta-IN' : 'en-IN', {
                                                     day: '2-digit',
                                                     month: 'short',
                                                     year: 'numeric',
@@ -404,7 +405,7 @@ Thank you for your business! 🏁`;
                                     <div className="space-y-1.5">
                                         <div className="flex items-center gap-2">
                                             <span className="text-[9px] font-black text-[var(--color-primary)] bg-[var(--color-primary)]/10 px-2 py-0.5 rounded-lg border border-[var(--color-primary)]/20 uppercase tracking-widest">#{inv.invoiceNo || inv.id}</span>
-                                            <span className="text-[9px] font-black text-gray-500 uppercase tracking-widest">{new Date(inv.date).toLocaleDateString(lang === 'ta' ? 'ta-IN' : 'en-IN', { day: '2-digit', month: 'short' })}</span>
+                                            <span className="text-[9px] font-black text-gray-500 uppercase tracking-widest">{new Date(inv.paymentStatus === 'paid' && inv.settledDate ? inv.settledDate : inv.date).toLocaleDateString(lang === 'ta' ? 'ta-IN' : 'en-IN', { day: '2-digit', month: 'short' })}</span>
                                         </div>
                                         <h3 className="text-lg font-black text-[var(--color-text-white)] leading-tight tracking-tight">{inv.customer?.name || (lang === 'ta' ? 'வாடிக்கையாளர்' : 'Walk-in')}</h3>
                                         <div className="flex items-center gap-2 text-gray-500">
@@ -524,7 +525,7 @@ Thank you for your business! 🏁`;
                             <p className="text-[var(--color-text-gray)] text-sm">
                                 {lang === 'ta' ? 'இதை மாற்ற முடியாது. இந்த ரசீதை நீக்கலாமா?' : 'This action cannot be undone. Delete invoice?'}
                                 <br />
-                                <strong>#{invoiceToDelete.id}</strong> - <strong>{invoiceToDelete.customer?.name || (lang === 'ta' ? 'வாடிக்கையாளர்' : 'Walk-in')}</strong>
+                                <strong className="text-red-600">#{invoiceToDelete.invoiceNo || invoiceToDelete.id}</strong> - <strong>{invoiceToDelete.customer?.name || (lang === 'ta' ? 'வாடிக்கையாளர்' : 'Walk-in')}</strong>
                             </p>
                         </div>
                         <div className="flex space-x-3">
@@ -538,137 +539,238 @@ Thank you for your business! 🏁`;
 
             {/* Settle Payment Modal */}
             {showSettleModal && selectedInvoice && createPortal(
-                <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
-                    <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setShowSettleModal(false)}></div>
-                    <Card className="relative w-full max-w-sm p-6 space-y-6 animate-in zoom-in-95 duration-200 bg-[var(--color-bg-card)] border-orange-500/30">
-                        <div className="flex items-center gap-3">
-                            <div className="h-12 w-12 rounded-2xl bg-orange-500/10 flex items-center justify-center text-orange-500 shadow-inner">
-                                <Coins className="h-6 w-6" />
-                            </div>
-                            <div>
-                                <h3 className="text-xl font-black uppercase tracking-tight leading-tight">{lang === 'ta' ? 'பணத்தை செட்டில் செய்க' : 'Settle Payment'}</h3>
-                                <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Inv #{selectedInvoice.invoiceNo || selectedInvoice.id} • Bal: ₹{(selectedInvoice.balanceAmount || 0).toLocaleString()}</p>
+                <div className="fixed inset-0 z-[120] flex items-start justify-center overflow-y-auto bg-black/80 backdrop-blur-sm p-4 py-8 md:py-12 no-scrollbar">
+                    <div className="absolute inset-0" onClick={() => setShowSettleModal(false)}></div>
+                    <Card className="relative w-full max-w-sm bg-[var(--color-bg-card)] border-orange-500/30 font-black shadow-2xl animate-in zoom-in-95 duration-200 rounded-[2rem] overflow-hidden flex flex-col max-h-fit">
+                        {/* Modal Header */}
+                        <div className="p-6 pb-2">
+                            <div className="flex items-center gap-4">
+                                <div className="h-14 w-14 rounded-2xl bg-orange-500/10 flex items-center justify-center text-orange-500 shadow-inner ring-1 ring-orange-500/20">
+                                    <Coins className="h-7 w-7" />
+                                </div>
+                                <div>
+                                    <h3 className="text-xl font-black uppercase tracking-tight leading-tight text-[var(--color-text-white)]">
+                                        {lang === 'ta' ? 'பணத்தை செட்டில் செய்க' : 'Settle Payment'}
+                                    </h3>
+                                    <p className="text-[10px] font-black text-[var(--color-text-gray)]/60 uppercase tracking-[0.2em] mt-1">
+                                        Inv #{selectedInvoice.invoiceNo || selectedInvoice.id} • Bal: <span className="text-orange-500">₹{(selectedInvoice.balanceAmount || 0).toLocaleString()}</span>
+                                    </p>
+                                </div>
                             </div>
                         </div>
 
-                        <div className="space-y-4">
-                            <div className="space-y-2">
-                                <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">{lang === 'ta' ? 'தேதி' : 'SETTLEMENT DATE'}</label>
-                                <div className="relative">
-                                    <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
-                                    <input
-                                        type="date"
-                                        value={settleDate}
-                                        onChange={(e) => setSettleDate(e.target.value)}
-                                        className="w-full bg-[var(--color-bg-dark)] border border-[var(--color-border)] rounded-xl pl-10 pr-4 py-3 text-sm font-black focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all text-[var(--color-text-white)]"
-                                    />
-                                </div>
+                        {/* Scrollable Body Container */}
+                        <div className="flex-1 overflow-y-auto p-6 pt-2 custom-scrollbar space-y-6">
+                            {/* Date Picker */}
+                            <div className="space-y-2.5">
+                                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-text-gray)]/70 flex items-center gap-2">
+                                    <Calendar className="h-3 w-3" />
+                                    {lang === 'ta' ? 'தேதி' : 'SETTLEMENT DATE'}
+                                </label>
+                                <input
+                                    type="date"
+                                    value={settleDate}
+                                    onChange={(e) => setSettleDate(e.target.value)}
+                                    className="w-full bg-[var(--color-bg-dark)] border border-[var(--color-border)] rounded-2xl px-5 py-4 text-sm font-black focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all text-[var(--color-text-white)] shadow-inner"
+                                />
                             </div>
 
-                            <div className="space-y-2">
-                                <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">{lang === 'ta' ? 'தொகை' : 'SETTLEMENT AMOUNT'}</label>
-                                <div className="relative">
-                                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-lg font-black text-orange-400">₹</span>
+                            {/* Amount Input */}
+                            <div className="space-y-2.5">
+                                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-text-gray)]/70 flex items-center gap-2">
+                                    <Wallet className="h-3 w-3" />
+                                    {lang === 'ta' ? 'தொகை' : 'SETTLEMENT AMOUNT'}
+                                </label>
+                                <div className="relative group">
+                                    <span className="absolute left-5 top-1/2 -translate-y-1/2 text-2xl font-black text-orange-500/40 group-focus-within:text-orange-500 transition-colors">₹</span>
                                     <input
                                         type="number"
                                         value={settleAmount}
                                         onChange={(e) => setSettleAmount(Number(e.target.value))}
                                         max={selectedInvoice.balanceAmount}
-                                        className="w-full bg-[var(--color-bg-dark)] border border-orange-500/30 rounded-xl pl-9 pr-4 py-4 text-2xl font-black text-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all shadow-inner"
+                                        className="w-full bg-[var(--color-bg-dark)] border-2 border-orange-500/20 rounded-2xl pl-11 pr-5 py-5 text-3xl font-black text-orange-500 focus:outline-none focus:ring-4 focus:ring-orange-500/10 focus:border-orange-500 transition-all shadow-xl placeholder:text-orange-500/20"
+                                        placeholder="0.00"
                                     />
                                 </div>
                             </div>
 
-                            <div className="space-y-2">
-                                <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">{lang === 'ta' ? 'வகை' : 'PAYMENT MODE'}</label>
-                                <div className="grid grid-cols-3 gap-2">
+                            {/* Settlement History */}
+                            {selectedInvoice.payments && selectedInvoice.payments.length > 0 && (
+                                <div className="space-y-4">
+                                    <div className="flex items-center justify-between text-blue-500/80 mb-1">
+                                        <div className="flex items-center gap-2">
+                                            <History className="h-3.5 w-3.5" />
+                                            <h4 className="text-[10px] font-black uppercase tracking-[0.2em]">{t.payment_history || 'History'}</h4>
+                                        </div>
+                                        <span className="text-[8px] font-black bg-blue-500/10 px-2 py-0.5 rounded-full border border-blue-500/10">{selectedInvoice.payments.length} Payments</span>
+                                    </div>
+                                    <div className="space-y-2.5">
+                                        {selectedInvoice.payments.map((payment, idx) => (
+                                            <div key={idx} className="relative group/payment overflow-hidden">
+                                                <div className="flex items-center justify-between p-4 bg-[var(--color-bg-dark)]/60 border border-[var(--color-border)] rounded-2xl group-hover/payment:border-blue-500/30 transition-all duration-300">
+                                                    <div className="flex items-center gap-4">
+                                                        <div className="h-10 w-10 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-500 shadow-inner group-hover/payment:scale-110 transition-transform">
+                                                            <ArrowUpRight className="h-5 w-5" />
+                                                        </div>
+                                                        <div>
+                                                            <div className="flex items-center gap-2 mb-0.5">
+                                                                <p className="text-base font-black text-[var(--color-text-white)] tracking-tight">₹{payment.amount.toLocaleString()}</p>
+                                                                <span className="text-[8px] font-black uppercase tracking-widest px-1.5 py-0.5 bg-blue-500/10 text-blue-400 rounded-lg border border-blue-500/10">{payment.mode}</span>
+                                                            </div>
+                                                            <p className="text-[9px] font-bold text-[var(--color-text-gray)]/40 uppercase tracking-widest">
+                                                                {new Date(payment.date).toLocaleDateString(lang === 'ta' ? 'ta-IN' : 'en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Fancy Delete for Old Settlement */}
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.preventDefault();
+                                                            setPaymentToDelete({ idx, payment });
+                                                        }}
+                                                        className="h-10 w-10 bg-red-500/5 hover:bg-red-500 text-red-500/50 hover:text-white rounded-xl transition-all active:scale-90 flex items-center justify-center border border-red-500/10 hover:border-red-500 shadow-sm"
+                                                        title="Delete Payment"
+                                                    >
+                                                        <Trash2 className="h-4 w-4" />
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Payment Mode Selection */}
+                            <div className="space-y-4">
+                                <div className="flex items-center gap-2 text-emerald-500/80 mb-1">
+                                    <Plus className="h-3.5 w-3.5" />
+                                    <h4 className="text-[10px] font-black uppercase tracking-[0.2em]">{lang === 'ta' ? 'புதிய வரவு' : 'New Settlement'}</h4>
+                                </div>
+                                <div className="grid grid-cols-3 gap-3">
                                     {[
-                                        { id: 'cash', label: 'Cash', icon: Coins },
-                                        { id: 'card', label: 'Card', icon: Wallet },
-                                        { id: 'upi', label: 'UPI', icon: ArrowUpRight }
+                                        { id: 'cash', label: 'Cash', icon: Coins, color: 'orange' },
+                                        { id: 'card', label: 'Card', icon: Wallet, color: 'blue' },
+                                        { id: 'upi', label: 'UPI', icon: ArrowUpRight, color: 'emerald' }
                                     ].map(mode => (
                                         <button
                                             key={mode.id}
+                                            type="button"
                                             onClick={() => setSettleMode(mode.id)}
                                             className={cn(
-                                                "flex flex-col items-center justify-center py-3 rounded-xl border transition-all",
+                                                "flex flex-col items-center justify-center py-4 rounded-2xl border-2 transition-all active:scale-95 gap-1.5",
                                                 settleMode === mode.id
-                                                    ? "border-orange-500 bg-orange-500/10 text-orange-500"
-                                                    : "border-[var(--color-border)] bg-[var(--color-bg-dark)] text-gray-500 hover:border-gray-600"
+                                                    ? "border-orange-500 bg-orange-500/10 text-orange-500 shadow-lg shadow-orange-500/10"
+                                                    : "border-[var(--color-border)] bg-[var(--color-bg-dark)]/50 text-gray-500 hover:border-gray-600"
                                             )}
                                         >
-                                            <mode.icon className="h-4 w-4 mb-1" />
-                                            <span className="text-[8px] font-black uppercase tracking-tighter">{mode.label}</span>
+                                            <mode.icon className="h-5 w-5" />
+                                            <span className="text-[9px] font-black uppercase tracking-widest">{mode.label}</span>
                                         </button>
                                     ))}
                                 </div>
                             </div>
                         </div>
 
-                        <div className="flex gap-3 pt-2">
-                            <Button variant="outline" className="flex-1 py-6 rounded-2xl font-black uppercase tracking-widest border-2" onClick={() => setShowSettleModal(false)}>
-                                {t.cancel}
-                            </Button>
-                            <Button
-                                className="flex-1 py-6 bg-orange-500 hover:bg-orange-600 text-white rounded-2xl font-black uppercase tracking-widest shadow-lg shadow-orange-500/20 border-none"
-                                onClick={async () => {
-                                    const newBalance = (selectedInvoice.balanceAmount || 0) - settleAmount;
-                                    const newStatus = newBalance <= 0 ? 'paid' : 'partially_paid';
+                        {/* Modal Footer (Sticky Bottom) */}
+                        <div className="p-6 pt-4 border-t border-[var(--color-border)] bg-[var(--color-bg-card)]/80 backdrop-blur-xl">
+                            <div className="flex gap-4">
+                                <Button
+                                    variant="outline"
+                                    className="flex-1 py-7 rounded-2xl font-black uppercase tracking-[0.2em] text-[10px] border-2 border-[var(--color-border)] hover:bg-[var(--color-bg-dark)] active:scale-95 transition-all h-auto"
+                                    onClick={() => setShowSettleModal(false)}
+                                >
+                                    {t.cancel}
+                                </Button>
+                                <Button
+                                    className="flex-1 py-7 bg-gradient-to-br from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white rounded-2xl font-black uppercase tracking-[0.2em] text-[10px] shadow-xl shadow-orange-500/20 border-none transition-all active:scale-[0.98] h-auto"
+                                    onClick={async () => {
+                                        if (settleAmount <= 0) return;
+                                        const newBalance = (selectedInvoice.balanceAmount || 0) - settleAmount;
+                                        const newStatus = newBalance <= 0 ? 'paid' : 'partially_paid';
 
-                                    const paymentEntry = {
-                                        date: settleDate,
-                                        amount: settleAmount,
-                                        mode: settleMode,
-                                        recordedAt: new Date().toISOString()
-                                    };
+                                        const paymentEntry = {
+                                            date: settleDate,
+                                            amount: settleAmount,
+                                            mode: settleMode,
+                                            recordedAt: new Date().toISOString()
+                                        };
 
-                                    const updatedPayments = [...(selectedInvoice.payments || []), paymentEntry];
+                                        const updatedPayments = [...(selectedInvoice.payments || []), paymentEntry];
 
-                                    await updateInvoice(selectedInvoice.id, {
-                                        balanceAmount: Math.max(0, newBalance),
-                                        paymentStatus: newStatus,
-                                        paidAmount: (selectedInvoice.paidAmount || 0) + settleAmount,
-                                        payments: updatedPayments,
-                                        isClosed: newStatus === 'paid'
-                                    });
+                                        await updateInvoice(selectedInvoice.id, {
+                                            balanceAmount: Math.max(0, newBalance),
+                                            paymentStatus: newStatus,
+                                            paidAmount: (selectedInvoice.paidAmount || 0) + settleAmount,
+                                            payments: updatedPayments,
+                                            isClosed: newStatus === 'paid',
+                                            settledDate: newStatus === 'paid' ? settleDate : (selectedInvoice.settledDate || null)
+                                        });
 
-                                    setShowSettleModal(false);
-                                }}
-                            >
-                                {lang === 'ta' ? 'சரி' : 'Confirm'}
-                            </Button>
+                                        setShowSettleModal(false);
+                                    }}
+                                >
+                                    {lang === 'ta' ? 'உறுதி செய்' : 'Confirm'}
+                                </Button>
+                            </div>
                         </div>
                     </Card>
                 </div>,
                 document.body
             )}
 
-            {/* Delete Confirmation Modal */}
-            {invoiceToDelete && createPortal(
-                <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
-                    <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setInvoiceToDelete(null)}></div>
-                    <Card className="relative w-full max-w-sm p-6 space-y-6 text-center animate-in zoom-in-95 duration-200 border border-[var(--color-border)]">
-                        <div className="mx-auto h-16 w-16 rounded-full bg-red-100 flex items-center justify-center text-red-600">
-                            <Trash2 className="h-8 w-8" />
+            {/* Delete Payment Confirmation Modal */}
+            {paymentToDelete && createPortal(
+                <div className="fixed inset-0 z-[130] flex items-center justify-center p-4">
+                    <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setPaymentToDelete(null)}></div>
+                    <Card className="relative w-full max-w-sm p-6 space-y-6 text-center animate-in zoom-in-95 duration-200 bg-[var(--color-bg-card)] border-red-500/30 font-black rounded-[2rem]">
+                        <div className="mx-auto h-20 w-20 rounded-full bg-red-500/10 flex items-center justify-center text-red-600 shadow-inner ring-4 ring-red-500/5">
+                            <Trash2 className="h-10 w-10" />
                         </div>
                         <div>
-                            <h3 className="text-xl font-bold">{t.delete_invoice || 'Delete Invoice'}?</h3>
-                            <p className="text-[var(--color-text-gray)] text-sm">{t.delete_invoice_confirm || 'Are you sure you want to delete this invoice?'} #{invoiceToDelete.invoiceNo || invoiceToDelete.id}</p>
+                            <h3 className="text-2xl font-black uppercase tracking-tight text-[var(--color-text-white)]">{lang === 'ta' ? 'பணத்தை நீக்கவா?' : 'Delete Payment?'}</h3>
+                            <p className="text-[10px] font-black text-orange-500 uppercase tracking-widest mt-1">Inv #{selectedInvoice.invoiceNo || selectedInvoice.id}</p>
+                            <div className="mt-4 p-4 bg-[var(--color-bg-dark)]/50 rounded-2xl border border-[var(--color-border)]">
+                                <p className="text-xl font-black text-red-500 tracking-tight">₹{paymentToDelete.payment.amount.toLocaleString()}</p>
+                                <p className="text-[10px] font-bold text-[var(--color-text-gray)]/50 uppercase tracking-[0.2em] mt-1">
+                                    {paymentToDelete.payment.mode} • {new Date(paymentToDelete.payment.date).toLocaleDateString(lang === 'ta' ? 'ta-IN' : 'en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+                                </p>
+                            </div>
+                            <p className="text-[10px] font-black text-[var(--color-text-gray)]/60 uppercase tracking-widest mt-4">
+                                {lang === 'ta' ? 'இதை மாற்ற முடியாது. இந்த வரவை நீக்கலாமா?' : 'This action cannot be undone. Confirm deletion?'}
+                            </p>
                         </div>
-                        <div className="flex space-x-3">
-                            <Button variant="outline" className="flex-1 py-4 rounded-xl" onClick={() => setInvoiceToDelete(null)}>{t.cancel}</Button>
+                        <div className="flex gap-4">
+                            <Button variant="outline" className="flex-1 py-7 rounded-2xl font-black uppercase tracking-[0.2em] text-[10px] border-2 h-auto" onClick={() => setPaymentToDelete(null)}>
+                                {t.cancel}
+                            </Button>
                             <Button
-                                className="flex-1 py-4 bg-red-600 hover:bg-red-700 text-white rounded-xl shadow-lg shadow-red-500/20 border-none"
+                                className="flex-1 py-7 bg-red-600 hover:bg-red-700 text-white rounded-2xl font-black uppercase tracking-[0.2em] text-[10px] shadow-xl shadow-red-500/20 border-none transition-all active:scale-[0.98] h-auto"
                                 onClick={async () => {
-                                    try {
-                                        await deleteInvoice(invoiceToDelete.id);
-                                        setInvoiceToDelete(null);
-                                    } catch (err) {
-                                        alert("Delete failed: " + err.message);
-                                    }
+                                    const { idx, payment } = paymentToDelete;
+                                    const updatedPayments = selectedInvoice.payments.filter((_, i) => i !== idx);
+                                    const newPaidAmount = (selectedInvoice.paidAmount || 0) - payment.amount;
+                                    const newBalance = selectedInvoice.total - newPaidAmount;
+
+                                    let newStatus = 'pending';
+                                    if (newPaidAmount >= selectedInvoice.total) newStatus = 'paid';
+                                    else if (newPaidAmount > 0) newStatus = 'partially_paid';
+
+                                    const updatedFields = {
+                                        payments: updatedPayments,
+                                        paidAmount: Math.max(0, newPaidAmount),
+                                        balanceAmount: Math.max(0, newBalance),
+                                        paymentStatus: newStatus,
+                                        isClosed: newStatus === 'paid',
+                                        settledDate: newStatus === 'paid' ? (updatedPayments.length > 0 ? updatedPayments[updatedPayments.length - 1].date : selectedInvoice.date) : null
+                                    };
+
+                                    await updateInvoice(selectedInvoice.id, updatedFields);
+                                    setSelectedInvoice(prev => ({ ...prev, ...updatedFields }));
+                                    setPaymentToDelete(null);
                                 }}
                             >
-                                {t.delete}
+                                {lang === 'ta' ? 'நீக்கு' : 'Delete'}
                             </Button>
                         </div>
                     </Card>

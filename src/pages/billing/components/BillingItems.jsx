@@ -9,7 +9,7 @@ import { useSettings } from '../../../context/SettingsContext';
 import { translations } from '../../../utils/translations';
 import { FALLBACK_IMAGE } from '../../../utils/constants';
 
-const BillingItems = ({ onAddToCart, onUpdateQuantity, onRemoveItem, cart = [], onBack }) => {
+const BillingItems = ({ onAddToCart, onUpdateQuantity, onRemoveItem, cart = [], onBack, editingInvoiceNo }) => {
     const { products } = useProducts();
     const { services } = useServices();
     const { shopDetails } = useSettings();
@@ -51,7 +51,7 @@ const BillingItems = ({ onAddToCart, onUpdateQuantity, onRemoveItem, cart = [], 
                     <div className="flex items-center gap-2">
                         <span className="h-1.5 w-1.5 rounded-full bg-blue-500 animate-pulse"></span>
                         <h2 className="text-[10px] font-black tracking-[0.2em] text-[var(--color-text-gray)] uppercase">
-                            {t.billing_mode || 'BILLING MODE'}
+                            {editingInvoiceNo ? (lang === 'ta' ? `திருத்துதல் #${editingInvoiceNo}` : `EDITING BILL #${editingInvoiceNo}`) : (t.billing_mode || 'BILLING MODE')}
                         </h2>
                     </div>
                 </div>

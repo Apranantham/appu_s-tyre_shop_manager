@@ -26,7 +26,8 @@ const BillingCart = ({
     setPaidAmount,
     paymentNote = '',
     setPaymentNote,
-    onToggleView
+    onToggleView,
+    editingInvoiceNo
 }) => {
     const { shopDetails } = useSettings();
     const { invoices } = useInvoices();
@@ -80,7 +81,7 @@ const BillingCart = ({
                     <ArrowLeft className="h-5 w-5" />
                 </button>
                 <h2 className="text-[11px] font-black tracking-[0.1em] text-[var(--color-text-gray)] uppercase">
-                    {t.items_services || 'ITEMS & SERVICES'}
+                    {editingInvoiceNo ? (lang === 'ta' ? `திருத்துதல் #${editingInvoiceNo}` : `EDITING BILL #${editingInvoiceNo}`) : (t.items_services || 'ITEMS & SERVICES')}
                 </h2>
                 <button
                     onClick={onToggleView}
