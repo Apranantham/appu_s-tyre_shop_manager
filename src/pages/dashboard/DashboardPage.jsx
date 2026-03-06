@@ -127,30 +127,49 @@ const DashboardPage = () => {
             if (!inv.isClosed && (inv.paymentStatus === 'pending' || inv.paymentStatus === 'partially_paid')) {
                 pendingTotal += (inv.balanceAmount || 0);
             }
-            const d = new Date(inv.paymentStatus === 'paid' && inv.settledDate ? inv.settledDate : inv.date);
-            const invDay = d.toDateString();
-            const invMonth = d.getMonth();
-            const invYear = d.getFullYear();
 
             const yesterday = new Date(now);
             yesterday.setDate(now.getDate() - 1);
             const yesterdayDateStr = yesterday.toDateString();
 
-            if (invDay === today) {
-                dailySales += inv.total;
+            const recordedPayments = inv.payments || [];
+            const recordedPaymentsTotal = recordedPayments.reduce((sum, p) => sum + (p.amount || 0), 0);
+
+            const synthesizedPayments = [];
+            if ((inv.paidAmount || 0) > recordedPaymentsTotal) {
+                const diff = inv.paidAmount - recordedPaymentsTotal;
+                synthesizedPayments.push({
+                    amount: diff,
+                    date: inv.date
+                });
             }
 
-            if (invDay === yesterdayDateStr) {
-                yesterdaySales += inv.total;
-            }
+            const allInvPayments = [...synthesizedPayments, ...recordedPayments];
 
-            if (invMonth === thisMonth && invYear === thisYear) {
-                monthlySales += inv.total;
-            }
+            allInvPayments.forEach(payment => {
+                if (!payment.amount || !payment.date) return;
 
-            if (invMonth === lastMonth && invYear === lastMonthYear) {
-                prevMonthlySales += inv.total;
-            }
+                const d = new Date(payment.date);
+                const pDay = d.toDateString();
+                const pMonth = d.getMonth();
+                const pYear = d.getFullYear();
+
+                if (pDay === today) {
+                    dailySales += payment.amount;
+                }
+
+                if (pDay === yesterdayDateStr) {
+                    yesterdaySales += payment.amount;
+                }
+
+                if (pMonth === thisMonth && pYear === thisYear) {
+                    monthlySales += payment.amount;
+                }
+
+                if (pMonth === lastMonth && pYear === lastMonthYear) {
+                    prevMonthlySales += payment.amount;
+                }
+            });
         });
 
         const monthGrowth = prevMonthlySales === 0

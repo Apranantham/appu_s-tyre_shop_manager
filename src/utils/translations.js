@@ -38,6 +38,11 @@ export const translations = {
         back_to_history: 'Back to History',
         exit: 'Exit',
         billing_mode: 'Billing Mode',
+        today: 'Today',
+        this_week: 'This Week',
+        this_month: 'This Month',
+        last_month: 'Last Month',
+        any_month: 'Any Month',
 
         // Dashboard
         monthly_revenue: 'MONTHLY REVENUE',
@@ -324,6 +329,11 @@ export const translations = {
         total_pending: 'மொத்த நிலுவை',
         exit: 'வெளியேறு',
         billing_mode: 'பில்லிங் முறை',
+        today: 'இன்று',
+        this_week: 'இந்த வாரம்',
+        this_month: 'இந்த மாதம்',
+        last_month: 'கடந்த மாதம்',
+        any_month: 'மற்ற மாதங்கள்',
 
         // Admin
         admin_control_panel: 'நிர்வாகக் கட்டுப்பாட்டுப் பலகம்',

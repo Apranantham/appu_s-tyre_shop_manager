@@ -43,10 +43,26 @@ const SalesChart = ({ staffFilter = 'all' }) => {
             }
 
             invoices.forEach(inv => {
-                const d = new Date(inv.paymentStatus === 'paid' && inv.settledDate ? inv.settledDate : inv.date);
-                if (d.toDateString() === targetDate.toDateString()) {
-                    dataMap[d.getHours()].revenue += inv.total;
+                const recordedPayments = inv.payments || [];
+                const recordedPaymentsTotal = recordedPayments.reduce((sum, p) => sum + (p.amount || 0), 0);
+
+                const synthesizedPayments = [];
+                if ((inv.paidAmount || 0) > recordedPaymentsTotal) {
+                    const diff = inv.paidAmount - recordedPaymentsTotal;
+                    synthesizedPayments.push({
+                        amount: diff,
+                        date: inv.date
+                    });
                 }
+
+                const allInvPayments = [...synthesizedPayments, ...recordedPayments];
+
+                allInvPayments.forEach(payment => {
+                    const d = new Date(payment.date);
+                    if (d.toDateString() === targetDate.toDateString()) {
+                        dataMap[d.getHours()].revenue += (payment.amount || 0);
+                    }
+                });
             });
 
             expenses.forEach(exp => {
@@ -73,9 +89,24 @@ const SalesChart = ({ staffFilter = 'all' }) => {
             }
 
             invoices.forEach(inv => {
-                const d = new Date(inv.paymentStatus === 'paid' && inv.settledDate ? inv.settledDate : inv.date);
-                const dateStr = d.toDateString();
-                if (dataMap[dateStr]) dataMap[dateStr].revenue += inv.total;
+                const recordedPayments = inv.payments || [];
+                const recordedPaymentsTotal = recordedPayments.reduce((sum, p) => sum + (p.amount || 0), 0);
+
+                const synthesizedPayments = [];
+                if ((inv.paidAmount || 0) > recordedPaymentsTotal) {
+                    const diff = inv.paidAmount - recordedPaymentsTotal;
+                    synthesizedPayments.push({
+                        amount: diff,
+                        date: inv.date
+                    });
+                }
+
+                const allInvPayments = [...synthesizedPayments, ...recordedPayments];
+
+                allInvPayments.forEach(payment => {
+                    const dateStr = new Date(payment.date).toDateString();
+                    if (dataMap[dateStr]) dataMap[dateStr].revenue += (payment.amount || 0);
+                });
             });
 
             expenses.forEach(exp => {
@@ -97,8 +128,26 @@ const SalesChart = ({ staffFilter = 'all' }) => {
             months.forEach((_, idx) => { dataMap[idx] = { revenue: 0, expense: 0 }; });
 
             invoices.forEach(inv => {
-                const d = new Date(inv.paymentStatus === 'paid' && inv.settledDate ? inv.settledDate : inv.date);
-                if (d.getFullYear() === targetYear) dataMap[d.getMonth()].revenue += inv.total;
+                const recordedPayments = inv.payments || [];
+                const recordedPaymentsTotal = recordedPayments.reduce((sum, p) => sum + (p.amount || 0), 0);
+
+                const synthesizedPayments = [];
+                if ((inv.paidAmount || 0) > recordedPaymentsTotal) {
+                    const diff = inv.paidAmount - recordedPaymentsTotal;
+                    synthesizedPayments.push({
+                        amount: diff,
+                        date: inv.date
+                    });
+                }
+
+                const allInvPayments = [...synthesizedPayments, ...recordedPayments];
+
+                allInvPayments.forEach(payment => {
+                    const d = new Date(payment.date);
+                    if (d.getFullYear() === targetYear) {
+                        dataMap[d.getMonth()].revenue += (payment.amount || 0);
+                    }
+                });
             });
 
             expenses.forEach(exp => {
@@ -121,9 +170,10 @@ const SalesChart = ({ staffFilter = 'all' }) => {
             }
 
             invoices.forEach(inv => {
-                const d = new Date(inv.paymentStatus === 'paid' && inv.settledDate ? inv.settledDate : inv.date);
-                const year = d.getFullYear();
-                if (dataMap[year] !== undefined) dataMap[year].revenue += inv.total;
+                (inv.payments || []).forEach(payment => {
+                    const year = new Date(payment.date).getFullYear();
+                    if (dataMap[year] !== undefined) dataMap[year].revenue += (payment.amount || 0);
+                });
             });
 
             expenses.forEach(exp => {

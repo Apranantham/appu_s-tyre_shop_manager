@@ -215,8 +215,19 @@ const BillingPage = () => {
             invoiceNo: editingInvoiceNo,
             isDeleted: false,
             deletedAt: null,
-            deletedBy: null
+            deletedBy: null,
+            payments: []
         };
+
+        // Initialize payments array with the initial payment if applicable
+        if (finalPaidAmount > 0) {
+            invoiceData.payments.push({
+                amount: finalPaidAmount,
+                date: new Date(billingDate).toISOString(),
+                mode: paymentMode,
+                note: paymentNote || 'Initial payment'
+            });
+        }
 
         let finalizedInvoice = { ...invoiceData };
 
