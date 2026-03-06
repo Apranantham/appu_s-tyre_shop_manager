@@ -235,39 +235,37 @@ const BillingHistory = () => {
     const filteredInvoices = getSortedInvoices();
 
     const shareOnWhatsApp = (invoice) => {
-        const emojiMap = { product: '📦', service: '🛠️' };
-        const itemsList = invoice.items.map(item => `${emojiMap[item.type] || '🔹'} *${item.name}* (x${item.quantity}) - ₹${item.price.toLocaleString()} (₹${(item.price * item.quantity).toLocaleString()})`).join('%0A');
+        const itemsList = invoice.items.map(item => `${item.quantity}x ${item.name} - ${item.price * item.quantity}`).join('%0A');
 
-        const border = '━━━━━━━━━━━━━━━━';
-        const shopDisplayName = shopDetails?.shopName || 'TURBOTYRE';
-        const shopAddress = shopDetails?.shopAddress ? `📍 ${shopDetails.shopAddress}%0A` : '';
-        const shopPhone = shopDetails?.shopPhone ? `📞 ${shopDetails.shopPhone}%0A` : '';
+        const border = '--------------------------';
+        const shopDisplayName = (shopDetails?.shopName || 'TURBOTYRE').toUpperCase();
+        const shopAddress = shopDetails?.shopAddress ? `${shopDetails.shopAddress}%0A` : '';
+        const shopPhone = shopDetails?.shopPhone ? `Phone: ${shopDetails.shopPhone}%0A` : '';
 
         const message =
-            `*${shopDisplayName}*
-${shopAddress}${shopPhone}
-*${border}*
-🚀 *INVOICE SUMMARY (*#${invoice.invoiceNo || invoice.id}*)*
-*${border}*
+            `${shopDisplayName}
+${shopAddress}${shopPhone}${border}
+INVOICE SUMMARY: #${invoice.invoiceNo || invoice.id}
+${border}
 
-👤 *Customer:* ${invoice.customer.name}
-${invoice.customer.vehicle ? `🚗 *Vehicle:* ${invoice.customer.vehicle}%0A` : ''}📅 *Date:* ${new Date(invoice.date).toLocaleDateString()}
+Customer: ${invoice.customer.name}
+${invoice.customer.vehicle ? `Vehicle: ${invoice.customer.vehicle}%0A` : ''}Date: ${new Date(invoice.date).toLocaleDateString()}
 
-*ITEMS:*
+ITEMS:
 ${itemsList}
 
-*${border}*
-💰 *Subtotal:* ₹${invoice.subtotal?.toLocaleString()}
-🏷️ *Discount:* -₹${invoice.discount?.toLocaleString()}
-⭐ *TOTAL:* ₹${invoice.total?.toLocaleString()}
-*${border}*
+${border}
+Subtotal: ₹${invoice.subtotal?.toLocaleString()}
+Discount: -₹${invoice.discount?.toLocaleString()}
+Total: ₹${invoice.total?.toLocaleString()}
+${border}
 
-💵 *Paid:* ₹${invoice.paidAmount?.toLocaleString()}
-🛑 *Balance:* ₹${invoice.balanceAmount?.toLocaleString()}
-💳 *Status:* ${invoice.paymentStatus?.toUpperCase() || 'PAID'}
+Paid: ₹${invoice.paidAmount?.toLocaleString()}
+Balance: ₹${invoice.balanceAmount?.toLocaleString()}
+Status: ${invoice.paymentStatus?.toUpperCase() || 'PAID'}
 
-*${border}*
-Thank you for your business! 🏁`;
+${border}
+Thank you for your business!`;
 
         const rawPhone = invoice.customer.phone.replace(/[^0-9]/g, '');
         const formattedPhone = rawPhone.length === 10 ? `91${rawPhone}` : rawPhone;
