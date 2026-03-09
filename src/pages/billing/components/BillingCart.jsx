@@ -54,7 +54,10 @@ const BillingCart = ({
     const lang = shopDetails?.appLanguage || 'ta';
     const t = translations[lang];
 
-    const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    const subtotal = cart.reduce((sum, item) => {
+        if (item.type === 'old_part') return sum - ((item.exchangeValue || 0) * item.quantity);
+        return sum + (item.price * item.quantity);
+    }, 0);
     const tax = 0; // No tax as requested
     const total = subtotal - (Number(discount) || 0);
 
@@ -221,11 +224,15 @@ const BillingCart = ({
                                             <div className="flex-1 min-w-0 pr-4">
                                                 <h4 className="font-black text-lg text-[var(--color-text-white)] leading-tight mb-1">{item.name}</h4>
                                                 <p className="text-xs font-bold text-[var(--color-text-gray)]/60 uppercase tracking-wider">
-                                                    {item.type === 'service' ? (t.service_tab || 'Service') : (t.part || 'Part')} • {item.size || (item.type === 'service' ? 'Maintenance' : 'General')}
+                                                    {item.type === 'old_part' ? (t.exchange_value || 'Exchange/Deduction') : item.type === 'service' ? (t.service_tab || 'Service') : (t.part || 'Part')} • {item.type === 'old_part' ? '' : (item.size || (item.type === 'service' ? 'Maintenance' : 'General'))}
                                                 </p>
                                             </div>
                                             <div className="text-right">
-                                                <span className="font-black text-xl text-[#3B82F6]">₹{item.price.toLocaleString()}</span>
+                                                {item.type === 'old_part' ? (
+                                                    <span className="font-black text-xl text-red-400">-₹{(item.exchangeValue || 0).toLocaleString()}</span>
+                                                ) : (
+                                                    <span className="font-black text-xl text-[#3B82F6]">₹{item.price.toLocaleString()}</span>
+                                                )}
                                             </div>
                                         </div>
 
@@ -247,8 +254,12 @@ const BillingCart = ({
                                             </div>
 
                                             <div className="text-right">
-                                                <p className="text-[10px] font-black text-[var(--color-text-gray)]/60 uppercase tracking-[0.2em] mb-1">SUBTOTAL</p>
-                                                <p className="text-xl font-black text-[var(--color-text-white)]">₹{(item.price * item.quantity).toLocaleString()}</p>
+                                                <p className="text-[10px] font-black text-[var(--color-text-gray)]/60 uppercase tracking-[0.2em] mb-1">{item.type === 'old_part' ? 'DEDUCTION' : 'SUBTOTAL'}</p>
+                                                {item.type === 'old_part' ? (
+                                                    <p className="text-xl font-black text-red-400">-₹{((item.exchangeValue || 0) * item.quantity).toLocaleString()}</p>
+                                                ) : (
+                                                    <p className="text-xl font-black text-[var(--color-text-white)]">₹{(item.price * item.quantity).toLocaleString()}</p>
+                                                )}
                                             </div>
                                         </div>
                                     </div>
@@ -366,6 +377,7 @@ const BillingCart = ({
                             <input
                                 type="number"
                                 value={discount}
+                                onFocus={(e) => e.target.select()}
                                 onChange={(e) => setDiscount(e.target.value)}
                                 className="w-full bg-transparent border-none p-0 text-right text-lg font-black focus:outline-none text-[var(--color-text-white)] placeholder:text-[var(--color-text-gray)]/20"
                                 placeholder="0"

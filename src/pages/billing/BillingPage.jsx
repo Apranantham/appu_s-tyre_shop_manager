@@ -187,7 +187,9 @@ const BillingPage = () => {
             }
         });
 
-        const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+        const totalItems = cart.filter(i => i.type !== 'old_part').reduce((sum, item) => sum + (item.price * item.quantity), 0);
+        const totalExchange = cart.filter(i => i.type === 'old_part').reduce((sum, item) => sum + (item.exchangeValue || 0), 0);
+        const subtotal = totalItems - totalExchange;
         const total = subtotal - (Number(discount) || 0);
 
         // Ensure paidAmount is synchronized with paymentStatus at final checkout
@@ -204,6 +206,8 @@ const BillingPage = () => {
             customer: { ...customer },
             items: [...cart],
             subtotal,
+            totalItems,
+            totalExchange,
             discount: Number(discount) || 0,
             total,
             paymentMode,
@@ -270,7 +274,12 @@ const BillingPage = () => {
     const shareOnWhatsApp = () => {
         if (!lastInvoice) return;
 
-        const itemsList = lastInvoice.items.map(item => `${item.quantity}x ${item.name} - ${item.price * item.quantity}`).join('%0A');
+        const itemsList = lastInvoice.items.map(item => {
+            if (item.type === 'old_part') {
+                return `${item.quantity}x ${item.name} (Exchange) - -₹${(item.exchangeValue * item.quantity).toLocaleString('en-IN')}`;
+            }
+            return `${item.quantity}x ${item.name} - ₹${(item.price * item.quantity).toLocaleString('en-IN')}`;
+        }).join('%0A');
 
         const border = '--------------------------';
         const shopDisplayName = (shopDetails?.shopName || 'TURBOTYRE').toUpperCase();
@@ -342,13 +351,18 @@ Thank you for your business!`;
         }
     };
 
-    const cartTotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    const cartTotal = cart.reduce((sum, item) => {
+        if (item.type === 'old_part') {
+            return sum - (item.exchangeValue || 0);
+        }
+        return sum + (item.price * item.quantity);
+    }, 0);
 
     return (
         <div ref={pageRef} className="min-h-[calc(100vh-2rem)] lg:h-[calc(100vh-2rem)] flex flex-col lg:flex-row gap-4 overflow-y-auto lg:overflow-hidden relative pb-20 lg:pb-0">
             {/* Success Overlay */}
             {isCheckoutSuccess && lastInvoice && createPortal(
-                <div className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-xl flex items-start justify-center overflow-y-auto p-4 py-8">
+                <div className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-xl flex items-start justify-center overflow-y-auto p-4 py-8 print:hidden">
                     <Card className="w-full max-w-md p-0 border-emerald-500/20 shadow-[0_0_80px_rgba(16,185,129,0.1)] animate-in zoom-in-95 fade-in slide-in-from-bottom-4 duration-500 overflow-hidden rounded-[2.5rem] shrink-0">
 
                         {/* Hero Header with Gradient */}
@@ -538,7 +552,7 @@ Thank you for your business!`;
 
             {/* Mobile Footer Toggle */}
             {!showCart && cart.length > 0 && (
-                <div className="fixed bottom-0 left-0 right-0 p-6 z-40 md:hidden animate-in fade-in slide-in-from-bottom-10 duration-500">
+                <div className="fixed bottom-0 left-0 right-0 p-6 z-40 md:hidden animate-in fade-in slide-in-from-bottom-10 duration-500 print:hidden">
                     {/* Glassmorphism Background Container */}
                     <div className="absolute inset-0 bg-gradient-to-t from-[var(--color-bg-card)] via-[var(--color-bg-card)]/95 to-transparent backdrop-blur-md -z-10" />
 

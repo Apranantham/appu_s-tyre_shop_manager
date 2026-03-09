@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Plus, Search, Filter, Edit2, Trash2, AlertTriangle, Package, Eye, EyeOff } from 'lucide-react';
+import { Plus, Search, Filter, Edit2, Trash2, AlertTriangle, Package, Eye, EyeOff, History } from 'lucide-react';
 import { useProducts } from '../../context/ProductContext';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
@@ -15,6 +15,7 @@ import { ProductCardSkeleton } from '../../components/ui/SkeletonVariants';
 
 const InventoryPage = () => {
     const location = useLocation();
+    const navigate = useNavigate();
     const { products, addProduct, updateProduct, deleteProduct, loading } = useProducts();
     const { shopDetails } = useSettings();
     const lang = shopDetails?.appLanguage || 'ta';
@@ -73,10 +74,16 @@ const InventoryPage = () => {
                     <h1 className="text-3xl font-bold tracking-tight uppercase">{t.inventory}</h1>
                     <p className="text-[var(--color-text-gray)]">{t.real_time_overview}</p>
                 </div>
-                <Button onClick={openAddModal}>
-                    <Plus className="mr-2 h-4 w-4" />
-                    {t.add_product}
-                </Button>
+                <div className="flex gap-2">
+                    <Button variant="outline" onClick={() => navigate('/inventory/old-items')}>
+                        <History className="mr-2 h-4 w-4" />
+                        {t.manage_old_items || 'Old Parts'}
+                    </Button>
+                    <Button onClick={openAddModal}>
+                        <Plus className="mr-2 h-4 w-4" />
+                        {t.add_product}
+                    </Button>
+                </div>
             </div>
 
             {/* Filters & Search */}

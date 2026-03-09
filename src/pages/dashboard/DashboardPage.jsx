@@ -1,5 +1,5 @@
 import React from 'react';
-import { IndianRupee, TrendingUp, TrendingDown, Package, AlertTriangle, Calendar, ShoppingCart, Clock, Eye, EyeOff, Wallet, Users, ChevronDown } from 'lucide-react';
+import { IndianRupee, TrendingUp, TrendingDown, Package, AlertTriangle, Calendar, ShoppingCart, Clock, Eye, EyeOff, Wallet, Users, ChevronDown, RefreshCw } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { collection, onSnapshot, query } from 'firebase/firestore';
 import { db } from '../../firebase';
@@ -36,6 +36,15 @@ const DashboardPage = () => {
     const [showStaffDropdown, setShowStaffDropdown] = React.useState(false);
     const [allUsers, setAllUsers] = React.useState([]);
 
+    const [activeSlide, setActiveSlide] = React.useState(0);
+
+    React.useEffect(() => {
+        if (invoicesLoading || productsLoading) return;
+        const interval = setInterval(() => {
+            setActiveSlide((prev) => (prev + 1) % 2);
+        }, 5000);
+        return () => clearInterval(interval);
+    }, [invoicesLoading, productsLoading]);
     // Fetch staff list for admin
     React.useEffect(() => {
         if (!isAdmin) return;
@@ -179,6 +188,19 @@ const DashboardPage = () => {
         const dayGrowth = yesterdaySales === 0
             ? (dailySales > 0 ? 100 : 0)
             : ((dailySales - yesterdaySales) / yesterdaySales) * 100;
+        let oldPartProfit = 0;
+        filteredInvoices.forEach(inv => {
+            const d = new Date(inv.date);
+            if (d.getMonth() === thisMonth && d.getFullYear() === thisYear) {
+                inv.items.forEach(item => {
+                    if (item.type === 'old_part') {
+                        const margin = (item.scrapValue || item.price || 0) - (item.exchangeValue || item.buyPrice || 0);
+                        oldPartProfit += margin * (item.quantity || 1);
+                    }
+                });
+            }
+        });
+
         const profit = monthlySales - filteredMonthlyExpenses;
 
         return {
@@ -188,7 +210,8 @@ const DashboardPage = () => {
             profit,
             monthGrowth: monthGrowth.toFixed(1),
             pendingTotal,
-            monthlyExpenses: filteredMonthlyExpenses
+            monthlyExpenses: filteredMonthlyExpenses,
+            oldPartProfit
         };
     }, [filteredInvoices, filteredMonthlyExpenses]);
 
@@ -270,16 +293,52 @@ const DashboardPage = () => {
                 {(invoicesLoading || productsLoading) ? (
                     <StatSkeleton />
                 ) : (
-                    <StatCard
-                        title={t.monthly_revenue}
-                        value={formatValue(stats.monthlySales)}
-                        trend={stats.monthGrowth >= 0 ? 'up' : 'down'}
+                    <div className="relative h-44 md:h-auto lg:h-full overflow-hidden rounded-3xl group">
+                        <div
+                            className="flex transition-transform duration-700 ease-[cubic-bezier(0.25,1,0.5,1)] h-full"
+                            style={{ transform: `translateX(-${activeSlide * 100}%)` }}
+                        >
+                            {/* Slide 1: Monthly Revenue */}
+                            <div className="w-full shrink-0 h-full">
+                                <StatCard
+                                    title={t.monthly_revenue}
+                                    value={formatValue(stats.monthlySales)}
+                                    trend={stats.monthGrowth >= 0 ? 'up' : 'down'}
+                                    trendValue={`${stats.monthGrowth >= 0 ? '+' : ''}${stats.monthGrowth}%`}
+                                    icon={IndianRupee}
+                                    variant="featured"
+                                    className="h-full rounded-none"
+                                />
+                            </div>
 
-                        trendValue={`${stats.monthGrowth >= 0 ? '+' : ''}${stats.monthGrowth}%`}
-                        icon={IndianRupee}
-                        variant="featured"
-                        className="h-44 md:h-auto lg:h-full"
-                    />
+                            {/* Slide 2: Old Parts Profit */}
+                            <div className="w-full shrink-0 h-full">
+                                <StatCard
+                                    title={t.old_parts || "Old Parts Scrap Margin"}
+                                    value={formatValue(stats.oldPartProfit)}
+                                    trend="up"
+                                    trendValue="Extra Profit Earned"
+                                    icon={RefreshCw}
+                                    variant="featured"
+                                    className="h-full rounded-none border-[var(--color-primary)]/50 bg-[var(--color-primary)]/5"
+                                />
+                            </div>
+                        </div>
+
+                        {/* Pagination Dots */}
+                        <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-2 z-10">
+                            {[0, 1].map((index) => (
+                                <button
+                                    key={index}
+                                    onClick={() => setActiveSlide(index)}
+                                    className={cn(
+                                        "h-2 rounded-full transition-all duration-300",
+                                        activeSlide === index ? "bg-white w-6" : "bg-white/40 hover:bg-white/60 w-2"
+                                    )}
+                                />
+                            ))}
+                        </div>
+                    </div>
                 )}
 
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 lg:col-span-2">
@@ -310,7 +369,7 @@ const DashboardPage = () => {
                                 title={t.real_profit || 'Real Profit'}
                                 value={formatValue(stats.profit)}
                                 trend={stats.profit >= 0 ? 'up' : 'down'}
-                                trendValue={stats.profit >= 0 ? 'Profit' : 'Loss'}
+                                trendValue={stats.oldPartProfit > 0 ? `+₹${stats.oldPartProfit.toLocaleString()} from Old Parts` : (stats.profit >= 0 ? 'Profit' : 'Loss')}
                                 icon={stats.profit >= 0 ? TrendingUp : TrendingDown}
                                 variant="compact"
                                 className="min-h-[10rem] md:min-h-0"

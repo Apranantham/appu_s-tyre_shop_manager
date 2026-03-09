@@ -17,7 +17,22 @@ const InvoiceTemplate = React.forwardRef(({ invoice, showPreview = false }, ref)
         <div
             ref={ref}
             className={`${showPreview ? 'block' : 'hidden print:block'} p-10 bg-white text-slate-800 min-h-[842px] w-full max-w-[800px] mx-auto shadow-2xl relative font-sans`}
+            style={{
+                printColorAdjust: 'exact',
+                WebkitPrintColorAdjust: 'exact'
+            }}
         >
+            <style dangerouslySetInnerHTML={{
+                __html: `
+                @page { 
+                    size: A4; 
+                    margin: 0; 
+                }
+                @media print {
+                    body { -webkit-print-color-adjust: exact; }
+                    .print-break-inside-avoid { break-inside: avoid; }
+                }
+            `}} />
             {/* Design Accent Top */}
             <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-[var(--color-primary)] to-blue-600 print:bg-[var(--color-primary)]"></div>
 
@@ -101,16 +116,20 @@ const InvoiceTemplate = React.forwardRef(({ invoice, showPreview = false }, ref)
                     </thead>
                     <tbody className="divide-y divide-slate-100">
                         {invoice.items.map((item, index) => (
-                            <tr key={index}>
+                            <tr key={index} className="print-break-inside-avoid">
                                 <td className="py-5">
                                     <p className="font-bold text-slate-900">{item.name}</p>
                                     <p className="text-xs text-slate-400 mt-0.5">
-                                        {item.type === 'service' ? 'Maintenance Service' : `${item.brand} | ${item.size}`}
+                                        {item.type === 'service' ? 'Maintenance Service' : item.type === 'old_part' ? 'Exchange/Used Part' : `${item.brand} | ${item.size}`}
                                     </p>
                                 </td>
                                 <td className="text-center py-5 text-slate-600 font-medium">{item.quantity}</td>
-                                <td className="text-right py-5 text-slate-600 font-medium">₹{item.price.toLocaleString('en-IN')}</td>
-                                <td className="text-right py-5 font-bold text-slate-900">₹{(item.price * item.quantity).toLocaleString('en-IN')}</td>
+                                <td className="text-right py-5 text-slate-600 font-medium">
+                                    {item.type === 'old_part' ? `-₹${item.exchangeValue?.toLocaleString('en-IN')}` : `₹${item.price.toLocaleString('en-IN')}`}
+                                </td>
+                                <td className={`text-right py-5 font-bold ${item.type === 'old_part' ? 'text-red-500' : 'text-slate-900'}`}>
+                                    {item.type === 'old_part' ? `-₹${(item.exchangeValue * item.quantity).toLocaleString('en-IN')}` : `₹${(item.price * item.quantity).toLocaleString('en-IN')}`}
+                                </td>
                             </tr>
                         ))}
                     </tbody>

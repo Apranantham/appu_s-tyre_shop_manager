@@ -171,6 +171,17 @@ export const translations = {
         all_categories: 'All Categories',
         category_breakdown: 'Category Breakdown',
 
+        // Old Parts
+        old_parts: 'Old Parts',
+        exchange_value: 'Exchange Value (Deduction)',
+        scrap_value: 'Scrap Value (Internal)',
+        old_part_profit: 'Scrap Margin',
+        add_old_part: 'Add Old Part (Exchange)',
+        item_name: 'Item Name',
+        select_old_item: 'Select Old Item...',
+        manage_old_items: 'Manage Old Items',
+        old_items_master: 'Old Items Master',
+
         // UPI QR Code
         upi_qr_code: 'UPI QR',
         scan_to_pay: 'Scan to Pay',
@@ -360,6 +371,17 @@ export const translations = {
         search_expenses: 'செலவுகளைத் தேடு...',
         all_categories: 'அனைத்து வகைகளும்',
         category_breakdown: 'வகை வாரியான செலவு',
+
+        // Old Parts
+        old_parts: 'பழைய பொருட்கள் (மாற்று)',
+        exchange_value: 'மாற்று விலை (கழிவு)',
+        scrap_value: 'ஸ்கிராப் விலை (உள்)',
+        old_part_profit: 'ஸ்கிராப் லாபம்',
+        add_old_part: 'பழைய பொருள் சேர்',
+        item_name: 'பொருளின் பெயர்',
+        select_old_item: 'பழைய பொருளைத் தேர்ந்தெடுக்கவும்...',
+        manage_old_items: 'பழைய பொருட்களை நிர்வகி',
+        old_items_master: 'பழைய பொருட்கள் பட்டியல்',
 
         // UPI QR Code
         upi_qr_code: 'UPI QR',
