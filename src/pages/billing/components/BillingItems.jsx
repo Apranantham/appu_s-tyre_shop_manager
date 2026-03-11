@@ -22,6 +22,7 @@ const BillingItems = ({ onAddToCart, onUpdateQuantity, onRemoveItem, cart = [], 
 
     const newRow = () => ({ id: Date.now() + Math.random(), name: '', qty: 1, exchangeValue: '', scrapValue: '' });
     const [oldPartRows, setOldPartRows] = useState([newRow()]);
+    const [focusedRowId, setFocusedRowId] = useState(null);
 
     const updateRow = useCallback((rowId, field, value) => {
         setOldPartRows(prev => prev.map(r => r.id === rowId ? { ...r, [field]: value } : r));
@@ -32,8 +33,9 @@ const BillingItems = ({ onAddToCart, onUpdateQuantity, onRemoveItem, cart = [], 
 
     const addRowToCart = (row) => {
         if (!row.name || !row.exchangeValue) return;
+        const slug = `${row.name}_${row.exchangeValue}`.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase();
         const item = {
-            id: `old_${Date.now()}`,
+            id: `old_${slug}`,
             name: row.name,
             price: 0,
             exchangeValue: Number(row.exchangeValue),
@@ -161,71 +163,109 @@ const BillingItems = ({ onAddToCart, onUpdateQuantity, onRemoveItem, cart = [], 
                                 </button>
                             </div>
 
-                            {/* Column Headers */}
-                            <div className="grid gap-2">
-                                <div className="grid grid-cols-[2fr_0.6fr_1fr_1fr_auto] gap-1.5 px-1">
-                                    <span className="text-[9px] font-black uppercase tracking-widest text-[var(--color-text-gray)] opacity-60">Item Name</span>
-                                    <span className="text-[9px] font-black uppercase tracking-widest text-[var(--color-text-gray)] opacity-60">Qty</span>
-                                    <span className="text-[9px] font-black uppercase tracking-widest text-[var(--color-text-gray)] opacity-60">Exchange ₹</span>
-                                    <span className="text-[9px] font-black uppercase tracking-widest text-[var(--color-text-gray)] opacity-60">Scrap ₹</span>
-                                    <span className="w-8"></span>
+                            <div className="grid gap-3 pt-1">
+                                {/* Desktop Headers */}
+                                <div className="hidden sm:grid grid-cols-[3fr_1fr_1.5fr_1.5fr_auto] gap-3 px-3 py-2 bg-[var(--color-bg-dark)]/50 rounded-xl border border-[var(--color-border)]">
+                                    <span className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-gray)]">Item Name</span>
+                                    <span className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-gray)] text-center">Qty</span>
+                                    <span className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-gray)] text-right">Exchange ₹</span>
+                                    <span className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-gray)] text-right">Scrap ₹</span>
+                                    <span className="w-9"></span>
                                 </div>
 
                                 {/* Rows */}
-                                {oldPartRows.map((row) => (
-                                    <div key={row.id} className="grid grid-cols-[2fr_0.6fr_1fr_1fr_auto] gap-1.5 items-center">
-                                        {/* Name - with master list datalist */}
-                                        <div className="relative">
+                                {oldPartRows.map((row, index) => (
+                                    <div key={row.id} className="relative flex flex-col sm:grid sm:grid-cols-[3fr_1fr_1.5fr_1.5fr_auto] gap-4 sm:gap-3 items-start sm:items-center bg-[var(--color-bg-dark)]/30 sm:bg-transparent p-4 sm:p-0 rounded-2xl sm:rounded-none border border-[var(--color-border)] sm:border-transparent mt-3 sm:mt-0">
+                                        {/* Mobile Row Label */}
+                                        <div className="absolute -top-3 left-4 px-3 py-0.5 bg-[var(--color-bg-card)] sm:hidden rounded-full border border-[var(--color-border)] shadow-sm">
+                                            <span className="text-[9px] font-black uppercase tracking-[0.2em] text-[var(--color-primary)]">Part {index + 1}</span>
+                                        </div>
+
+                                        {/* Name - with custom dropdown */}
+                                        <div className="w-full relative group/input">
+                                            <span className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-gray)] sm:hidden mb-1.5 block ml-1">Item Name</span>
                                             <input
-                                                list={`master-list-${row.id}`}
                                                 value={row.name}
                                                 onChange={(e) => updateRow(row.id, 'name', e.target.value)}
-                                                placeholder="Select or type..."
-                                                className="w-full bg-[var(--color-bg-card)] border border-[var(--color-border)] rounded-lg px-2.5 py-2 text-xs font-bold focus:border-[var(--color-primary)] outline-none min-w-0"
+                                                onFocus={() => setFocusedRowId(row.id)}
+                                                onBlur={() => setTimeout(() => { if (focusedRowId === row.id) setFocusedRowId(null); }, 200)}
+                                                placeholder="Select or type item..."
+                                                className="w-full bg-[var(--color-bg-card)] border border-[var(--color-border)] rounded-xl px-4 py-2.5 text-sm font-bold focus:border-[var(--color-primary)] outline-none transition-all text-[var(--color-text-white)] shadow-sm focus:ring-2 focus:ring-[var(--color-primary)]/20"
                                             />
-                                            <datalist id={`master-list-${row.id}`}>
-                                                {oldItemsMaster.map(item => (
-                                                    <option key={item.id} value={item.name} />
-                                                ))}
-                                            </datalist>
+                                            {focusedRowId === row.id && oldItemsMaster.length > 0 && (
+                                                <div className="absolute left-0 right-0 top-[110%] bg-[var(--color-bg-dark)] border border-[var(--color-border)] rounded-xl shadow-2xl overflow-hidden z-[100] animate-in fade-in slide-in-from-top-2 duration-200 mt-1 max-h-48 overflow-y-auto custom-scrollbar">
+                                                    {oldItemsMaster
+                                                        .filter(item => item.name.toLowerCase().includes((row.name || '').toLowerCase()))
+                                                        .map(item => (
+                                                            <button
+                                                                key={item.id}
+                                                                type="button"
+                                                                onMouseDown={() => {
+                                                                    updateRow(row.id, 'name', item.name);
+                                                                    setFocusedRowId(null);
+                                                                }}
+                                                                className="w-full text-left px-4 py-3 text-sm font-bold text-[var(--color-text-white)] hover:bg-[var(--color-primary)] hover:text-white transition-colors border-b border-[var(--color-border)]/50 last:border-none"
+                                                            >
+                                                                {item.name}
+                                                            </button>
+                                                        ))}
+                                                </div>
+                                            )}
                                         </div>
-                                        {/* Qty */}
-                                        <input
-                                            type="number"
-                                            min="1"
-                                            value={row.qty}
-                                            onFocus={(e) => e.target.select()}
-                                            onChange={(e) => updateRow(row.id, 'qty', e.target.value)}
-                                            className="w-full bg-[var(--color-bg-card)] border border-[var(--color-border)] rounded-lg px-2 py-2 text-xs font-bold focus:border-[var(--color-primary)] outline-none text-center"
-                                        />
-                                        {/* Exchange Value */}
-                                        <input
-                                            type="number"
-                                            value={row.exchangeValue}
-                                            onFocus={(e) => e.target.select()}
-                                            onChange={(e) => updateRow(row.id, 'exchangeValue', e.target.value)}
-                                            placeholder="0"
-                                            className="w-full bg-[var(--color-bg-card)] border border-[var(--color-border)] rounded-lg px-2 py-2 text-xs font-bold focus:border-red-400 outline-none text-right"
-                                        />
-                                        {/* Scrap Value */}
-                                        <input
-                                            type="number"
-                                            value={row.scrapValue}
-                                            onFocus={(e) => e.target.select()}
-                                            onChange={(e) => updateRow(row.id, 'scrapValue', e.target.value)}
-                                            placeholder="0"
-                                            className="w-full bg-[var(--color-bg-card)] border border-[var(--color-border)] rounded-lg px-2 py-2 text-xs font-bold focus:border-[var(--color-primary)] outline-none text-right"
-                                        />
+
+                                        <div className="grid grid-cols-3 gap-3 w-full sm:col-span-3 sm:grid sm:grid-cols-[1fr_1.5fr_1.5fr] sm:gap-3">
+                                            {/* Qty */}
+                                            <div className="flex flex-col w-full">
+                                                <span className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-gray)] sm:hidden mb-1.5 block ml-1">Qty</span>
+                                                <input
+                                                    type="number"
+                                                    min="1"
+                                                    value={row.qty}
+                                                    onFocus={(e) => e.target.select()}
+                                                    onChange={(e) => updateRow(row.id, 'qty', e.target.value)}
+                                                    className="w-full bg-[var(--color-bg-card)] border border-[var(--color-border)] rounded-xl px-2 py-2.5 text-sm font-bold focus:border-[var(--color-primary)] outline-none text-center shadow-sm focus:ring-2 focus:ring-[var(--color-primary)]/20"
+                                                />
+                                            </div>
+                                            {/* Exchange Value */}
+                                            <div className="flex flex-col w-full">
+                                                <span className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-gray)] sm:hidden mb-1.5 block pl-1 text-right">Exchange ₹</span>
+                                                <input
+                                                    type="number"
+                                                    value={row.exchangeValue}
+                                                    onFocus={(e) => e.target.select()}
+                                                    onChange={(e) => updateRow(row.id, 'exchangeValue', e.target.value)}
+                                                    placeholder="0"
+                                                    className="w-full bg-[var(--color-bg-card)] border border-[var(--color-border)] rounded-xl px-3 py-2.5 text-sm font-bold focus:border-red-400 outline-none text-right text-red-400 shadow-sm focus:ring-2 focus:ring-red-400/20"
+                                                />
+                                            </div>
+                                            {/* Scrap Value */}
+                                            <div className="flex flex-col w-full">
+                                                <span className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-gray)] sm:hidden mb-1.5 block pl-1 text-right">Scrap ₹</span>
+                                                <input
+                                                    type="number"
+                                                    value={row.scrapValue}
+                                                    onFocus={(e) => e.target.select()}
+                                                    onChange={(e) => updateRow(row.id, 'scrapValue', e.target.value)}
+                                                    placeholder="0"
+                                                    className="w-full bg-[var(--color-bg-card)] border border-[var(--color-border)] rounded-xl px-3 py-2.5 text-sm font-bold focus:border-[var(--color-primary)] outline-none text-right shadow-sm focus:ring-2 focus:ring-[var(--color-primary)]/20"
+                                                />
+                                            </div>
+                                        </div>
+
                                         {/* Delete Row */}
-                                        <button
-                                            onClick={() => removeRow(row.id)}
-                                            className="h-8 w-8 flex items-center justify-center rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white transition-all active:scale-95 flex-shrink-0"
-                                        >
-                                            <Trash2 className="h-3.5 w-3.5" />
-                                        </button>
+                                        <div className="w-full sm:w-auto mt-2 sm:mt-0 pt-3 sm:pt-0 border-t border-[var(--color-border)] sm:border-none flex justify-center">
+                                            <button
+                                                onClick={() => removeRow(row.id)}
+                                                className="w-full sm:w-9 h-10 sm:h-9 flex items-center justify-center rounded-xl bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white transition-all active:scale-95 border border-red-500/20 hover:border-red-500"
+                                            >
+                                                <Trash2 className="h-4 w-4" />
+                                                <span className="text-[11px] uppercase font-black tracking-[0.2em] ml-2 sm:hidden">Remove Row</span>
+                                            </button>
+                                        </div>
                                     </div>
                                 ))}
                             </div>
+
 
                             {/* Actions */}
                             <div className="flex gap-2 pt-1">

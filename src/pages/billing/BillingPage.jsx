@@ -114,6 +114,8 @@ const BillingPage = () => {
     };
 
     const addToCart = (item, type) => {
+        const addQty = Number(item.quantity) || 1;
+
         if (type === 'product') {
             const liveProduct = products.find(p => p.id === item.id);
             const currentStock = liveProduct?.stock || 0;
@@ -126,21 +128,21 @@ const BillingPage = () => {
             setCart(prev => {
                 const existing = prev.find(i => i.id === item.id && i.type === type);
                 if (existing) {
-                    if (existing.quantity + 1 > currentStock) {
+                    if (existing.quantity + addQty > currentStock) {
                         alert(lang === 'ta' ? `போதிய இருப்பு இல்லை! மீதமுள்ள இருப்பு: ${currentStock}` : `Insufficient stock! Available stock: ${currentStock}`);
                         return prev;
                     }
-                    return prev.map(i => i.id === item.id && i.type === type ? { ...i, quantity: i.quantity + 1 } : i);
+                    return prev.map(i => i.id === item.id && i.type === type ? { ...i, quantity: i.quantity + addQty } : i);
                 }
-                return [...prev, { ...item, type, quantity: 1, stock: currentStock }];
+                return [...prev, { ...item, type, quantity: addQty, stock: currentStock }];
             });
         } else {
             setCart(prev => {
                 const existing = prev.find(i => i.id === item.id && i.type === type);
                 if (existing) {
-                    return prev.map(i => i.id === item.id && i.type === type ? { ...i, quantity: i.quantity + 1 } : i);
+                    return prev.map(i => i.id === item.id && i.type === type ? { ...i, quantity: i.quantity + addQty } : i);
                 }
-                return [...prev, { ...item, type, quantity: 1 }];
+                return [...prev, { ...item, type, quantity: addQty }];
             });
         }
     };
@@ -188,7 +190,7 @@ const BillingPage = () => {
         });
 
         const totalItems = cart.filter(i => i.type !== 'old_part').reduce((sum, item) => sum + (item.price * item.quantity), 0);
-        const totalExchange = cart.filter(i => i.type === 'old_part').reduce((sum, item) => sum + (item.exchangeValue || 0), 0);
+        const totalExchange = cart.filter(i => i.type === 'old_part').reduce((sum, item) => sum + ((item.exchangeValue || 0) * (item.quantity || 1)), 0);
         const subtotal = totalItems - totalExchange;
         const total = subtotal - (Number(discount) || 0);
 
