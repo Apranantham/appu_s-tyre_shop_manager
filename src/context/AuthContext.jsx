@@ -9,7 +9,7 @@ import {
     RecaptchaVerifier,
     signInWithPhoneNumber
 } from 'firebase/auth';
-import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db, googleProvider } from '../firebase';
 
 const AuthContext = createContext();
@@ -21,22 +21,31 @@ export const AuthProvider = ({ children }) => {
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
             if (currentUser) {
+                // Admin status is decided solely by membership in the /admins
+                // registry — the same check the Firestore security rules use, so
+                // the client and server can never disagree. Seed the first admin
+                // manually in the Firebase console (admins/<uid>).
+                let admin = false;
+                try {
+                    const adminSnap = await getDoc(doc(db, 'admins', currentUser.uid));
+                    admin = adminSnap.exists();
+                } catch (err) {
+                    console.error("Admin check failed:", err);
+                }
+
                 const userData = {
                     name: currentUser.displayName || currentUser.email?.split('@')[0] || currentUser.phoneNumber,
                     email: currentUser.email,
                     picture: currentUser.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser.displayName || 'U')}&background=0D8ABC&color=fff`,
                     uid: currentUser.uid,
                     phone: currentUser.phoneNumber,
-                    isAdmin: currentUser.uid === 'hPGom0p4tAfZf37Bqly6erLYkZm1' ||
-                        (currentUser.email || '').toLowerCase().includes('apranantham') ||
-                        (currentUser.email || '').toLowerCase().includes('appuananth') ||
-                        (currentUser.displayName || '').toLowerCase().includes('apranantham') ||
-                        (currentUser.displayName || '').toLowerCase().includes('appu')
                 };
 
-                setUser(userData);
+                setUser({ ...userData, isAdmin: admin });
 
-                // Sync user data to Firestore
+                // Sync profile to Firestore. We deliberately do NOT persist an
+                // isAdmin flag here — a user can write their own /users doc, so
+                // trusting a stored flag would be an escalation hole.
                 try {
                     await setDoc(doc(db, 'users', currentUser.uid), {
                         ...userData,

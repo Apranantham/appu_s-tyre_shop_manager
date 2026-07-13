@@ -13,6 +13,7 @@ import { InvoiceProvider } from './context/InvoiceContext';
 import { ExpenseProvider } from './context/ExpenseContext';
 import { SettingsProvider } from './context/SettingsContext';
 import { OldItemProvider } from './context/OldItemContext';
+import { ProcurementProvider } from './context/ProcurementContext';
 import DashboardPage from './pages/dashboard/DashboardPage';
 import InventoryPage from './pages/inventory/InventoryPage';
 import ServicePage from './pages/services/ServicePage';
@@ -25,6 +26,10 @@ import AdminPanel from './pages/admin/AdminPanel';
 import RecycleBin from './pages/admin/RecycleBin';
 import ExpensesPage from './pages/expenses/ExpensesPage';
 import OldItemsMasterPage from './pages/inventory/OldItemsMasterPage';
+import DayBookPage from './pages/reports/DayBookPage';
+import DuesPage from './pages/reports/DuesPage';
+import SuppliersPage from './pages/suppliers/SuppliersPage';
+import StockLogPage from './pages/suppliers/StockLogPage';
 
 function App() {
   return (
@@ -36,6 +41,7 @@ function App() {
               <OldItemProvider>
                 <InvoiceProvider>
                   <ExpenseProvider>
+                   <ProcurementProvider>
                     <Router>
                       <ScrollToTop />
                       <Routes>
@@ -56,11 +62,15 @@ function App() {
                           <Route path="billing" element={<BillingPage />} />
                           <Route path="inventory" element={<InventoryPage />} />
                           <Route path="inventory/old-items" element={<OldItemsMasterPage />} />
+                          <Route path="inventory/stock-log" element={<StockLogPage />} />
+                          <Route path="suppliers" element={<SuppliersPage />} />
                           <Route path="services" element={<ServicePage />} />
                           <Route path="customers" element={<CustomerHistory />} />
                           <Route path="customers/:id" element={<CustomerProfile />} />
                           <Route path="history" element={<BillingHistory />} />
                           <Route path="expenses" element={<ExpensesPage />} />
+                          <Route path="daybook" element={<DayBookPage />} />
+                          <Route path="dues" element={<DuesPage />} />
                           <Route path="settings" element={<SettingsPage />} />
                           <Route path="admin" element={<AdminPanel />} />
                           <Route path="admin/recycle-bin" element={<RecycleBin />} />
@@ -70,6 +80,7 @@ function App() {
                         <Route path="*" element={<Navigate to="/dashboard" replace />} />
                       </Routes>
                     </Router>
+                   </ProcurementProvider>
                   </ExpenseProvider>
                 </InvoiceProvider>
               </OldItemProvider>

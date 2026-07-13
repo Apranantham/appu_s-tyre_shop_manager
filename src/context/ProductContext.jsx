@@ -12,6 +12,7 @@ import {
 } from 'firebase/firestore';
 import { db } from '../firebase';
 import { useAuth } from './AuthContext';
+import { logStockMovements } from '../utils/stockLog';
 
 const ProductContext = createContext();
 
@@ -77,12 +78,22 @@ export const ProductProvider = ({ children }) => {
         }
     };
 
-    const updateStock = async (id, quantity) => {
+    // Deducts `quantity` from stock (negative quantity returns stock).
+    // `meta` feeds the stock-movement audit trail.
+    const updateStock = async (id, quantity, meta = {}) => {
         try {
             const productRef = doc(db, 'inventory', id);
             await updateDoc(productRef, {
                 stock: increment(-quantity)
             });
+            logStockMovements({
+                productId: id,
+                productName: meta.productName || products.find(p => p.id === id)?.name || '',
+                delta: -quantity,
+                reason: meta.reason || 'sale',
+                refId: meta.refId,
+                note: meta.note
+            }, user);
         } catch (error) {
             console.error("Error updating stock:", error);
             throw error;

@@ -352,7 +352,7 @@ const DashboardPage = () => {
                     ) : (
                         <>
                             <div
-                                onClick={() => navigate('/history', { state: { dateFilter: 'today' } })}
+                                onClick={() => navigate('/daybook')}
                                 className="cursor-pointer active:scale-[0.98] transition-all group/stat"
                             >
                                 <StatCard
@@ -389,7 +389,7 @@ const DashboardPage = () => {
                                 />
                             </div>
                             <div
-                                onClick={() => navigate('/history', { state: { statusFilter: 'pending' } })}
+                                onClick={() => navigate('/dues')}
                                 className="cursor-pointer active:scale-[0.98] transition-all"
                             >
                                 <StatCard

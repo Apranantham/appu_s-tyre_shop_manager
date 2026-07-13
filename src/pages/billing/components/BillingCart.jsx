@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { X, Plus, Minus, User, Phone, Car, CreditCard, Banknote, QrCode, Calendar, FileText, CheckCircle2, Clock, Search, ShoppingCart, ArrowLeft, Coins, Wallet, History, Send } from 'lucide-react';
+import { X, Plus, Minus, User, Phone, Car, CreditCard, Banknote, QrCode, Calendar, FileText, CheckCircle2, Clock, Search, ShoppingCart, ArrowLeft, Coins, Wallet, History, Send, PauseCircle } from 'lucide-react';
 import { cn } from '../../../utils/cn';
 import { Button } from '../../../components/ui/Button';
 import { Card } from '../../../components/ui/Card';
@@ -12,8 +12,12 @@ const BillingCart = ({
     customer,
     onUpdateCustomer,
     onUpdateQuantity,
+    onSetQuantity,
+    onUpdatePrice,
     onRemoveItem,
     onCheckout,
+    onHold,
+    isSubmitting = false,
     paymentMode,
     setPaymentMode,
     discount,
@@ -58,8 +62,9 @@ const BillingCart = ({
         if (item.type === 'old_part') return sum - ((item.exchangeValue || 0) * item.quantity);
         return sum + (item.price * item.quantity);
     }, 0);
-    const tax = 0; // No tax as requested
-    const total = subtotal - (Number(discount) || 0);
+    // Clamp the discount so the total can never go negative.
+    const discountVal = Math.min(Math.max(0, Number(discount) || 0), Math.max(0, subtotal));
+    const total = subtotal - discountVal;
 
     const paymentModes = [
         { id: 'cash', label: t.cash, icon: Banknote },
@@ -231,7 +236,18 @@ const BillingCart = ({
                                                 {item.type === 'old_part' ? (
                                                     <span className="font-black text-xl text-red-400">-₹{(item.exchangeValue || 0).toLocaleString()}</span>
                                                 ) : (
-                                                    <span className="font-black text-xl text-[#3B82F6]">₹{item.price.toLocaleString()}</span>
+                                                    /* Editable unit price — counter staff negotiate per tyre */
+                                                    <div className="flex items-center justify-end">
+                                                        <span className="font-black text-xl text-[var(--color-primary)]">₹</span>
+                                                        <input
+                                                            type="number"
+                                                            min="0"
+                                                            value={item.price}
+                                                            onFocus={(e) => e.target.select()}
+                                                            onChange={(e) => onUpdatePrice && onUpdatePrice(item.id, item.type, Number(e.target.value))}
+                                                            className="w-24 bg-transparent text-right font-black text-xl text-[var(--color-primary)] border-b border-dashed border-[var(--color-border)] focus:border-[var(--color-primary)] focus:outline-none p-0"
+                                                        />
+                                                    </div>
                                                 )}
                                             </div>
                                         </div>
@@ -244,7 +260,17 @@ const BillingCart = ({
                                                 >
                                                     <Minus className="h-4 w-4" />
                                                 </button>
-                                                <span className="w-8 text-center text-base font-black text-[var(--color-text-white)]">{item.quantity}</span>
+                                                <input
+                                                    type="number"
+                                                    min="1"
+                                                    value={item.quantity}
+                                                    onFocus={(e) => e.target.select()}
+                                                    onChange={(e) => {
+                                                        const v = parseInt(e.target.value, 10);
+                                                        if (Number.isFinite(v) && onSetQuantity) onSetQuantity(item.id, item.type, v);
+                                                    }}
+                                                    className="w-12 text-center text-base font-black text-[var(--color-text-white)] bg-transparent focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                                />
                                                 <button
                                                     onClick={() => onUpdateQuantity(item.id, item.type, 1)}
                                                     className="w-10 h-10 flex items-center justify-center bg-[#3B82F6] text-white rounded-full shadow-md hover:bg-blue-700 transition-all hover:scale-105"
@@ -313,7 +339,7 @@ const BillingCart = ({
                                     className={cn(
                                         "flex flex-col items-center justify-center py-3 rounded-xl border transition-all h-16",
                                         paymentMode === mode.id
-                                            ? "border-blue-500 bg-blue-50 text-blue-600 shadow-sm ring-2 ring-blue-500/20"
+                                            ? "border-[var(--color-primary)] bg-[var(--color-primary)] text-white shadow-sm"
                                             : "border-[var(--color-border)] bg-[var(--color-bg-dark)]/50 text-[var(--color-text-gray)]/60 hover:border-[var(--color-text-gray)]/40 hover:text-[var(--color-text-white)]"
                                     )}
                                 >
@@ -376,9 +402,14 @@ const BillingCart = ({
                             </div>
                             <input
                                 type="number"
+                                min="0"
+                                max={Math.max(0, subtotal)}
                                 value={discount}
                                 onFocus={(e) => e.target.select()}
-                                onChange={(e) => setDiscount(e.target.value)}
+                                onChange={(e) => {
+                                    const v = Math.min(Math.max(0, Number(e.target.value) || 0), Math.max(0, subtotal));
+                                    setDiscount(v);
+                                }}
                                 className="w-full bg-transparent border-none p-0 text-right text-lg font-black focus:outline-none text-[var(--color-text-white)] placeholder:text-[var(--color-text-gray)]/20"
                                 placeholder="0"
                             />
@@ -391,17 +422,37 @@ const BillingCart = ({
                         </div>
                     </div>
 
+                    <div className="flex gap-3">
+                    {/* Hold: park this bill and start a fresh one (not shown while editing) */}
+                    {onHold && cart.length > 0 && !editingInvoiceNo && (
+                        <Button
+                            variant="outline"
+                            onClick={onHold}
+                            className="h-14 px-4 rounded-2xl border-[var(--color-warning)]/40 text-[var(--color-warning)] hover:bg-[var(--color-warning-soft)] flex items-center gap-2 shrink-0 active:scale-[0.98] transition-all"
+                        >
+                            <PauseCircle className="h-5 w-5" />
+                            <span className="text-[10px] font-black uppercase tracking-widest">{t.hold_bill || 'Hold'}</span>
+                        </Button>
+                    )}
                     <Button
-                        className="w-full h-14 bg-[#3B82F6] hover:bg-blue-700 text-white rounded-2xl shadow-[0_10px_20px_rgba(59,130,246,0.25)] active:scale-[0.98] transition-all flex flex-row items-center justify-center gap-3 border-none"
+                        className="flex-1 h-14 bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white rounded-2xl shadow-[0_10px_20px_rgba(59,130,246,0.25)] active:scale-[0.98] transition-all flex flex-row items-center justify-center gap-3 border-none"
                         onClick={onCheckout}
+                        isLoading={isSubmitting}
                         disabled={cart.length === 0}
                     >
-                        <span className="text-base font-black uppercase tracking-widest">{t.done || 'DONE'}</span>
-                        <div className="h-6 w-[1px] bg-white/20" />
-                        <span className="text-[9px] font-bold uppercase tracking-widest opacity-90">
-                            {paymentStatuses.find(s => s.id === paymentStatus)?.label} • {paymentModes.find(m => m.id === paymentMode)?.label}
+                        <span className="text-base font-black uppercase tracking-widest">
+                            {isSubmitting ? (t.saving || 'SAVING…') : (t.done || 'DONE')}
                         </span>
+                        {!isSubmitting && (
+                            <>
+                                <div className="h-6 w-[1px] bg-white/20" />
+                                <span className="text-[9px] font-bold uppercase tracking-widest opacity-90">
+                                    {paymentStatuses.find(s => s.id === paymentStatus)?.label} • {paymentModes.find(m => m.id === paymentMode)?.label}
+                                </span>
+                            </>
+                        )}
                     </Button>
+                    </div>
                 </div>
             </div>
         </Card>

@@ -13,11 +13,18 @@ import { translations } from '../../utils/translations';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import Loader from '../../components/ui/Loader';
-import { CheckCircle2, Download, MessageSquare, Printer, X, Plus, Home, ShoppingCart, Edit2, QrCode } from 'lucide-react';
+import { CheckCircle2, Download, MessageSquare, Printer, X, Plus, Home, ShoppingCart, Edit2, QrCode, PauseCircle, ReceiptText, ImageDown } from 'lucide-react';
+import ThermalReceipt from './components/ThermalReceipt';
+import { shareInvoiceImage } from '../../utils/invoiceImage';
+
+// Local persistence keys: the in-progress bill survives refreshes, and bills can
+// be parked ("held") to serve another customer, then resumed.
+const DRAFT_KEY = 'tyreshop_billing_draft';
+const HELD_KEY = 'tyreshop_held_bills';
 
 const BillingPage = () => {
     const { products, updateStock } = useProducts();
-    const { addInvoice, updateInvoice, deleteInvoice } = useInvoices();
+    const { addInvoice, updateInvoice } = useInvoices();
     const { shopDetails } = useSettings();
     const lang = shopDetails?.appLanguage || 'ta';
     const t = translations[lang];
@@ -38,6 +45,14 @@ const BillingPage = () => {
     const [discount, setDiscount] = useState(0);
     const [showUpiQr, setShowUpiQr] = useState(false);
     const [isAutoTime, setIsAutoTime] = useState(true);
+    // Snapshot of the invoice being edited — used to apply only the *stock delta*
+    // (and preserve payment history) instead of blindly re-deducting on save.
+    const [editOriginal, setEditOriginal] = useState(null);
+    // Guards against double-taps creating duplicate invoices.
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [heldBills, setHeldBills] = useState(() => {
+        try { return JSON.parse(localStorage.getItem(HELD_KEY) || '[]'); } catch { return []; }
+    });
     const getLocalDateTime = () => {
         const now = new Date();
         const year = now.getFullYear();
@@ -45,6 +60,19 @@ const BillingPage = () => {
         const day = String(now.getDate()).padStart(2, '0');
         const hours = String(now.getHours()).padStart(2, '0');
         const minutes = String(now.getMinutes()).padStart(2, '0');
+        return `${year}-${month}-${day}T${hours}:${minutes}`;
+    };
+
+    // Format any date into the `YYYY-MM-DDTHH:mm` shape a datetime-local input needs,
+    // in LOCAL time (previous code truncated to date-only and lost the time).
+    const toDateTimeLocal = (dateInput) => {
+        const d = new Date(dateInput);
+        if (isNaN(d.getTime())) return getLocalDateTime();
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        const hours = String(d.getHours()).padStart(2, '0');
+        const minutes = String(d.getMinutes()).padStart(2, '0');
         return `${year}-${month}-${day}T${hours}:${minutes}`;
     };
 
@@ -67,6 +95,7 @@ const BillingPage = () => {
     };
 
     const componentRef = useRef();
+    const thermalRef = useRef();
     const pageRef = useRef();
 
     // Reset scroll when switching between items and cart on mobile
@@ -90,10 +119,11 @@ const BillingPage = () => {
             setDiscount(editInvoice.discount || 0);
             setEditingId(editInvoice.id);
             setEditingInvoiceNo(editInvoice.invoiceNo || null);
+            setEditOriginal(editInvoice); // snapshot for stock-delta + payment history
             setPaymentStatus(editInvoice.paymentStatus || 'paid');
             setPaidAmount(editInvoice.paidAmount || editInvoice.total || 0);
             setPaymentNote(editInvoice.paymentNote || '');
-            setBillingDate(new Date(editInvoice.date).toISOString().split('T')[0]);
+            setBillingDate(toDateTimeLocal(editInvoice.date));
             setIsAutoTime(false); // Don't auto-update when editing an old invoice
             setShowCart(true); // Switch to cart view immediately
 
@@ -101,8 +131,38 @@ const BillingPage = () => {
         }
     }, [location.state, navigate, location.pathname]);
 
+    // Restore an unsaved draft after a refresh/crash (skipped when opening an edit).
+    // Defined BEFORE the autosave effect so it reads storage before the first write.
+    useEffect(() => {
+        if (location.state?.editInvoice) return;
+        try {
+            const saved = JSON.parse(localStorage.getItem(DRAFT_KEY) || 'null');
+            if (saved?.cart?.length) {
+                setCart(saved.cart);
+                setCustomer(saved.customer || { name: '', phone: '', vehicle: '' });
+                setDiscount(saved.discount || 0);
+                setPaymentMode(saved.paymentMode || 'cash');
+                setPaymentStatus(saved.paymentStatus || 'paid');
+                setPaidAmount(saved.paidAmount || 0);
+                setPaymentNote(saved.paymentNote || '');
+            }
+        } catch { /* corrupt draft — ignore */ }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+    // Auto-save the in-progress bill so a refresh never loses the cart.
+    useEffect(() => {
+        if (editingId || isCheckoutSuccess) return;
+        localStorage.setItem(DRAFT_KEY, JSON.stringify({
+            cart, customer, discount, paymentMode, paymentStatus, paidAmount, paymentNote
+        }));
+    }, [cart, customer, discount, paymentMode, paymentStatus, paidAmount, paymentNote, editingId, isCheckoutSuccess]);
+
     const handlePrint = useReactToPrint({
         contentRef: componentRef,
+    });
+    const handlePrintReceipt = useReactToPrint({
+        contentRef: thermalRef,
     });
 
     const handleExit = () => {
@@ -173,90 +233,182 @@ const BillingPage = () => {
         setCart(prev => prev.filter(i => !(i.id === id && i.type === type)));
     };
 
+    // Direct quantity entry (type "4" instead of tapping + four times).
+    const handleSetQuantity = (id, type, qty) => {
+        if (!Number.isFinite(qty) || qty < 1) return;
+        let newQty = Math.floor(qty);
+        if (type === 'product') {
+            const liveProduct = products.find(p => p.id === id);
+            const currentStock = liveProduct?.stock || 0;
+            if (newQty > currentStock) {
+                alert(lang === 'ta' ? `போதிய இருப்பு இல்லை! மீதமுள்ள இருப்பு: ${currentStock}` : `Insufficient stock! Available stock: ${currentStock}`);
+                newQty = Math.max(1, currentStock);
+            }
+        }
+        setCart(prev => prev.map(i => (i.id === id && i.type === type) ? { ...i, quantity: newQty } : i));
+    };
+
+    // Per-line price override — tyre prices are negotiated at the counter.
+    const handleUpdatePrice = (id, type, price) => {
+        if (!Number.isFinite(price) || price < 0) return;
+        setCart(prev => prev.map(i => (i.id === id && i.type === type) ? { ...i, price } : i));
+    };
+
+    const persistHeld = (list) => {
+        setHeldBills(list);
+        localStorage.setItem(HELD_KEY, JSON.stringify(list));
+    };
+
+    // Park the current bill to serve another customer.
+    const holdCurrentBill = () => {
+        if (cart.length === 0 || editingId) return;
+        const entry = {
+            id: Date.now(),
+            heldAt: new Date().toISOString(),
+            cart, customer, discount, paymentMode, paymentStatus, paidAmount, paymentNote
+        };
+        persistHeld([entry, ...heldBills]);
+        resetBilling();
+    };
+
+    const resumeHeldBill = (id) => {
+        const entry = heldBills.find(h => h.id === id);
+        if (!entry) return;
+        if (cart.length > 0) {
+            alert(t.finish_current_first || 'Finish or hold the current bill before resuming another.');
+            return;
+        }
+        setCart(entry.cart || []);
+        setCustomer(entry.customer || { name: '', phone: '', vehicle: '' });
+        setDiscount(entry.discount || 0);
+        setPaymentMode(entry.paymentMode || 'cash');
+        setPaymentStatus(entry.paymentStatus || 'paid');
+        setPaidAmount(entry.paidAmount || 0);
+        setPaymentNote(entry.paymentNote || '');
+        persistHeld(heldBills.filter(h => h.id !== id));
+    };
+
+    const discardHeldBill = (id) => persistHeld(heldBills.filter(h => h.id !== id));
+
     const handleAddToCart = (item, type) => addToCart(item, type);
 
     const handleUpdateCustomer = (field, value) => {
         setCustomer(prev => ({ ...prev, [field]: value }));
     };
 
-    const handleCheckout = async () => {
-        if (cart.length === 0) return;
-
-        // Deduct Stock
-        cart.forEach(item => {
-            if (item.type === 'product') {
-                updateStock(item.id, item.quantity);
+    // Sum product quantities per product id (ignores services/old parts).
+    const productQtyMap = (items) => {
+        const map = {};
+        (items || []).forEach(it => {
+            if (it.type === 'product' && it.id != null) {
+                map[it.id] = (map[it.id] || 0) + (Number(it.quantity) || 0);
             }
         });
+        return map;
+    };
 
-        const totalItems = cart.filter(i => i.type !== 'old_part').reduce((sum, item) => sum + (item.price * item.quantity), 0);
-        const totalExchange = cart.filter(i => i.type === 'old_part').reduce((sum, item) => sum + ((item.exchangeValue || 0) * (item.quantity || 1)), 0);
-        const subtotal = totalItems - totalExchange;
-        const total = subtotal - (Number(discount) || 0);
+    const handleCheckout = async () => {
+        if (cart.length === 0 || isSubmitting) return; // guard against double-submit
+        setIsSubmitting(true);
+        try {
+            const totalItems = cart.filter(i => i.type !== 'old_part').reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            const totalExchange = cart.filter(i => i.type === 'old_part').reduce((sum, item) => sum + ((item.exchangeValue || 0) * (item.quantity || 1)), 0);
+            const subtotal = totalItems - totalExchange;
+            // Clamp discount to [0, subtotal] so the total can never go negative.
+            const discountVal = Math.min(Math.max(0, Number(discount) || 0), Math.max(0, subtotal));
+            const total = subtotal - discountVal;
 
-        // Ensure paidAmount is synchronized with paymentStatus at final checkout
-        let finalPaidAmount = Number(paidAmount) || 0;
-        if (paymentStatus === 'paid') {
-            finalPaidAmount = total;
-        } else if (paymentStatus === 'pending') {
-            finalPaidAmount = 0;
-        }
-
-        const invoiceData = {
-            id: editingId || Date.now(),
-            date: new Date(billingDate).toISOString(),
-            customer: { ...customer },
-            items: [...cart],
-            subtotal,
-            totalItems,
-            totalExchange,
-            discount: Number(discount) || 0,
-            total,
-            paymentMode,
-            paymentStatus,
-            paidAmount: finalPaidAmount,
-            paymentNote: paymentNote || '',
-            balanceAmount: total - finalPaidAmount,
-            isClosed: paymentStatus === 'paid',
-            invoiceNo: editingInvoiceNo,
-            isDeleted: false,
-            deletedAt: null,
-            deletedBy: null,
-            payments: []
-        };
-
-        // Initialize payments array with the initial payment if applicable
-        if (finalPaidAmount > 0) {
-            invoiceData.payments.push({
-                amount: finalPaidAmount,
-                date: new Date(billingDate).toISOString(),
-                mode: paymentMode,
-                note: paymentNote || 'Initial payment'
+            // Apply stock changes. For a NEW bill, deduct each product's quantity.
+            // For an EDIT, apply only the delta vs. the original bill so stock is
+            // never double-counted (this was the source of drifting stock counts).
+            const originalQty = editingId ? productQtyMap(editOriginal?.items) : {};
+            const newQty = productQtyMap(cart);
+            const stockOps = [];
+            new Set([...Object.keys(originalQty), ...Object.keys(newQty)]).forEach(id => {
+                const delta = (newQty[id] || 0) - (originalQty[id] || 0);
+                // updateStock deducts `delta`; a negative delta returns stock.
+                if (delta !== 0) stockOps.push(updateStock(id, delta, {
+                    reason: editingId ? 'sale_edit' : 'sale',
+                    refId: editingInvoiceNo || null,
+                    note: customer?.name || ''
+                }));
             });
-        }
+            await Promise.all(stockOps);
 
-        let finalizedInvoice = { ...invoiceData };
+            // Preserve any previously recorded payments; only add the new money as
+            // an extra payment line so installment history is never wiped on edit.
+            const priorPayments = editingId ? (editOriginal?.payments || []) : [];
+            const recordedTotal = priorPayments.reduce((s, p) => s + (p.amount || 0), 0);
 
-        if (editingId) {
-            await updateInvoice(editingId, invoiceData);
-        } else {
-            const addedResult = await addInvoice(invoiceData);
-            // Handle new return format where addInvoice returns { id, invoiceNo }
-            if (typeof addedResult === 'object') {
-                finalizedInvoice.id = addedResult.id;
-                finalizedInvoice.invoiceNo = addedResult.invoiceNo;
-            } else {
-                // Fallback for older code that just returned the string ID
-                finalizedInvoice.id = addedResult;
+            let finalPaidAmount = Number(paidAmount) || 0;
+            if (paymentStatus === 'paid') finalPaidAmount = total;
+            else if (paymentStatus === 'pending') finalPaidAmount = 0;
+            // Never drop money that was actually recorded against this bill.
+            finalPaidAmount = Math.max(finalPaidAmount, recordedTotal);
+
+            const payments = [...priorPayments];
+            if (finalPaidAmount > recordedTotal) {
+                payments.push({
+                    amount: finalPaidAmount - recordedTotal,
+                    date: new Date(billingDate).toISOString(),
+                    mode: paymentMode,
+                    note: paymentNote || (editingId ? 'Adjustment' : 'Initial payment')
+                });
             }
+
+            const derivedStatus = finalPaidAmount <= 0
+                ? 'pending'
+                : (finalPaidAmount >= total ? 'paid' : 'partially_paid');
+
+            const invoiceData = {
+                id: editingId || Date.now(),
+                date: new Date(billingDate).toISOString(),
+                customer: { ...customer },
+                items: [...cart],
+                subtotal,
+                totalItems,
+                totalExchange,
+                discount: discountVal,
+                total,
+                paymentMode,
+                paymentStatus: derivedStatus,
+                paidAmount: finalPaidAmount,
+                paymentNote: paymentNote || '',
+                balanceAmount: total - finalPaidAmount,
+                isClosed: derivedStatus === 'paid',
+                invoiceNo: editingInvoiceNo,
+                isDeleted: false,
+                deletedAt: null,
+                deletedBy: null,
+                payments
+            };
+
+            let finalizedInvoice = { ...invoiceData };
+
+            if (editingId) {
+                await updateInvoice(editingId, invoiceData);
+            } else {
+                const addedResult = await addInvoice(invoiceData);
+                // addInvoice returns { id, invoiceNo }; fall back to a bare id string.
+                if (addedResult && typeof addedResult === 'object') {
+                    finalizedInvoice.id = addedResult.id;
+                    finalizedInvoice.invoiceNo = addedResult.invoiceNo;
+                } else {
+                    finalizedInvoice.id = addedResult;
+                }
+            }
+
+            setLastInvoice(finalizedInvoice);
+            setIsCheckoutSuccess(true);
+            localStorage.removeItem(DRAFT_KEY); // bill saved — draft no longer needed
+        } catch (err) {
+            console.error("Checkout failed:", err);
+            alert(lang === 'ta'
+                ? 'பில் சேமிப்பதில் பிழை ஏற்பட்டது. மீண்டும் முயற்சிக்கவும்.'
+                : 'Could not save the bill. Please try again.');
+        } finally {
+            setIsSubmitting(false);
         }
-
-        setLastInvoice(finalizedInvoice);
-        setIsCheckoutSuccess(true);
-
-        // Auto-print option removed to avoid the "null" issue described by user 
-        // until they see the success screen and click print manually if needed,
-        // or we can trigger it safely here if lastInvoice is set.
     };
 
     const resetBilling = () => {
@@ -267,9 +419,14 @@ const BillingPage = () => {
         setLastInvoice(null);
         setEditingId(null);
         setEditingInvoiceNo(null);
+        setEditOriginal(null);
+        setIsSubmitting(false);
         setDiscount(0);
+        setPaymentMode('cash');
         setPaymentStatus('paid');
         setPaidAmount(0);
+        setPaymentNote('');
+        setIsAutoTime(true);
         setBillingDate(getLocalDateTime());
     };
 
@@ -327,30 +484,25 @@ Thank you for your business!`;
         window.open(smsUrl);
     };
 
-    const handleEditAfterPaid = async () => {
-        if (lastInvoice) {
-            try {
-                await deleteInvoice(lastInvoice.id);
-                // The instruction provided `setInvoiceItems`, but based on context, `setCart` is likely intended.
-                // Following the instruction faithfully, using `setInvoiceItems`.
-                // If `setInvoiceItems` is not defined, this will cause an error.
-                // Assuming `setInvoiceItems` is a state setter for the items in the cart.
-                // If it's meant to be `setCart`, please provide a new instruction.
-                setCart(lastInvoice.items);
-                setIsCheckoutSuccess(false);
-                setShowCart(true);
-                // We don't call deleteInvoice here because we want to keep it in context
-                // until the user saves it again (which will call updateInvoice)
-                // or we can delete it now to be safe and let handleCheckout re-add it.
-                // Actually, deleting it now is better to avoid duplicates if they refresh.
-            } catch (error) {
-                console.error("Error deleting invoice for edit:", error);
-                // Optionally, handle the error (e.g., show a toast notification)
-            }
-            setEditingId(lastInvoice.id);
-            setEditingInvoiceNo(lastInvoice.invoiceNo || null);
-            setCustomer(lastInvoice.customer);
-        }
+    // Re-open the just-saved bill for editing. We keep the invoice in place and
+    // let handleCheckout run its update + stock-delta path — no delete/re-add, so
+    // there is no window where a refresh could lose or duplicate the bill.
+    const handleEditAfterPaid = () => {
+        if (!lastInvoice) return;
+        setCart(lastInvoice.items || []);
+        setCustomer(lastInvoice.customer || { name: '', phone: '', vehicle: '' });
+        setEditingId(lastInvoice.id);
+        setEditingInvoiceNo(lastInvoice.invoiceNo || null);
+        setEditOriginal(lastInvoice);
+        setPaymentMode(lastInvoice.paymentMode || 'cash');
+        setDiscount(lastInvoice.discount || 0);
+        setPaymentStatus(lastInvoice.paymentStatus || 'paid');
+        setPaidAmount(lastInvoice.paidAmount || 0);
+        setPaymentNote(lastInvoice.paymentNote || '');
+        setBillingDate(toDateTimeLocal(lastInvoice.date));
+        setIsAutoTime(false);
+        setIsCheckoutSuccess(false);
+        setShowCart(true);
     };
 
     const cartTotal = cart.reduce((sum, item) => {
@@ -406,11 +558,11 @@ Thank you for your business!`;
                                         <p className="text-[8px] font-black uppercase tracking-[0.2em] opacity-50 text-[var(--color-text-gray)]">{t.payment_status || 'Status'}</p>
                                         <span className={`inline-block mt-1 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${lastInvoice.paymentStatus === 'paid'
                                             ? 'bg-emerald-500/15 text-emerald-500 ring-1 ring-emerald-500/20'
-                                            : lastInvoice.paymentStatus === 'partial'
+                                            : lastInvoice.paymentStatus === 'partially_paid'
                                                 ? 'bg-amber-500/15 text-amber-500 ring-1 ring-amber-500/20'
                                                 : 'bg-red-500/15 text-red-500 ring-1 ring-red-500/20'
                                             }`}>
-                                            {lastInvoice.paymentStatus === 'paid' ? (t.full_paid || 'Paid') : lastInvoice.paymentStatus === 'partial' ? (t.partial_paid || 'Partial') : (t.pay_later || 'Pending')}
+                                            {lastInvoice.paymentStatus === 'paid' ? (t.full_paid || 'Paid') : lastInvoice.paymentStatus === 'partially_paid' ? (t.partial_paid || 'Partial') : (t.pay_later || 'Pending')}
                                         </span>
                                     </div>
                                 </div>
@@ -449,6 +601,36 @@ Thank you for your business!`;
                                         <div className="text-center relative z-10">
                                             <p className="text-[10px] font-black uppercase tracking-wide leading-tight">WhatsApp</p>
                                             <p className="text-[7px] opacity-60 font-bold uppercase tracking-wider mt-0.5">Share</p>
+                                        </div>
+                                    </button>
+
+                                    {/* Thermal receipt */}
+                                    <button
+                                        onClick={() => handlePrintReceipt()}
+                                        className="group relative bg-slate-600 hover:bg-slate-700 text-white rounded-2xl p-3.5 flex flex-col items-center gap-2 transition-all active:scale-95 shadow-lg overflow-hidden"
+                                    >
+                                        <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent pointer-events-none" />
+                                        <div className="h-10 w-10 rounded-xl bg-white/20 flex items-center justify-center group-hover:scale-110 transition-transform relative z-10">
+                                            <ReceiptText className="h-5 w-5" />
+                                        </div>
+                                        <div className="text-center relative z-10">
+                                            <p className="text-[10px] font-black uppercase tracking-wide leading-tight">{lang === 'ta' ? 'ரசீது' : 'Receipt'}</p>
+                                            <p className="text-[7px] opacity-60 font-bold uppercase tracking-wider mt-0.5">80mm</p>
+                                        </div>
+                                    </button>
+
+                                    {/* Bill as image (real bill via share sheet / WhatsApp) */}
+                                    <button
+                                        onClick={() => lastInvoice && shareInvoiceImage(lastInvoice, shopDetails)}
+                                        className="group relative bg-emerald-700 hover:bg-emerald-800 text-white rounded-2xl p-3.5 flex flex-col items-center gap-2 transition-all active:scale-95 shadow-lg overflow-hidden"
+                                    >
+                                        <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent pointer-events-none" />
+                                        <div className="h-10 w-10 rounded-xl bg-white/20 flex items-center justify-center group-hover:scale-110 transition-transform relative z-10">
+                                            <ImageDown className="h-5 w-5" />
+                                        </div>
+                                        <div className="text-center relative z-10">
+                                            <p className="text-[10px] font-black uppercase tracking-wide leading-tight">{lang === 'ta' ? 'பில் படம்' : 'Bill Image'}</p>
+                                            <p className="text-[7px] opacity-60 font-bold uppercase tracking-wider mt-0.5">PNG</p>
                                         </div>
                                     </button>
 
@@ -511,15 +693,49 @@ Thank you for your business!`;
             )}
 
             {/* Left Side: Items (Search/Grid) */}
-            <div className={`w-full lg:w-[60%] h-fit lg:h-full ${showCart ? 'hidden md:block' : 'block'}`}>
-                <BillingItems
-                    onAddToCart={handleAddToCart}
-                    onUpdateQuantity={handleUpdateQuantity}
-                    onRemoveItem={handleRemoveItem}
-                    cart={cart}
-                    onBack={handleExit}
-                    editingInvoiceNo={editingInvoiceNo}
-                />
+            <div className={`w-full lg:w-[60%] h-fit lg:h-full flex-col gap-3 ${showCart ? 'hidden md:flex' : 'flex'}`}>
+                {/* Held (parked) bills — resume or discard */}
+                {heldBills.length > 0 && (
+                    <div className="flex items-center gap-2 p-2.5 rounded-card border border-[var(--color-warning)]/30 bg-[var(--color-warning-soft)] overflow-x-auto shrink-0">
+                        <PauseCircle className="h-4 w-4 text-[var(--color-warning)] shrink-0 ml-1" />
+                        {heldBills.map(h => {
+                            const heldTotal = (h.cart || []).reduce((sum, i) =>
+                                i.type === 'old_part'
+                                    ? sum - ((i.exchangeValue || 0) * (i.quantity || 1))
+                                    : sum + ((i.price || 0) * (i.quantity || 1)), 0);
+                            return (
+                                <div key={h.id} className="flex items-center gap-2 bg-[var(--color-bg-card)] border border-[var(--color-border)] rounded-pill pl-3 pr-1 py-1 shrink-0">
+                                    <span className="text-xs font-bold text-[var(--color-text)] whitespace-nowrap">
+                                        {h.customer?.name || (lang === 'ta' ? 'வாடிக்கையாளர்' : 'Walk-in')} · {(h.cart || []).length} · ₹{heldTotal.toLocaleString()}
+                                    </span>
+                                    <button
+                                        onClick={() => resumeHeldBill(h.id)}
+                                        className="px-2.5 py-1 rounded-pill bg-[var(--color-primary)] text-white text-[10px] font-black uppercase tracking-wide active:scale-95 transition-transform"
+                                    >
+                                        {t.resume || 'Resume'}
+                                    </button>
+                                    <button
+                                        onClick={() => discardHeldBill(h.id)}
+                                        className="p-1 text-[var(--color-text-gray)] hover:text-red-500 transition-colors"
+                                        aria-label="Discard held bill"
+                                    >
+                                        <X className="h-3.5 w-3.5" />
+                                    </button>
+                                </div>
+                            );
+                        })}
+                    </div>
+                )}
+                <div className="flex-1 min-h-0">
+                    <BillingItems
+                        onAddToCart={handleAddToCart}
+                        onUpdateQuantity={handleUpdateQuantity}
+                        onRemoveItem={handleRemoveItem}
+                        cart={cart}
+                        onBack={handleExit}
+                        editingInvoiceNo={editingInvoiceNo}
+                    />
+                </div>
             </div>
 
             {/* Right Side: Cart/Checkout */}
@@ -531,8 +747,12 @@ Thank you for your business!`;
                             customer={customer}
                             onUpdateCustomer={handleUpdateCustomer}
                             onUpdateQuantity={handleUpdateQuantity}
+                            onSetQuantity={handleSetQuantity}
+                            onUpdatePrice={handleUpdatePrice}
                             onRemoveItem={handleRemoveItem}
                             onCheckout={handleCheckout}
+                            onHold={editingId ? undefined : holdCurrentBill}
+                            isSubmitting={isSubmitting}
                             paymentMode={paymentMode}
                             setPaymentMode={setPaymentMode}
                             discount={discount}
@@ -587,9 +807,11 @@ Thank you for your business!`;
                 </div>
             )}
 
-            {/* Print Template (Hidden from UI, visible only for print) */}
-            {/* Print Template (Hidden from UI, visible only for print) */}
+            {/* Print templates (hidden from UI, used only for printing) */}
             <InvoiceTemplate ref={componentRef} invoice={lastInvoice} />
+            <div className="hidden">
+                <ThermalReceipt ref={thermalRef} invoice={lastInvoice} shopDetails={shopDetails} />
+            </div>
 
             {/* UPI QR Code Modal (portaled to body so it appears above the success overlay) */}
             {showUpiQr && lastInvoice && createPortal(

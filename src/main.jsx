@@ -8,3 +8,12 @@ createRoot(document.getElementById('root')).render(
     <App />
   </StrictMode>,
 )
+
+// Register the PWA service worker (production only — it would fight Vite's HMR in dev).
+if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch((err) => {
+      console.error('Service worker registration failed:', err)
+    })
+  })
+}

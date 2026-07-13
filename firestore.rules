@@ -2,52 +2,113 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    
-    // Master Admin Helper (Merged from your version)
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // Admin = has a document in /admins/{uid}.
+    // IMPORTANT: seed the FIRST admin manually in the Firebase console
+    // (create a doc at admins/<your-uid> with any content, e.g. { role: "owner" }).
+    // After that, existing admins can add more admins from the app.
     function isAdmin() {
-      return request.auth != null && (
-        request.auth.uid == 'hPGom0p4tAfZf37Bqly6erLYkZm1' ||
-        (request.auth.token.email != null && (
-          request.auth.token.email.lower().matches('.*apranantham.*') ||
-          request.auth.token.email.lower().matches('.*appuananth.*')
-        ))
-      );
+      return isSignedIn()
+        && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
     }
 
-    // User Profiles: Staff sync their own, Admins see all
+    // Keys changed by this write — used for field-level control.
+    function changedKeys() {
+      return request.resource.data.diff(resource.data).affectedKeys();
+    }
+
+    // ---- Admin registry -------------------------------------------------
+    // Signed-in users may READ (the client checks its own membership here);
+    // only existing admins may WRITE. Bootstrap the first admin in console.
+    match /admins/{uid} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+
+    // ---- User profiles --------------------------------------------------
+    // A user manages only their own profile. Reads limited to self + admin
+    // (previously any signed-in user could enumerate every staff member).
     match /users/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
-      allow read: if request.auth != null;
+      allow read: if isSignedIn() && (request.auth.uid == userId || isAdmin());
+      allow create, update: if isSignedIn() && request.auth.uid == userId;
+      allow delete: if isAdmin();
     }
 
-    // Billing records: Admins see all, Staff see only what they created
+    // ---- Billing --------------------------------------------------------
+    // Create only records stamped with your own uid; owner or admin may
+    // read/update (soft-delete is an update); only admin may hard-delete.
     match /billing/{invoiceId} {
-      allow create: if request.auth != null;
-      allow read, update, delete: if request.auth != null && (isAdmin() || resource.data.createdBy == request.auth.uid);
+      allow create: if isSignedIn() && request.resource.data.createdBy == request.auth.uid;
+      allow read, update: if isSignedIn() && (isAdmin() || resource.data.createdBy == request.auth.uid);
+      allow delete: if isAdmin();
     }
 
-    // Inventory and Service: All authenticated staff can manage
+    // ---- Inventory ------------------------------------------------------
+    // Everyone reads. Admin manages fully. Regular staff may change ONLY
+    // `stock` (sales) and `costPrice` (goods receipt updates the latest cost)
+    // — they cannot rewrite selling prices, create, or delete products.
     match /inventory/{id} {
-      allow read, write: if request.auth != null;
+      allow read: if isSignedIn();
+      allow create, delete: if isAdmin();
+      allow update: if isAdmin() || (isSignedIn() && changedKeys().hasOnly(['stock', 'costPrice']));
     }
 
+    // ---- Procurement ----------------------------------------------------
+    // Suppliers: staff may add/edit (they receive stock); only admin deletes.
+    match /suppliers/{id} {
+      allow read: if isSignedIn();
+      allow create, update: if isSignedIn();
+      allow delete: if isAdmin();
+    }
+    // Purchases: create stamped with your own uid; owner or admin updates
+    // (settling a supplier payment is an update); only admin deletes.
+    match /purchases/{id} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && request.resource.data.createdBy == request.auth.uid;
+      allow update: if isSignedIn() && (isAdmin() || resource.data.createdBy == request.auth.uid);
+      allow delete: if isAdmin();
+    }
+    // Stock movements: append-only audit trail. No edits or deletes from the
+    // app (the admin catch-all below still lets an admin correct mistakes).
+    match /stock_movements/{id} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && request.resource.data.createdBy == request.auth.uid;
+      allow update, delete: if false;
+    }
+
+    // ---- Catalogs (admin-managed) --------------------------------------
+    // Services and the old-item master are catalog data: everyone reads,
+    // only admin edits.
     match /service/{id} {
-      allow read, write: if request.auth != null;
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
     }
-    
-    // Expenses: Admins see all, Staff see only what they created
-    match /expenses/{expenseId} {
-      allow create: if request.auth != null;
-      allow read, update, delete: if request.auth != null && (isAdmin() || resource.data.createdBy == request.auth.uid);
+    match /old_items_master/{id} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
     }
 
-    // Shop Settings: Needed for invoice numbering!
-    match /settings/shopProfile {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null; // Everyone needs to increment nextInvoiceNumber
+    // ---- Expenses -------------------------------------------------------
+    // Create only your own; owner or admin may read/update/delete.
+    match /expenses/{expenseId} {
+      allow create: if isSignedIn() && request.resource.data.createdBy == request.auth.uid;
+      allow read, update, delete: if isSignedIn() && (isAdmin() || resource.data.createdBy == request.auth.uid);
     }
-    
-    // Admin Catch-all for any other collections
+
+    // ---- Shop settings --------------------------------------------------
+    // Everyone reads. Admin may write anything. Regular staff may write ONLY
+    // to bump the invoice counter at checkout — they can no longer overwrite
+    // the shop's UPI IDs, name, or address (previous payment-diversion hole).
+    match /settings/shopProfile {
+      allow read: if isSignedIn();
+      allow write: if isAdmin() || (isSignedIn() && changedKeys().hasOnly(['nextInvoiceNumber']));
+    }
+
+    // ---- Everything else ------------------------------------------------
     match /{document=**} {
       allow read, write: if isAdmin();
     }

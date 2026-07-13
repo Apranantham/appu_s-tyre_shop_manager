@@ -12,7 +12,10 @@ import {
     LogOut,
     History,
     ShieldCheck,
-    Wallet
+    Wallet,
+    BookOpen,
+    HandCoins,
+    Truck
 } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
@@ -34,7 +37,10 @@ const Sidebar = ({ isMobile }) => {
         { icon: Wrench, label: t.services, path: '/services' },
         { icon: Users, label: t.customers, path: '/customers' },
         { icon: History, label: t.history, path: '/history' },
+        { icon: BookOpen, label: t.day_book || 'Day Book', path: '/daybook' },
+        { icon: HandCoins, label: t.dues || 'Dues', path: '/dues' },
         { icon: Wallet, label: t.expenses || 'Expenses', path: '/expenses' },
+        { icon: Truck, label: t.suppliers || 'Suppliers', path: '/suppliers' },
         { icon: Settings, label: t.settings, path: '/settings' },
         ...(user?.isAdmin ? [{ icon: ShieldCheck, label: t.admin_panel, path: '/admin' }] : []),
     ];

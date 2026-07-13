@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import { Plus, Search, Filter, Edit2, Trash2, AlertTriangle, Package, Eye, EyeOff, History } from 'lucide-react';
+import { Plus, Search, Edit2, Trash2, AlertTriangle, Package, Eye, EyeOff, History, Boxes, TrendingUp } from 'lucide-react';
 import { useProducts } from '../../context/ProductContext';
+import { useAuth } from '../../context/AuthContext';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
 import Modal from '../../components/ui/Modal';
@@ -17,6 +18,7 @@ const InventoryPage = () => {
     const location = useLocation();
     const navigate = useNavigate();
     const { products, addProduct, updateProduct, deleteProduct, loading } = useProducts();
+    const { isAdmin } = useAuth();
     const { shopDetails } = useSettings();
     const lang = shopDetails?.appLanguage || 'ta';
     const t = translations[lang];
@@ -27,11 +29,25 @@ const InventoryPage = () => {
     const [editingProduct, setEditingProduct] = useState(null);
     const [productToDelete, setProductToDelete] = useState(null);
 
+    // Stock valuation across ACTIVE products — owner's view of money on the shelf.
+    const valuation = useMemo(() => {
+        let units = 0, costValue = 0, saleValue = 0;
+        products.forEach(p => {
+            if (p.isActive === false) return;
+            const stock = Number(p.stock) || 0;
+            units += stock;
+            costValue += (Number(p.costPrice) || 0) * stock;
+            saleValue += (Number(p.price) || 0) * stock;
+        });
+        return { units, costValue, saleValue, margin: saleValue - costValue };
+    }, [products]);
+
     const filteredProducts = products.filter(product => {
         const matchesSearch =
             product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
             product.brand.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            product.size.toLowerCase().includes(searchTerm.toLowerCase());
+            product.size.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            (product.barcode || '').toLowerCase().includes(searchTerm.toLowerCase());
 
         let matchesCategory = false;
         if (activeCategory === 'all') {
@@ -85,6 +101,38 @@ const InventoryPage = () => {
                     </Button>
                 </div>
             </div>
+
+            {/* Stock valuation (admin only) */}
+            {isAdmin && !loading && (
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                    <div className="p-4 rounded-panel bg-[var(--color-bg-card)] border border-[var(--color-border)] flex items-center gap-3">
+                        <div className="h-9 w-9 rounded-control bg-[var(--color-primary-soft)] text-[var(--color-primary)] flex items-center justify-center shrink-0">
+                            <Boxes className="h-4 w-4" />
+                        </div>
+                        <div className="min-w-0">
+                            <p className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-gray)]">{lang === 'ta' ? 'மொத்த இருப்பு' : 'Units in stock'}</p>
+                            <p className="text-lg font-black text-[var(--color-text)] truncate">{valuation.units.toLocaleString()}</p>
+                        </div>
+                    </div>
+                    <div className="p-4 rounded-panel bg-[var(--color-bg-card)] border border-[var(--color-border)]">
+                        <p className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-gray)]">{lang === 'ta' ? 'இருப்பு மதிப்பு (வாங்கியது)' : 'Stock value (cost)'}</p>
+                        <p className="text-lg font-black text-[var(--color-text)] truncate">₹{valuation.costValue.toLocaleString()}</p>
+                    </div>
+                    <div className="p-4 rounded-panel bg-[var(--color-bg-card)] border border-[var(--color-border)]">
+                        <p className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-gray)]">{lang === 'ta' ? 'விற்பனை மதிப்பு' : 'Sale value'}</p>
+                        <p className="text-lg font-black text-[var(--color-text)] truncate">₹{valuation.saleValue.toLocaleString()}</p>
+                    </div>
+                    <div className="p-4 rounded-panel bg-[var(--color-bg-card)] border border-[var(--color-border)] flex items-center gap-3">
+                        <div className="h-9 w-9 rounded-control bg-[var(--color-success-soft)] text-[var(--color-success)] flex items-center justify-center shrink-0">
+                            <TrendingUp className="h-4 w-4" />
+                        </div>
+                        <div className="min-w-0">
+                            <p className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-gray)]">{lang === 'ta' ? 'எதிர்பார்க்கும் லாபம்' : 'Potential margin'}</p>
+                            <p className={cn("text-lg font-black truncate", valuation.margin >= 0 ? "text-[var(--color-success)]" : "text-[var(--color-danger)]")}>₹{valuation.margin.toLocaleString()}</p>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Filters & Search */}
             <div className="flex flex-col lg:flex-row gap-4 items-center bg-[var(--color-bg-card)] p-4 rounded-3xl border border-[var(--color-border)] mt-4 shadow-sm">
@@ -190,6 +238,14 @@ const InventoryPage = () => {
                                     </div>
                                     <div className="text-right flex-shrink-0">
                                         <p className="font-black text-xl text-[var(--color-primary)]">₹{product.price.toLocaleString()}</p>
+                                        {isAdmin && (product.costPrice || 0) > 0 && (
+                                            <p className={cn(
+                                                "text-[10px] font-black uppercase tracking-wide mt-0.5",
+                                                product.price - product.costPrice >= 0 ? "text-[var(--color-success)]" : "text-[var(--color-danger)]"
+                                            )}>
+                                                +₹{(product.price - product.costPrice).toLocaleString()} ({Math.round(((product.price - product.costPrice) / product.costPrice) * 100)}%)
+                                            </p>
+                                        )}
                                     </div>
                                 </div>
 
@@ -197,6 +253,21 @@ const InventoryPage = () => {
                                     <span className="px-3 py-1.5 rounded-xl bg-[var(--color-bg-dark)] border border-[var(--color-border)] text-[10px] font-black uppercase tracking-widest text-[var(--color-text-gray)]">
                                         {product.size}
                                     </span>
+                                    {product.loadIndex && (
+                                        <span className="px-3 py-1.5 rounded-xl bg-[var(--color-bg-dark)] border border-[var(--color-border)] text-[10px] font-black uppercase tracking-widest text-[var(--color-text-gray)]">
+                                            {product.loadIndex}
+                                        </span>
+                                    )}
+                                    {product.tubeType && (
+                                        <span className="px-3 py-1.5 rounded-xl bg-[var(--color-bg-dark)] border border-[var(--color-border)] text-[10px] font-black uppercase tracking-widest text-[var(--color-text-gray)]">
+                                            {product.tubeType === 'tube' ? (lang === 'ta' ? 'டியூப்' : 'Tube') : (lang === 'ta' ? 'டியூப்லெஸ்' : 'Tubeless')}
+                                        </span>
+                                    )}
+                                    {product.manufactureYear && (
+                                        <span className="px-3 py-1.5 rounded-xl bg-[var(--color-bg-dark)] border border-[var(--color-border)] text-[10px] font-black uppercase tracking-widest text-[var(--color-text-gray)]">
+                                            {product.manufactureYear}
+                                        </span>
+                                    )}
                                     {product.pattern && (
                                         <span className="px-3 py-1.5 rounded-xl bg-[var(--color-bg-dark)] border border-[var(--color-border)] text-[10px] font-black uppercase tracking-widest text-[var(--color-text-gray)]">
                                             {product.pattern}

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, FileText, User, Calendar, ArrowRight } from 'lucide-react';
 import { cn } from '../../utils/cn';
@@ -17,30 +17,76 @@ const CustomerHistory = () => {
     const t = translations[lang];
 
     const [searchTerm, setSearchTerm] = useState('');
+    // Win-back filter: customers not seen for N+ months.
+    const [followUpMonths, setFollowUpMonths] = useState(0);
 
-    // Grouping invoices by customer phone to show unique customers
-    const customers = Object.values(invoices.reduce((acc, inv) => {
-        // Use phone as primary key, fallback to name, then to invoice ID
-        const customerKey = inv.customer?.phone || inv.customer?.name || inv.id;
+    const sendWinBack = (c) => {
+        const shopName = shopDetails?.shopName || 'Tyre Shop';
+        const msg = lang === 'ta'
+            ? `வணக்கம் ${c.name}!\n\n${shopName} — உங்கள் வாகனத்தின் டயர்களை கடைசியாக ${new Date(c.lastVisit).toLocaleDateString('ta-IN')} அன்று பார்த்தோம். டயர் நிலை, காற்றழுத்தம் மற்றும் அலைன்மென்ட் சரிபார்க்க ஒரு முறை வந்து செல்லுங்கள்!\n\nநன்றி!`
+            : `Hello ${c.name}!\n\nThis is ${shopName} — we last serviced your vehicle on ${new Date(c.lastVisit).toLocaleDateString('en-IN')}. Drop by for a quick tyre health, pressure and alignment check!\n\nThank you!`;
+        const raw = (c.phone || '').replace(/[^0-9]/g, '');
+        const phone = raw.length === 10 ? `91${raw}` : raw;
+        window.open(phone ? `https://wa.me/${phone}?text=${encodeURIComponent(msg)}` : `https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+    };
 
-        if (!acc[customerKey] || new Date(inv.date) > new Date(acc[customerKey].date)) {
-            acc[customerKey] = inv;
-        }
-        return acc;
-    }, {}));
+    // Single pass over invoices producing per-customer aggregates. Previously
+    // every card re-scanned the entire invoice list four times per render
+    // (pending ×2, lifetime, visits) — O(customers × invoices) on each keystroke.
+    const customers = useMemo(() => {
+        const map = new Map();
+        invoices.forEach(inv => {
+            const key = inv.customer?.phone || inv.customer?.name || inv.id;
+            if (!map.has(key)) {
+                map.set(key, {
+                    key,
+                    name: inv.customer?.name || '',
+                    phone: inv.customer?.phone || '',
+                    vehicle: inv.customer?.vehicle || '',
+                    lastVisit: inv.date,
+                    pending: 0,
+                    lifetime: 0,
+                    visits: 0
+                });
+            }
+            const c = map.get(key);
+            c.pending += inv.balanceAmount || 0;
+            c.lifetime += inv.total || 0;
+            c.visits += 1;
+            if (new Date(inv.date) > new Date(c.lastVisit)) {
+                c.lastVisit = inv.date;
+                // Keep the freshest contact details on the card.
+                c.name = inv.customer?.name || c.name;
+                c.phone = inv.customer?.phone || c.phone;
+                c.vehicle = inv.customer?.vehicle || c.vehicle;
+            }
+        });
+        return Array.from(map.values())
+            .sort((a, b) => new Date(b.lastVisit) - new Date(a.lastVisit));
+    }, [invoices]);
 
-    const filteredCustomers = customers.filter(inv => {
-        const name = (inv?.customer?.name || '').toLowerCase();
-        const phone = (inv?.customer?.phone || '').toLowerCase();
-        const vehicle = (inv?.customer?.vehicle || '').toLowerCase();
+    const filteredCustomers = useMemo(() => {
         const search = searchTerm.toLowerCase();
+        const cutoff = followUpMonths > 0
+            ? Date.now() - followUpMonths * 30 * 24 * 60 * 60 * 1000
+            : null;
+        return customers.filter(c => {
+            if (cutoff && new Date(c.lastVisit).getTime() > cutoff) return false;
+            if (!searchTerm) return c.name || c.phone || c.vehicle;
+            return c.name.toLowerCase().includes(search)
+                || c.phone.toLowerCase().includes(search)
+                || c.vehicle.toLowerCase().includes(search);
+        });
+    }, [customers, searchTerm, followUpMonths]);
 
-        // If no search term, show everything that has at least SOME data
-        if (!searchTerm) return name || phone || vehicle;
-
-        // Match search against any field
-        return name.includes(search) || phone.includes(search) || vehicle.includes(search);
-    });
+    // Incremental rendering for large customer bases.
+    const PAGE_SIZE = 50;
+    const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+    useEffect(() => setVisibleCount(PAGE_SIZE), [searchTerm, followUpMonths]);
+    const pagedCustomers = useMemo(
+        () => filteredCustomers.slice(0, visibleCount),
+        [filteredCustomers, visibleCount]
+    );
 
     return (
         <div className="space-y-6">
@@ -51,15 +97,45 @@ const CustomerHistory = () => {
                 </div>
             </div>
 
-            <div className="relative max-w-md">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--color-text-gray)]" />
-                <input
-                    placeholder={t.search_customer}
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full bg-[var(--color-bg-dark)] border border-[var(--color-border)] rounded-lg pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[var(--color-primary)]"
-                />
+            <div className="flex flex-col sm:flex-row gap-3 sm:items-center">
+                <div className="relative max-w-md flex-1">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--color-text-gray)]" />
+                    <input
+                        placeholder={t.search_customer}
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="w-full bg-[var(--color-bg-dark)] border border-[var(--color-border)] rounded-lg pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[var(--color-primary)]"
+                    />
+                </div>
+                {/* Win-back filters: who hasn't been back in a while */}
+                <div className="flex gap-2">
+                    {[
+                        { m: 0, label: lang === 'ta' ? 'அனைவரும்' : 'All' },
+                        { m: 3, label: lang === 'ta' ? '3+ மாதம்' : '3+ months' },
+                        { m: 6, label: lang === 'ta' ? '6+ மாதம்' : '6+ months' },
+                    ].map(f => (
+                        <button
+                            key={f.m}
+                            onClick={() => setFollowUpMonths(f.m)}
+                            className={cn(
+                                "px-4 py-2 rounded-pill text-[11px] font-black uppercase tracking-wide border transition-all",
+                                followUpMonths === f.m
+                                    ? "bg-[var(--color-primary)] text-white border-[var(--color-primary)]"
+                                    : "bg-[var(--color-bg-card)] text-[var(--color-text-gray)] border-[var(--color-border)] hover:text-[var(--color-text)]"
+                            )}
+                        >
+                            {f.label}
+                        </button>
+                    ))}
+                </div>
             </div>
+            {followUpMonths > 0 && (
+                <p className="text-xs font-semibold text-[var(--color-text-gray)]">
+                    {lang === 'ta'
+                        ? `${filteredCustomers.length} வாடிக்கையாளர்கள் ${followUpMonths}+ மாதங்களாக வரவில்லை — WhatsApp மூலம் அழையுங்கள்`
+                        : `${filteredCustomers.length} customers haven't visited in ${followUpMonths}+ months — nudge them on WhatsApp`}
+                </p>
+            )}
 
             <div className="space-y-4">
                 {loading ? (
@@ -72,66 +148,76 @@ const CustomerHistory = () => {
                         <p>{lang === 'ta' ? 'வாடிக்கையாளர்கள் யாரும் இல்லை' : 'No customers found'}</p>
                     </div>
                 ) : (
-                    filteredCustomers.map((invoice) => {
-                        const customerKey = invoice.customer?.phone || invoice.customer?.name || invoice.id;
-                        return (
-                            <Card
-                                key={customerKey}
-                                onClick={() => navigate(`/customers/${encodeURIComponent(customerKey)}`)}
-                                className="flex flex-col md:flex-row md:items-center justify-between p-4 gap-4 transition-colors cursor-pointer hover:border-[var(--color-primary)]"
-                            >
-                                <div className="flex items-start space-x-4">
-                                    <div className="h-12 w-12 rounded-full bg-[var(--color-primary)]/10 flex items-center justify-center text-[var(--color-primary)]">
-                                        <User className="h-6 w-6" />
-                                    </div>
-                                    <div>
-                                        <h3 className="font-bold text-lg">{invoice.customer.name}</h3>
-                                        <div className="flex items-center text-sm text-[var(--color-text-gray)] space-x-4">
-                                            <span className="flex items-center"><Calendar className="h-3 w-3 mr-1" /> {t.last_visit}: {new Date(invoice.date).toLocaleDateString(lang === 'ta' ? 'ta-IN' : 'en-IN')}</span>
-                                            <span>{invoice.customer.phone}</span>
-                                            <span className="uppercase font-mono bg-[var(--color-bg-dark)] px-2 rounded text-xs">{invoice.customer.vehicle}</span>
-                                        </div>
+                    pagedCustomers.map((c) => (
+                        <Card
+                            key={c.key}
+                            onClick={() => navigate(`/customers/${encodeURIComponent(c.key)}`)}
+                            className="flex flex-col md:flex-row md:items-center justify-between p-4 gap-4 transition-colors cursor-pointer hover:border-[var(--color-primary)]"
+                        >
+                            <div className="flex items-start space-x-4">
+                                <div className="h-12 w-12 rounded-full bg-[var(--color-primary)]/10 flex items-center justify-center text-[var(--color-primary)]">
+                                    <User className="h-6 w-6" />
+                                </div>
+                                <div>
+                                    <h3 className="font-bold text-lg">{c.name || (lang === 'ta' ? 'வாடிக்கையாளர்' : 'Walk-in')}</h3>
+                                    <div className="flex items-center text-sm text-[var(--color-text-gray)] space-x-4">
+                                        <span className="flex items-center"><Calendar className="h-3 w-3 mr-1" /> {t.last_visit}: {new Date(c.lastVisit).toLocaleDateString(lang === 'ta' ? 'ta-IN' : 'en-IN')}</span>
+                                        <span>{c.phone}</span>
+                                        {c.vehicle && <span className="uppercase font-mono bg-[var(--color-bg-dark)] px-2 rounded text-xs">{c.vehicle}</span>}
                                     </div>
                                 </div>
+                            </div>
 
-                                <div className="flex items-center justify-between md:justify-end gap-6 flex-1">
-                                    <div className="text-right">
-                                        <p className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-gray)]">Total Pending</p>
-                                        <p className={cn(
-                                            "font-bold text-xl",
-                                            invoices
-                                                .filter(i => (i.customer?.phone && i.customer?.phone === invoice.customer?.phone) || (i.customer?.name === invoice.customer?.name))
-                                                .reduce((sum, i) => sum + (i.balanceAmount || 0), 0) > 0 ? "text-orange-500" : "text-green-500"
-                                        )}>
-                                            ₹{invoices
-                                                .filter(i => (i.customer?.phone && i.customer?.phone === invoice.customer?.phone) || (i.customer?.name === invoice.customer?.name))
-                                                .reduce((sum, i) => sum + (i.balanceAmount || 0), 0)
-                                                .toLocaleString()}
-                                        </p>
-                                    </div>
-                                    <div className="text-right">
-                                        <p className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-gray)]">{t.lifetime_value}</p>
-                                        <p className="font-bold text-xl text-[var(--color-primary)]">
-                                            ₹{invoices
-                                                .filter(i => (i.customer?.phone && i.customer?.phone === invoice.customer?.phone) || (i.customer?.name === invoice.customer?.name))
-                                                .reduce((sum, i) => sum + i.total, 0)
-                                                .toLocaleString()}
-                                        </p>
-                                    </div>
-                                    <div className="text-right hidden sm:block">
-                                        <p className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-gray)]">{t.visits}</p>
-                                        <p className="font-medium">
-                                            {invoices.filter(i => (i.customer?.phone && i.customer?.phone === invoice.customer?.phone) || (i.customer?.name === invoice.customer?.name)).length}
-                                        </p>
-                                    </div>
-                                    <Button variant="outline" size="sm" className="font-black uppercase tracking-tighter text-[10px]">
-                                        {t.view_profile} <ArrowRight className="ml-2 h-4 w-4" />
-                                    </Button>
+                            <div className="flex items-center justify-between md:justify-end gap-6 flex-1">
+                                <div className="text-right">
+                                    <p className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-gray)]">{t.total_pending || 'Total Pending'}</p>
+                                    <p className={cn(
+                                        "font-bold text-xl",
+                                        c.pending > 0 ? "text-orange-500" : "text-green-500"
+                                    )}>
+                                        ₹{c.pending.toLocaleString()}
+                                    </p>
                                 </div>
+                                <div className="text-right">
+                                    <p className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-gray)]">{t.lifetime_value}</p>
+                                    <p className="font-bold text-xl text-[var(--color-primary)]">
+                                        ₹{c.lifetime.toLocaleString()}
+                                    </p>
+                                </div>
+                                <div className="text-right hidden sm:block">
+                                    <p className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-gray)]">{t.visits}</p>
+                                    <p className="font-medium">{c.visits}</p>
+                                </div>
+                                {c.phone && (
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); sendWinBack(c); }}
+                                        className="h-9 w-9 shrink-0 rounded-full bg-[#25D366] text-white flex items-center justify-center active:scale-95 transition-transform"
+                                        title={lang === 'ta' ? 'WhatsApp அழைப்பு' : 'WhatsApp nudge'}
+                                    >
+                                        <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
+                                            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z" />
+                                        </svg>
+                                    </button>
+                                )}
+                                <Button variant="outline" size="sm" className="font-black uppercase tracking-tighter text-[10px]">
+                                    {t.view_profile} <ArrowRight className="ml-2 h-4 w-4" />
+                                </Button>
+                            </div>
+                        </Card>
+                    ))
+                )}
 
-                            </Card>
-                        )
-                    })
+                {filteredCustomers.length > visibleCount && (
+                    <div className="text-center pt-2">
+                        <button
+                            onClick={() => setVisibleCount(v => v + PAGE_SIZE)}
+                            className="px-6 py-3 rounded-control bg-[var(--color-bg-card)] border border-[var(--color-border)] text-xs font-black uppercase tracking-widest text-[var(--color-text-gray)] hover:text-[var(--color-text)] hover:border-[var(--color-primary)]/40 transition-colors"
+                        >
+                            {lang === 'ta'
+                                ? `மேலும் காட்டு (${filteredCustomers.length - visibleCount})`
+                                : `Load more (${filteredCustomers.length - visibleCount} remaining)`}
+                        </button>
+                    </div>
                 )}
             </div>
         </div>

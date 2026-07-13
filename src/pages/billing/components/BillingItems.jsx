@@ -1,5 +1,6 @@
 import React, { useState, useCallback } from 'react';
-import { Search, Package, Wrench, ChevronRight, Plus, Minus, X, ArrowLeft, History, Trash2 } from 'lucide-react';
+import { Search, Package, Wrench, ChevronRight, Plus, Minus, X, ArrowLeft, History, Trash2, ScanLine } from 'lucide-react';
+import BarcodeScannerModal, { isBarcodeScanSupported } from '../../../components/common/BarcodeScannerModal';
 import { cn } from '../../../utils/cn';
 import { Card } from '../../../components/ui/Card';
 import { Button } from '../../../components/ui/Button';
@@ -19,6 +20,24 @@ const BillingItems = ({ onAddToCart, onUpdateQuantity, onRemoveItem, cart = [], 
     const t = translations[lang];
     const [activeTab, setActiveTab] = useState('services');
     const [searchTerm, setSearchTerm] = useState('');
+    const [showScanner, setShowScanner] = useState(false);
+
+    // Camera scan → add the matching product straight to the cart.
+    const handleBarcodeDetected = useCallback((code) => {
+        setShowScanner(false);
+        const normalized = String(code).trim().toLowerCase();
+        const product = products.find(p =>
+            (p.isActive !== false) && (p.barcode || '').trim().toLowerCase() === normalized
+        );
+        if (product) {
+            onAddToCart(product, 'product');
+            setSearchTerm('');
+        } else {
+            // No match — drop the code into search so staff can see what scanned.
+            setActiveTab('products');
+            setSearchTerm(String(code));
+        }
+    }, [products, onAddToCart]);
 
     const newRow = () => ({ id: Date.now() + Math.random(), name: '', qty: 1, exchangeValue: '', scrapValue: '' });
     const [oldPartRows, setOldPartRows] = useState([newRow()]);
@@ -62,8 +81,9 @@ const BillingItems = ({ onAddToCart, onUpdateQuantity, onRemoveItem, cart = [], 
     const filteredProducts = products.filter(p => {
         const name = (p.name || '').toLowerCase();
         const size = (p.size || '').toLowerCase();
+        const barcode = (p.barcode || '').toLowerCase();
         const search = searchTerm.toLowerCase();
-        return (p.isActive !== false) && (name.includes(search) || size.includes(search));
+        return (p.isActive !== false) && (name.includes(search) || size.includes(search) || (barcode && barcode.includes(search)));
     });
 
     const filteredServices = services.filter(s => {
@@ -138,14 +158,28 @@ const BillingItems = ({ onAddToCart, onUpdateQuantity, onRemoveItem, cart = [], 
                 </div>
 
                 {activeTab !== 'old_parts' ? (
-                    <div className="relative">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--color-text-gray)]" />
-                        <input
-                            placeholder={t.search_placeholder(activeTab)}
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            className="w-full bg-[var(--color-bg-dark)] border-2 border-[var(--color-border)] rounded-xl pl-10 pr-4 py-3 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] placeholder:opacity-40"
-                        />
+                    <div className="flex gap-2">
+                        <div className="relative flex-1">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--color-text-gray)]" />
+                            <input
+                                placeholder={t.search_placeholder(activeTab)}
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                className="w-full bg-[var(--color-bg-dark)] border-2 border-[var(--color-border)] rounded-xl pl-10 pr-4 py-3 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] placeholder:opacity-40"
+                            />
+                        </div>
+                        {activeTab === 'products' && isBarcodeScanSupported() && (
+                            <button
+                                onClick={() => setShowScanner(true)}
+                                className="shrink-0 px-4 rounded-xl bg-[var(--color-primary)] text-white flex items-center gap-2 active:scale-95 transition-transform"
+                                title={lang === 'ta' ? 'பார்கோடு ஸ்கேன்' : 'Scan barcode'}
+                            >
+                                <ScanLine className="h-5 w-5" />
+                                <span className="hidden sm:inline text-[10px] font-black uppercase tracking-widest">
+                                    {lang === 'ta' ? 'ஸ்கேன்' : 'Scan'}
+                                </span>
+                            </button>
+                        )}
                     </div>
                 ) : (
                     <div className="animate-in fade-in slide-in-from-top-2 duration-300">
@@ -475,6 +509,13 @@ const BillingItems = ({ onAddToCart, onUpdateQuantity, onRemoveItem, cart = [], 
                     </div>
                 </div>
             </div>
+
+            <BarcodeScannerModal
+                isOpen={showScanner}
+                onClose={() => setShowScanner(false)}
+                onDetect={handleBarcodeDetected}
+                title={lang === 'ta' ? 'பார்கோடு ஸ்கேன்' : 'Scan barcode'}
+            />
         </div>
     );
 };

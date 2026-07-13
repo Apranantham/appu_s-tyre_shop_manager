@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
@@ -27,6 +27,8 @@ import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { useReactToPrint } from 'react-to-print';
 import InvoiceTemplate from '../billing/components/InvoiceTemplate';
+import ThermalReceipt from '../billing/components/ThermalReceipt';
+import { shareInvoiceImage } from '../../utils/invoiceImage';
 import { cn } from '../../utils/cn';
 import { TableRowSkeleton } from '../../components/ui/SkeletonVariants';
 import { useTheme } from '../../context/ThemeContext';
@@ -75,6 +77,10 @@ const BillingHistory = () => {
     const handlePrint = useReactToPrint({
         contentRef: printRef,
     });
+    const thermalRef = useRef();
+    const handlePrintReceipt = useReactToPrint({
+        contentRef: thermalRef,
+    });
 
     const handleSort = (key) => {
         setSortConfig(prev => ({
@@ -87,11 +93,12 @@ const BillingHistory = () => {
         const filtered = invoices.filter(inv => {
             const name = (inv.customer?.name || '').toLowerCase();
             const phone = (inv.customer?.phone || '').toLowerCase();
+            const vehicle = (inv.customer?.vehicle || '').toLowerCase();
             const id = (String(inv.id) || '').toLowerCase();
             const invNo = (String(inv.invoiceNo) || '').toLowerCase();
             const search = searchTerm.toLowerCase();
 
-            const matchesSearch = name.includes(search) || phone.includes(search) || id.includes(search) || invNo.includes(search);
+            const matchesSearch = name.includes(search) || phone.includes(search) || vehicle.includes(search) || id.includes(search) || invNo.includes(search);
             if (!matchesSearch) return false;
 
             if (statusFilter !== 'all') {
@@ -228,11 +235,36 @@ const BillingHistory = () => {
         return filtered.sort((a, b) => new Date(b.date) - new Date(a.date));
     };
 
-    const displayInvoices = getSortedInvoices();
-    const displayPayments = getFilteredPayments();
-    const totalPaymentsReceived = displayPayments.reduce((sum, p) => sum + (p.amount || 0), 0);
+    // Memoized: previously these re-filtered and re-sorted the entire collection
+    // on every render (and getSortedInvoices was even computed twice).
+    const displayInvoices = useMemo(
+        getSortedInvoices,
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [invoices, searchTerm, statusFilter, dateFilter, customMonth, activeUserFilter, sortConfig]
+    );
+    // The payments ledger is only flattened when that tab is actually open.
+    const displayPayments = useMemo(
+        () => (viewMode === 'payments' ? getFilteredPayments() : []),
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [viewMode, invoices, searchTerm, dateFilter, customMonth, activeUserFilter, lang]
+    );
+    const totalPaymentsReceived = useMemo(
+        () => displayPayments.reduce((sum, p) => sum + (p.amount || 0), 0),
+        [displayPayments]
+    );
 
-    const filteredInvoices = getSortedInvoices();
+    // Incremental rendering: show 50 rows at a time instead of the whole ledger.
+    const PAGE_SIZE = 50;
+    const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+    useEffect(() => {
+        setVisibleCount(PAGE_SIZE);
+    }, [searchTerm, statusFilter, dateFilter, customMonth, activeUserFilter, viewMode]);
+
+    const pagedInvoices = useMemo(() => displayInvoices.slice(0, visibleCount), [displayInvoices, visibleCount]);
+    const pagedPayments = useMemo(() => displayPayments.slice(0, visibleCount), [displayPayments, visibleCount]);
+    const hasMore = viewMode === 'invoices'
+        ? displayInvoices.length > visibleCount
+        : displayPayments.length > visibleCount;
 
     const shareOnWhatsApp = (invoice) => {
         const itemsList = invoice.items.map(item => `${item.quantity}x ${item.name} - ${item.price * item.quantity}`).join('%0A');
@@ -480,7 +512,7 @@ Thank you for your business!`;
                                             </td>
                                         </tr>
                                     ) : (
-                                        displayInvoices.map((inv) => (
+                                        pagedInvoices.map((inv) => (
                                             <tr key={inv.id} className="hover:bg-[var(--color-bg-dark)] transition-colors group">
                                                 <td className="px-6 py-4">
                                                     <p className="font-bold text-sm tracking-tight text-[var(--color-text-white)]">
@@ -564,7 +596,7 @@ Thank you for your business!`;
 
                         {/* Mobile View (Invoices) */}
                         <div className="md:hidden divide-y divide-[var(--color-border)]">
-                            {displayInvoices.map((inv) => (
+                            {pagedInvoices.map((inv) => (
                                 <div key={inv.id} className="p-5 space-y-5 bg-[var(--color-bg-card)] hover:bg-[var(--color-bg-dark)]/50 transition-colors active:scale-[0.99] duration-200" onClick={() => { setSelectedInvoice(inv); setShowPreview(true); }}>
                                     <div className="flex justify-between items-start">
                                         <div className="space-y-1.5">
@@ -643,7 +675,7 @@ Thank you for your business!`;
                                             </td>
                                         </tr>
                                     ) : (
-                                        displayPayments.map((p, idx) => (
+                                        pagedPayments.map((p, idx) => (
                                             <tr key={`${p.invoiceId}-${idx}`} className="hover:bg-[var(--color-bg-dark)] transition-colors group">
                                                 <td className="px-6 py-4">
                                                     <p className="font-bold text-sm tracking-tight text-[var(--color-text-white)]">
@@ -689,7 +721,7 @@ Thank you for your business!`;
 
                         {/* Mobile View (Payments) */}
                         <div className="md:hidden divide-y divide-[var(--color-border)]">
-                            {displayPayments.map((p, idx) => (
+                            {pagedPayments.map((p, idx) => (
                                 <div key={`${p.invoiceId}-${idx}`} className="p-5 bg-[var(--color-bg-card)] hover:bg-[var(--color-bg-dark)]/50 transition-colors" onClick={() => { setSelectedInvoice(p.parentInvoice); setShowPreview(true); }}>
                                     <div className="flex justify-between items-center">
                                         <div>
@@ -709,6 +741,20 @@ Thank you for your business!`;
                         </div>
                     </>
                 )}
+
+                {/* Load more */}
+                {hasMore && (
+                    <div className="p-4 border-t border-[var(--color-border)] text-center">
+                        <button
+                            onClick={() => setVisibleCount(c => c + PAGE_SIZE)}
+                            className="px-6 py-3 rounded-control bg-[var(--color-bg-dark)] border border-[var(--color-border)] text-xs font-black uppercase tracking-widest text-[var(--color-text-gray)] hover:text-[var(--color-text)] hover:border-[var(--color-primary)]/40 transition-colors"
+                        >
+                            {lang === 'ta'
+                                ? `மேலும் காட்டு (${(viewMode === 'invoices' ? displayInvoices.length : displayPayments.length) - visibleCount})`
+                                : `Load more (${(viewMode === 'invoices' ? displayInvoices.length : displayPayments.length) - visibleCount} remaining)`}
+                        </button>
+                    </div>
+                )}
             </Card>
 
             {/* Preview Modal */}
@@ -726,8 +772,25 @@ Thank you for your business!`;
                                     >
                                         WhatsApp
                                     </Button>
-                                    <Button size="sm" onClick={handlePrint} className="bg-[#3B82F6] text-white rounded-xl px-6">
+                                    <Button
+                                        size="sm"
+                                        onClick={() => shareInvoiceImage(selectedInvoice, shopDetails)}
+                                        className="bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl px-4"
+                                        title={lang === 'ta' ? 'பில் படமாக பகிர்' : 'Share bill as image'}
+                                    >
+                                        {lang === 'ta' ? 'பில் படம்' : 'Bill Image'}
+                                    </Button>
+                                    <Button size="sm" onClick={handlePrint} className="bg-[var(--color-primary)] text-white rounded-xl px-6">
                                         <Printer className="h-4 w-4 mr-2" /> {t.print}
+                                    </Button>
+                                    <Button
+                                        size="sm"
+                                        onClick={handlePrintReceipt}
+                                        variant="outline"
+                                        className="rounded-xl px-4"
+                                        title={lang === 'ta' ? '80mm ரசீது' : '80mm receipt'}
+                                    >
+                                        {lang === 'ta' ? 'ரசீது' : 'Receipt'}
                                     </Button>
                                     <Button
                                         variant="ghost"
@@ -744,6 +807,7 @@ Thank you for your business!`;
                             </div>
                             <div className="hidden">
                                 <InvoiceTemplate ref={printRef} invoice={selectedInvoice} />
+                                <ThermalReceipt ref={thermalRef} invoice={selectedInvoice} shopDetails={shopDetails} />
                             </div>
                         </div>
                     </div>,

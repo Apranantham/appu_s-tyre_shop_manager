@@ -18,14 +18,34 @@
   --color-bg-light: #F3F4F6;
   /* Light Gray */
 
-  --color-text-white: #F9FAFB;
-  --color-text-gray: #9CA3AF;
+  /* Canonical text tokens. Legacy --color-text-white/gray alias to these so
+     every naming convention in the app resolves correctly, and a future palette
+     swap only needs to touch these values (not 140+ scattered literals). */
+  --color-text: #F9FAFB;
+  --color-text-muted: #9CA3AF;
+  --color-text-white: var(--color-text);
+  --color-text-gray: var(--color-text-muted);
   --color-text-dark: #1F2937;
 
   --color-border: #4B5563;
   --color-success: #10B981;
   --color-danger: #EF4444;
   --color-warning: #F59E0B;
+
+  /* Soft tints for chips / badges / selected states (work over dark or light). */
+  --color-primary-soft: rgba(59, 130, 246, 0.14);
+  --color-secondary-soft: rgba(249, 115, 22, 0.14);
+  --color-success-soft: rgba(16, 185, 129, 0.14);
+  --color-danger-soft: rgba(239, 68, 68, 0.14);
+  --color-warning-soft: rgba(245, 158, 11, 0.16);
+
+  /* Radius scale — the single source of corner radii. */
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.5rem;
+  --radius-2xl: 2rem;
+  --radius-full: 9999px;
 
   /* Typography */
   --font-family: 'Inter', system-ui, -apple-system, sans-serif;
@@ -55,7 +75,8 @@
   --app-spacing-scale: 0.9;
 }
 
-[data-font-size='ultra'] {
+[data-font-size='ultra'],
+[data-font-size='extra_large'] {
   --app-font-base: 22px;
   --app-spacing-scale: 0.75;
 }
@@ -66,10 +87,11 @@
   /* Softer light blue-gray */
   --color-bg-card: #F8FAFC;
   /* Slate 50 - Very light gray, not pure white */
-  --color-text-white: #0F172A;
-  /* Darker Slate 900 for main text */
-  --color-text-gray: #1E293B;
-  /* Darker Slate 800 for secondary text */
+  --color-text: #0F172A;
+  /* Slate 900 for main text */
+  --color-text-muted: #64748B;
+  /* Slate 500 for secondary text — distinct from primary text, fixes the
+     collapsed light-theme contrast where both were near-black slate. */
   --color-border: #E2E8F0;
   /* Slate 200 */
   --glass-bg: rgba(248, 250, 252, 0.8);

@@ -12,6 +12,7 @@ import {
 } from 'firebase/firestore';
 import { db } from '../firebase';
 import { useAuth } from './AuthContext';
+import { logStockMovements } from '../utils/stockLog';
 
 const InvoiceContext = createContext();
 
@@ -116,6 +117,7 @@ export const InvoiceProvider = ({ children }) => {
     const deleteInvoice = async (id) => {
         try {
             const invoiceRef = doc(db, 'billing', String(id));
+            let deletedData = null;
             await runTransaction(db, async (transaction) => {
                 const invSnap = await transaction.get(invoiceRef);
                 if (!invSnap.exists()) {
@@ -138,7 +140,25 @@ export const InvoiceProvider = ({ children }) => {
                     deletedAt: new Date().toISOString(),
                     deletedBy: user?.uid || 'unknown'
                 });
+
+                deletedData = invData;
             });
+
+            // Audit AFTER commit (transactions may retry — logging inside would duplicate).
+            if (deletedData) {
+                logStockMovements(
+                    (deletedData.items || [])
+                        .filter(it => it.type === 'product' && it.id)
+                        .map(it => ({
+                            productId: it.id,
+                            productName: it.name,
+                            delta: it.quantity || 0,
+                            reason: 'sale_void',
+                            refId: deletedData.invoiceNo || id
+                        })),
+                    user
+                );
+            }
         } catch (err) {
             console.error("Delete invoice error:", err);
             throw err;
@@ -148,6 +168,7 @@ export const InvoiceProvider = ({ children }) => {
     const restoreInvoice = async (id) => {
         try {
             const invoiceRef = doc(db, 'billing', String(id));
+            let restoredData = null;
             await runTransaction(db, async (transaction) => {
                 const invSnap = await transaction.get(invoiceRef);
                 if (!invSnap.exists()) {
@@ -170,7 +191,25 @@ export const InvoiceProvider = ({ children }) => {
                     restoredAt: new Date().toISOString(),
                     restoredBy: user?.uid || 'unknown'
                 });
+
+                restoredData = invData;
             });
+
+            // Audit AFTER commit (transactions may retry — logging inside would duplicate).
+            if (restoredData) {
+                logStockMovements(
+                    (restoredData.items || [])
+                        .filter(it => it.type === 'product' && it.id)
+                        .map(it => ({
+                            productId: it.id,
+                            productName: it.name,
+                            delta: -(it.quantity || 0),
+                            reason: 'sale_restore',
+                            refId: restoredData.invoiceNo || id
+                        })),
+                    user
+                );
+            }
         } catch (err) {
             console.error("Restore invoice error:", err);
             throw err;

@@ -1,0 +1,19 @@
+{
+  "name": "Tyre Shop Manager",
+  "short_name": "TyreShop",
+  "description": "Billing, inventory, expenses and customer records for the tyre shop.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#111827",
+  "theme_color": "#111827",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

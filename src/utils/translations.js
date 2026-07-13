@@ -108,6 +108,17 @@ export const translations = {
         medium: 'Medium',
         large: 'Large',
         extra_large: 'Ultra',
+        account: 'Account',
+        sign_in_sync_data: 'Sign in to sync your data',
+        protect_data_firebase: 'Securely backed up to the cloud',
+        continue_with_google: 'Continue with Google',
+        customize_your_view: 'Customize how the app looks',
+        switch_dark_light: 'Switch between dark and light themes',
+        select_preferred_language: 'Choose your preferred language',
+        adjust_text_readability: 'Adjust text size for readability',
+        manage_preferences_desc: 'Manage your application preferences and shop information',
+        about_turbotyre: 'About Application',
+        saving: 'Saving…',
 
         // Inventory
         add_product: 'Add Product',
@@ -155,6 +166,43 @@ export const translations = {
         employee_email: 'Employee / Email',
         last_activity: 'Last Activity',
         view_sales: 'View Sales',
+
+        // Day Book (daily cash closing)
+        day_book: 'Day Book',
+        closing_summary: 'Daily closing summary',
+        total_collected: 'Total Collected',
+        from_new_bills: "From today's bills",
+        dues_collected: 'Old dues collected',
+        net_cash: 'Net cash in drawer',
+        bills_created: 'Bills created',
+        total_billed: 'Total billed',
+        new_pending: 'New pending',
+        payments_received: 'Payments received',
+        no_activity: 'No activity on this day',
+        share_summary: 'Share Summary',
+        expenses_paid: 'Expenses paid',
+
+        // Suppliers & stock log
+        suppliers: 'Suppliers',
+        add_supplier: 'Add Supplier',
+        new_purchase: 'Receive Stock',
+        stock_log: 'Stock Log',
+
+        // Counter speed
+        hold_bill: 'Hold',
+        resume: 'Resume',
+        finish_current_first: 'Finish or hold the current bill before resuming another.',
+
+        // Dues & Receivables
+        dues: 'Dues',
+        receivables_desc: 'Outstanding balances by customer',
+        total_due: 'Total Due',
+        oldest_due: 'Oldest due',
+        days_old: 'days',
+        send_reminder: 'Remind on WhatsApp',
+        no_dues: 'No pending dues — all clear!',
+        customers_with_dues: 'customers with dues',
+        pending_bills: 'pending bills',
 
         // Expenses
         expenses: 'Expenses',
@@ -302,6 +350,17 @@ export const translations = {
         medium: 'சராசரி',
         large: 'பெரியது',
         extra_large: 'மிகப் பெரியது',
+        account: 'கணக்கு',
+        sign_in_sync_data: 'தரவை ஒத்திசைக்க உள்நுழையவும்',
+        protect_data_firebase: 'கிளவுட்டில் பாதுகாப்பாக சேமிக்கப்படும்',
+        continue_with_google: 'Google மூலம் தொடரவும்',
+        customize_your_view: 'செயலியின் தோற்றத்தை தனிப்பயனாக்கவும்',
+        switch_dark_light: 'இரவு / பகல் முறையை மாற்றவும்',
+        select_preferred_language: 'விருப்பமான மொழியைத் தேர்ந்தெடுக்கவும்',
+        adjust_text_readability: 'படிக்க எழுத்து அளவை மாற்றவும்',
+        manage_preferences_desc: 'செயலி விருப்பங்கள் மற்றும் கடை விவரங்களை நிர்வகிக்கவும்',
+        about_turbotyre: 'செயலி பற்றி',
+        saving: 'சேமிக்கிறது…',
 
         // Inventory
         add_product: 'பொருள் சேர்',
@@ -356,6 +415,43 @@ export const translations = {
         employee_email: 'ஊழியர் / மின்னஞ்சல்',
         last_activity: 'கடைசி செயல்பாடு',
         view_sales: 'விற்பனையைப் பார்',
+
+        // Day Book (daily cash closing)
+        day_book: 'நாள் கணக்கு',
+        closing_summary: 'நாள் இறுதி கணக்கு சுருக்கம்',
+        total_collected: 'மொத்த வசூல்',
+        from_new_bills: 'இன்றைய பில்களில்',
+        dues_collected: 'பழைய நிலுவை வசூல்',
+        net_cash: 'கையில் உள்ள பணம் (நிகர)',
+        bills_created: 'பில்கள்',
+        total_billed: 'மொத்த பில் தொகை',
+        new_pending: 'புதிய நிலுவை',
+        payments_received: 'பெறப்பட்ட பணம்',
+        no_activity: 'இந்த நாளில் பரிவர்த்தனை இல்லை',
+        share_summary: 'சுருக்கத்தை பகிர்',
+        expenses_paid: 'செலுத்திய செலவுகள்',
+
+        // Suppliers & stock log
+        suppliers: 'சப்ளையர்கள்',
+        add_supplier: 'சப்ளையர் சேர்',
+        new_purchase: 'சரக்கு வரவு',
+        stock_log: 'இருப்பு பதிவு',
+
+        // Counter speed
+        hold_bill: 'ஹோல்ட்',
+        resume: 'தொடர்',
+        finish_current_first: 'மற்றொரு பில்லைத் தொடரும் முன் இந்த பில்லை முடிக்கவும் அல்லது ஹோல்ட் செய்யவும்.',
+
+        // Dues & Receivables
+        dues: 'நிலுவை',
+        receivables_desc: 'வாடிக்கையாளர் வாரியான நிலுவைத் தொகை',
+        total_due: 'மொத்த நிலுவை',
+        oldest_due: 'பழமையான நிலுவை',
+        days_old: 'நாட்கள்',
+        send_reminder: 'WhatsApp நினைவூட்டல்',
+        no_dues: 'நிலுவை எதுவும் இல்லை!',
+        customers_with_dues: 'நிலுவை உள்ள வாடிக்கையாளர்கள்',
+        pending_bills: 'நிலுவை பில்கள்',
 
         // Expenses
         expenses: 'செலவுகள்',

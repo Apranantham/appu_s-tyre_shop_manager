@@ -8,16 +8,22 @@ const ProductForm = ({ onSubmit, initialData, onCancel }) => {
         brand: '',
         size: '',
         pattern: '',
+        loadIndex: '',
+        tubeType: 'tubeless',
+        manufactureYear: '',
         category: 'car',
+        costPrice: '',
         price: '',
         stock: '',
         minStock: 5,
+        barcode: '',
         image: '',
     });
 
     useEffect(() => {
         if (initialData) {
-            setFormData(initialData);
+            // Merge over defaults — older products won't have the newer fields.
+            setFormData(prev => ({ ...prev, ...initialData }));
         }
     }, [initialData]);
 
@@ -31,10 +37,17 @@ const ProductForm = ({ onSubmit, initialData, onCancel }) => {
         onSubmit({
             ...formData,
             price: Number(formData.price),
+            costPrice: Number(formData.costPrice) || 0,
             stock: Number(formData.stock),
             minStock: Number(formData.minStock),
+            barcode: (formData.barcode || '').trim(),
         });
     };
+
+    const costNum = Number(formData.costPrice) || 0;
+    const priceNum = Number(formData.price) || 0;
+    const margin = priceNum - costNum;
+    const marginPct = costNum > 0 ? ((margin / costNum) * 100).toFixed(0) : null;
 
     return (
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -87,6 +100,42 @@ const ProductForm = ({ onSubmit, initialData, onCancel }) => {
                 </div>
             </div>
 
+            <div className="grid grid-cols-3 gap-4">
+                <div className="space-y-2">
+                    <label className="text-sm font-medium text-[var(--color-text-gray)]">Load/Speed</label>
+                    <input
+                        name="loadIndex"
+                        value={formData.loadIndex}
+                        onChange={handleChange}
+                        className="w-full rounded-md border border-[var(--color-border)] bg-[var(--color-bg-dark)] px-3 py-2 text-sm text-[var(--color-text-white)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                        placeholder="e.g. 91V"
+                    />
+                </div>
+                <div className="space-y-2">
+                    <label className="text-sm font-medium text-[var(--color-text-gray)]">Tube Type</label>
+                    <select
+                        name="tubeType"
+                        value={formData.tubeType}
+                        onChange={handleChange}
+                        className="w-full rounded-md border border-[var(--color-border)] bg-[var(--color-bg-dark)] px-3 py-2 text-sm text-[var(--color-text-white)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                    >
+                        <option value="tubeless">Tubeless</option>
+                        <option value="tube">Tube Type</option>
+                    </select>
+                </div>
+                <div className="space-y-2">
+                    <label className="text-sm font-medium text-[var(--color-text-gray)]">Mfg. Year</label>
+                    <input
+                        type="number"
+                        name="manufactureYear"
+                        value={formData.manufactureYear}
+                        onChange={handleChange}
+                        className="w-full rounded-md border border-[var(--color-border)] bg-[var(--color-bg-dark)] px-3 py-2 text-sm text-[var(--color-text-white)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                        placeholder="e.g. 2025"
+                    />
+                </div>
+            </div>
+
             <div className="space-y-2">
                 <label className="text-sm font-medium text-[var(--color-text-gray)]">Category</label>
                 <div className="flex space-x-2">
@@ -106,9 +155,20 @@ const ProductForm = ({ onSubmit, initialData, onCancel }) => {
                 </div>
             </div>
 
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                    <label className="text-sm font-medium text-[var(--color-text-gray)]">Price (₹)</label>
+                    <label className="text-sm font-medium text-[var(--color-text-gray)]">Cost Price (₹)</label>
+                    <input
+                        type="number"
+                        name="costPrice"
+                        value={formData.costPrice}
+                        onChange={handleChange}
+                        className="w-full rounded-md border border-[var(--color-border)] bg-[var(--color-bg-dark)] px-3 py-2 text-sm text-[var(--color-text-white)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                        placeholder="What you paid"
+                    />
+                </div>
+                <div className="space-y-2">
+                    <label className="text-sm font-medium text-[var(--color-text-gray)]">Selling Price (₹)</label>
                     <input
                         required
                         type="number"
@@ -119,6 +179,15 @@ const ProductForm = ({ onSubmit, initialData, onCancel }) => {
                         placeholder="0.00"
                     />
                 </div>
+            </div>
+
+            {costNum > 0 && priceNum > 0 && (
+                <p className={`text-xs font-bold ${margin >= 0 ? 'text-[var(--color-success)]' : 'text-[var(--color-danger)]'}`}>
+                    Margin: ₹{margin.toLocaleString()} per unit{marginPct !== null ? ` (${marginPct}%)` : ''}
+                </p>
+            )}
+
+            <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                     <label className="text-sm font-medium text-[var(--color-text-gray)]">Stock</label>
                     <input
@@ -143,6 +212,17 @@ const ProductForm = ({ onSubmit, initialData, onCancel }) => {
                         placeholder="5"
                     />
                 </div>
+            </div>
+
+            <div className="space-y-2">
+                <label className="text-sm font-medium text-[var(--color-text-gray)]">Barcode</label>
+                <input
+                    name="barcode"
+                    value={formData.barcode}
+                    onChange={handleChange}
+                    className="w-full rounded-md border border-[var(--color-border)] bg-[var(--color-bg-dark)] px-3 py-2 text-sm font-mono text-[var(--color-text-white)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                    placeholder="Scan with a USB scanner or type the code (optional)"
+                />
             </div>
 
             <div className="space-y-2">
