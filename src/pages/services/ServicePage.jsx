@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Plus, Settings, Edit2, Trash2, Power } from 'lucide-react';
 import { useServices } from '../../context/ServiceContext';
+import { useAuth } from '../../context/AuthContext';
 import { useSettings } from '../../context/SettingsContext';
 import { translations } from '../../utils/translations';
 import { Button } from '../../components/ui/Button';
@@ -73,6 +74,7 @@ const ServiceForm = ({ onSubmit, initialData, onCancel, t }) => {
 
 const ServicePage = () => {
     const { services, addService, updateService, deleteService, toggleService, loading } = useServices();
+    const { isAdmin } = useAuth();
     const { shopDetails } = useSettings();
     const lang = shopDetails?.appLanguage || 'ta';
     const t = translations[lang];
@@ -147,10 +149,21 @@ const ServicePage = () => {
                                             <Edit2 className="h-4 w-4 sm:h-3.5 sm:w-3.5 sm:mr-1" />
                                             <span className="hidden sm:inline">{t.edit}</span>
                                         </Button>
-                                        <Button size="sm" variant="ghost" className="h-9 w-9 sm:h-8 sm:w-auto px-0 sm:px-2 text-red-500 text-xs hover:bg-red-500/10" onClick={() => deleteService(service.id)}>
-                                            <Trash2 className="h-4 w-4 sm:h-3.5 sm:w-3.5 sm:mr-1" />
-                                            <span className="hidden sm:inline">{t.delete}</span>
-                                        </Button>
+                                        {isAdmin && (
+                                            <Button
+                                                size="sm"
+                                                variant="ghost"
+                                                className="h-9 w-9 sm:h-8 sm:w-auto px-0 sm:px-2 text-red-500 text-xs hover:bg-red-500/10"
+                                                onClick={() => {
+                                                    if (window.confirm(lang === 'ta' ? `"${service.name}" சேவையை நீக்கவா?` : `Delete service "${service.name}"?`)) {
+                                                        deleteService(service.id);
+                                                    }
+                                                }}
+                                            >
+                                                <Trash2 className="h-4 w-4 sm:h-3.5 sm:w-3.5 sm:mr-1" />
+                                                <span className="hidden sm:inline">{t.delete}</span>
+                                            </Button>
+                                        )}
                                     </div>
                                     <Button
                                         size="sm"

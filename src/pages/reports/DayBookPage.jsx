@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { useInvoices } from '../../context/InvoiceContext';
 import { useExpenses } from '../../context/ExpenseContext';
+import { useAuth } from '../../context/AuthContext';
 import { useSettings } from '../../context/SettingsContext';
 import { translations } from '../../utils/translations';
 import { cn } from '../../utils/cn';
@@ -63,6 +64,7 @@ const DayBookPage = () => {
     const navigate = useNavigate();
     const { invoices, loading: invoicesLoading } = useInvoices();
     const { expenses } = useExpenses();
+    const { isAdmin } = useAuth();
     const { shopDetails } = useSettings();
     const lang = shopDetails?.appLanguage || 'ta';
     const t = translations[lang];
@@ -156,6 +158,15 @@ ${t.net_cash}: ${fmt(report.netCash)}`;
 
     return (
         <div className="space-y-6 pb-10 max-w-5xl mx-auto">
+            {/* Non-admin data is scoped to the signed-in staffer's own bills —
+                say so, or these totals read as (wrong) shop-wide numbers. */}
+            {!isAdmin && (
+                <div className="p-3 rounded-card bg-[var(--color-warning-soft)] border border-[var(--color-warning)]/30 text-[12px] font-bold text-[var(--color-warning)]">
+                    {lang === 'ta'
+                        ? 'நீங்கள் உருவாக்கிய பில்கள் மட்டுமே இங்கு காட்டப்படுகின்றன — கடை முழுமையான கணக்கு அல்ல.'
+                        : 'Showing only bills you created — these are not shop-wide totals.'}
+                </div>
+            )}
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>

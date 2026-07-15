@@ -121,7 +121,9 @@ const BillingPage = () => {
             setEditingInvoiceNo(editInvoice.invoiceNo || null);
             setEditOriginal(editInvoice); // snapshot for stock-delta + payment history
             setPaymentStatus(editInvoice.paymentStatus || 'paid');
-            setPaidAmount(editInvoice.paidAmount || editInvoice.total || 0);
+            // ?? not ||: a pending bill legitimately has paidAmount 0 and must
+            // not be prefilled with the full total.
+            setPaidAmount(editInvoice.paidAmount ?? 0);
             setPaymentNote(editInvoice.paymentNote || '');
             setBillingDate(toDateTimeLocal(editInvoice.date));
             setIsAutoTime(false); // Don't auto-update when editing an old invoice
@@ -151,11 +153,24 @@ const BillingPage = () => {
     }, []);
 
     // Auto-save the in-progress bill so a refresh never loses the cart.
+    // isEditSessionRef guards the first render pass of an edit: editingId is
+    // still null there, and without the ref the autosave would overwrite the
+    // parked draft with an empty cart before the edit state commits.
+    const isEditSessionRef = useRef(!!location.state?.editInvoice);
+    const autosaveTimerRef = useRef(null);
     useEffect(() => {
-        if (editingId || isCheckoutSuccess) return;
-        localStorage.setItem(DRAFT_KEY, JSON.stringify({
-            cart, customer, discount, paymentMode, paymentStatus, paidAmount, paymentNote
-        }));
+        if (isEditSessionRef.current || editingId || isCheckoutSuccess) return;
+        clearTimeout(autosaveTimerRef.current);
+        // Debounced, and product images are stripped — cart lines carry the
+        // full product doc including its base64 image, which would otherwise be
+        // re-serialized on every keystroke and can blow the localStorage quota.
+        autosaveTimerRef.current = setTimeout(() => {
+            localStorage.setItem(DRAFT_KEY, JSON.stringify({
+                cart: cart.map(({ image, ...rest }) => rest),
+                customer, discount, paymentMode, paymentStatus, paidAmount, paymentNote
+            }));
+        }, 400);
+        return () => clearTimeout(autosaveTimerRef.current);
     }, [cart, customer, discount, paymentMode, paymentStatus, paidAmount, paymentNote, editingId, isCheckoutSuccess]);
 
     const handlePrint = useReactToPrint({
@@ -177,8 +192,7 @@ const BillingPage = () => {
         const addQty = Number(item.quantity) || 1;
 
         if (type === 'product') {
-            const liveProduct = products.find(p => p.id === item.id);
-            const currentStock = liveProduct?.stock || 0;
+            const currentStock = availableStock(item.id);
 
             if (currentStock <= 0) {
                 alert(lang === 'ta' ? 'இந்த தயாரிப்பு கையிருப்பில் இல்லை!' : 'This product is out of stock!');
@@ -207,6 +221,19 @@ const BillingPage = () => {
         }
     };
 
+    // Stock available to THIS bill: live stock plus whatever this bill already
+    // deducted when it was first saved (live stock excludes the edited bill's
+    // own units, which otherwise falsely blocks legitimate quantity increases).
+    const availableStock = (id) => {
+        const liveProduct = products.find(p => p.id === id);
+        let stock = liveProduct?.stock || 0;
+        if (editOriginal?.items) {
+            const original = editOriginal.items.find(i => i.type === 'product' && i.id === id);
+            stock += Number(original?.quantity) || 0;
+        }
+        return stock;
+    };
+
     const handleUpdateQuantity = (id, type, change) => {
         setCart(prev => prev.map(i => {
             if (i.id === id && i.type === type) {
@@ -214,8 +241,7 @@ const BillingPage = () => {
 
                 // Stock validation for increment
                 if (type === 'product' && change > 0) {
-                    const liveProduct = products.find(p => p.id === id);
-                    const currentStock = liveProduct?.stock || 0;
+                    const currentStock = availableStock(id);
 
                     if (newQty > currentStock) {
                         alert(lang === 'ta' ? `போதிய இருப்பு இல்லை! மீதமுள்ள இருப்பு: ${currentStock}` : `Insufficient stock! Available stock: ${currentStock}`);
@@ -238,11 +264,11 @@ const BillingPage = () => {
         if (!Number.isFinite(qty) || qty < 1) return;
         let newQty = Math.floor(qty);
         if (type === 'product') {
-            const liveProduct = products.find(p => p.id === id);
-            const currentStock = liveProduct?.stock || 0;
+            const currentStock = availableStock(id);
             if (newQty > currentStock) {
                 alert(lang === 'ta' ? `போதிய இருப்பு இல்லை! மீதமுள்ள இருப்பு: ${currentStock}` : `Insufficient stock! Available stock: ${currentStock}`);
-                newQty = Math.max(1, currentStock);
+                if (currentStock < 1) return; // nothing available — keep the existing qty
+                newQty = currentStock;
             }
         }
         setCart(prev => prev.map(i => (i.id === id && i.type === type) ? { ...i, quantity: newQty } : i));
@@ -265,7 +291,9 @@ const BillingPage = () => {
         const entry = {
             id: Date.now(),
             heldAt: new Date().toISOString(),
-            cart, customer, discount, paymentMode, paymentStatus, paidAmount, paymentNote
+            // Strip base64 product images — they bloat localStorage for nothing.
+            cart: cart.map(({ image, ...rest }) => rest),
+            customer, discount, paymentMode, paymentStatus, paidAmount, paymentNote
         };
         persistHeld([entry, ...heldBills]);
         resetBilling();
@@ -307,6 +335,14 @@ const BillingPage = () => {
         return map;
     };
 
+    // Firestore write promises never resolve while offline (writes queue in
+    // IndexedDB and sync later). Don't let a queued write hang checkout: race
+    // against a short grace period and assume "queued" if it hasn't settled.
+    const awaitOrQueue = (promise, ms = 4000) => {
+        promise.catch(() => { }); // avoid unhandled rejection if the timeout wins
+        return Promise.race([promise, new Promise(resolve => setTimeout(resolve, ms))]);
+    };
+
     const handleCheckout = async () => {
         if (cart.length === 0 || isSubmitting) return; // guard against double-submit
         setIsSubmitting(true);
@@ -317,23 +353,6 @@ const BillingPage = () => {
             // Clamp discount to [0, subtotal] so the total can never go negative.
             const discountVal = Math.min(Math.max(0, Number(discount) || 0), Math.max(0, subtotal));
             const total = subtotal - discountVal;
-
-            // Apply stock changes. For a NEW bill, deduct each product's quantity.
-            // For an EDIT, apply only the delta vs. the original bill so stock is
-            // never double-counted (this was the source of drifting stock counts).
-            const originalQty = editingId ? productQtyMap(editOriginal?.items) : {};
-            const newQty = productQtyMap(cart);
-            const stockOps = [];
-            new Set([...Object.keys(originalQty), ...Object.keys(newQty)]).forEach(id => {
-                const delta = (newQty[id] || 0) - (originalQty[id] || 0);
-                // updateStock deducts `delta`; a negative delta returns stock.
-                if (delta !== 0) stockOps.push(updateStock(id, delta, {
-                    reason: editingId ? 'sale_edit' : 'sale',
-                    refId: editingInvoiceNo || null,
-                    note: customer?.name || ''
-                }));
-            });
-            await Promise.all(stockOps);
 
             // Preserve any previously recorded payments; only add the new money as
             // an extra payment line so installment history is never wiped on edit.
@@ -385,8 +404,11 @@ const BillingPage = () => {
 
             let finalizedInvoice = { ...invoiceData };
 
+            // Save the bill FIRST. Stock moves only after the invoice exists, so
+            // a failed save can never leave phantom stock deductions, and the
+            // audit log gets the real invoice number instead of a blank ref.
             if (editingId) {
-                await updateInvoice(editingId, invoiceData);
+                await awaitOrQueue(updateInvoice(editingId, invoiceData));
             } else {
                 const addedResult = await addInvoice(invoiceData);
                 // addInvoice returns { id, invoiceNo }; fall back to a bare id string.
@@ -397,6 +419,23 @@ const BillingPage = () => {
                     finalizedInvoice.id = addedResult;
                 }
             }
+
+            // Apply stock changes. For a NEW bill, deduct each product's quantity.
+            // For an EDIT, apply only the delta vs. the original bill so stock is
+            // never double-counted.
+            const originalQty = editingId ? productQtyMap(editOriginal?.items) : {};
+            const newQty = productQtyMap(cart);
+            const stockOps = [];
+            new Set([...Object.keys(originalQty), ...Object.keys(newQty)]).forEach(id => {
+                const delta = (newQty[id] || 0) - (originalQty[id] || 0);
+                // updateStock deducts `delta`; a negative delta returns stock.
+                if (delta !== 0) stockOps.push(updateStock(id, delta, {
+                    reason: editingId ? 'sale_edit' : 'sale',
+                    refId: finalizedInvoice.invoiceNo || null,
+                    note: customer?.name || ''
+                }).catch(e => console.error('Stock update failed:', e)));
+            });
+            await awaitOrQueue(Promise.all(stockOps));
 
             setLastInvoice(finalizedInvoice);
             setIsCheckoutSuccess(true);
@@ -412,6 +451,7 @@ const BillingPage = () => {
     };
 
     const resetBilling = () => {
+        isEditSessionRef.current = false; // leaving the edit session — autosave may resume
         setCart([]);
         setCustomer({ name: '', phone: '', vehicle: '' });
         setShowCart(false);

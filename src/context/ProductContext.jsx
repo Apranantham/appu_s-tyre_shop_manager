@@ -62,7 +62,24 @@ export const ProductProvider = ({ children }) => {
     const updateProduct = async (id, updatedData) => {
         try {
             const productRef = doc(db, 'inventory', id);
+            // A manual stock correction in the edit form is a stock movement
+            // like any other — without this, the audit trail has a hole exactly
+            // where hand adjustments happen.
+            const before = products.find(p => p.id === id);
             await updateDoc(productRef, updatedData);
+            if (
+                before &&
+                updatedData.stock !== undefined &&
+                Number(updatedData.stock) !== Number(before.stock)
+            ) {
+                logStockMovements({
+                    productId: id,
+                    productName: updatedData.name || before.name || '',
+                    delta: Number(updatedData.stock) - Number(before.stock || 0),
+                    reason: 'adjustment',
+                    note: 'Manual edit'
+                }, user);
+            }
         } catch (error) {
             console.error("Error updating product:", error);
             throw error;

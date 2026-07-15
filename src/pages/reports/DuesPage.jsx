@@ -10,6 +10,7 @@ import {
     ChevronRight
 } from 'lucide-react';
 import { useInvoices } from '../../context/InvoiceContext';
+import { useAuth } from '../../context/AuthContext';
 import { useSettings } from '../../context/SettingsContext';
 import { translations } from '../../utils/translations';
 import { cn } from '../../utils/cn';
@@ -31,6 +32,7 @@ const bucketFor = (days) => BUCKETS.find(b => days >= b.min && days <= b.max) ||
 const DuesPage = () => {
     const navigate = useNavigate();
     const { invoices, loading } = useInvoices();
+    const { isAdmin } = useAuth();
     const { shopDetails } = useSettings();
     const lang = shopDetails?.appLanguage || 'ta';
     const t = translations[lang];
@@ -78,14 +80,13 @@ const DuesPage = () => {
             .map(c => ({ ...c, bucket: bucketFor(c.oldestDays) }))
             .sort((a, b) => b.oldestDays - a.oldestDays || b.due - a.due);
 
-        const bucketTotals = Object.fromEntries(BUCKETS.map(b => [b.id, { amount: 0, count: 0 }]));
+        const bucketTotals = Object.fromEntries(BUCKETS.map(b => [b.id, { amount: 0 }]));
         customers.forEach(c => {
             // Attribute each BILL to its own bucket so totals reflect real aging.
             c.bills.forEach(bill => {
                 const b = bucketFor(bill.days);
                 bucketTotals[b.id].amount += bill.balance;
             });
-            bucketTotals[c.bucket.id].count += 1;
         });
 
         const totalDue = customers.reduce((s, c) => s + c.due, 0);
@@ -95,7 +96,9 @@ const DuesPage = () => {
     const visible = useMemo(() => {
         const q = search.trim().toLowerCase();
         return customers.filter(c => {
-            if (bucketFilter && c.bucket.id !== bucketFilter) return false;
+            // Match customers with ANY bill in the selected bucket, so a tile's
+            // amount is always accounted for by the customers it lists.
+            if (bucketFilter && !c.bills.some(b => bucketFor(b.days).id === bucketFilter)) return false;
             if (!q) return true;
             return c.name.toLowerCase().includes(q)
                 || c.phone.includes(q)
@@ -125,6 +128,13 @@ const DuesPage = () => {
 
     return (
         <div className="space-y-6 pb-10 max-w-5xl mx-auto">
+            {!isAdmin && (
+                <div className="p-3 rounded-card bg-[var(--color-warning-soft)] border border-[var(--color-warning)]/30 text-[12px] font-bold text-[var(--color-warning)]">
+                    {lang === 'ta'
+                        ? 'நீங்கள் உருவாக்கிய பில்களின் நிலுவை மட்டுமே இங்கு காட்டப்படுகிறது.'
+                        : 'Showing dues only from bills you created — not shop-wide receivables.'}
+                </div>
+            )}
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>

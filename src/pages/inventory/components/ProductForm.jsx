@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '../../../components/ui/Button';
 import { PRODUCT_CATEGORIES } from '../../../utils/constants';
 
-const ProductForm = ({ onSubmit, initialData, onCancel }) => {
+const ProductForm = ({ onSubmit, initialData, onCancel, canEditPrice = true }) => {
     const [formData, setFormData] = useState({
         name: '',
         brand: '',
@@ -168,14 +168,18 @@ const ProductForm = ({ onSubmit, initialData, onCancel }) => {
                     />
                 </div>
                 <div className="space-y-2">
-                    <label className="text-sm font-medium text-[var(--color-text-gray)]">Selling Price (₹)</label>
+                    <label className="text-sm font-medium text-[var(--color-text-gray)]">
+                        Selling Price (₹){!canEditPrice && ' — admin only'}
+                    </label>
                     <input
                         required
                         type="number"
                         name="price"
                         value={formData.price}
                         onChange={handleChange}
-                        className="w-full rounded-md border border-[var(--color-border)] bg-[var(--color-bg-dark)] px-3 py-2 text-sm text-[var(--color-text-white)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                        disabled={!canEditPrice}
+                        title={!canEditPrice ? 'Only an admin can change the selling price of an existing product' : undefined}
+                        className="w-full rounded-md border border-[var(--color-border)] bg-[var(--color-bg-dark)] px-3 py-2 text-sm text-[var(--color-text-white)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] disabled:opacity-50 disabled:cursor-not-allowed"
                         placeholder="0.00"
                     />
                 </div>

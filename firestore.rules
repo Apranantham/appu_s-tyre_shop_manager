@@ -48,13 +48,14 @@ service cloud.firestore {
     }
 
     // ---- Inventory ------------------------------------------------------
-    // Everyone reads. Admin manages fully. Regular staff may change ONLY
-    // `stock` (sales) and `costPrice` (goods receipt updates the latest cost)
-    // — they cannot rewrite selling prices, create, or delete products.
+    // Balanced model: staff may add products and edit them (receiving stock,
+    // fixing details), but only admin may DELETE or change the SELLING PRICE
+    // of an existing product.
     match /inventory/{id} {
       allow read: if isSignedIn();
-      allow create, delete: if isAdmin();
-      allow update: if isAdmin() || (isSignedIn() && changedKeys().hasOnly(['stock', 'costPrice']));
+      allow create: if isSignedIn();
+      allow delete: if isAdmin();
+      allow update: if isAdmin() || (isSignedIn() && !changedKeys().hasAny(['price']));
     }
 
     // ---- Procurement ----------------------------------------------------
@@ -64,12 +65,13 @@ service cloud.firestore {
       allow create, update: if isSignedIn();
       allow delete: if isAdmin();
     }
-    // Purchases: create stamped with your own uid; owner or admin updates
-    // (settling a supplier payment is an update); only admin deletes.
+    // Purchases: create stamped with your own uid; ANY staff may update
+    // (settling a colleague's supplier purchase is normal counter work);
+    // only admin deletes.
     match /purchases/{id} {
       allow read: if isSignedIn();
       allow create: if isSignedIn() && request.resource.data.createdBy == request.auth.uid;
-      allow update: if isSignedIn() && (isAdmin() || resource.data.createdBy == request.auth.uid);
+      allow update: if isSignedIn();
       allow delete: if isAdmin();
     }
     // Stock movements: append-only audit trail. No edits or deletes from the
@@ -80,16 +82,18 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
-    // ---- Catalogs (admin-managed) --------------------------------------
-    // Services and the old-item master are catalog data: everyone reads,
-    // only admin edits.
+    // ---- Catalogs -------------------------------------------------------
+    // Staff may add and edit services / old-item names (daily counter work);
+    // only admin may delete.
     match /service/{id} {
       allow read: if isSignedIn();
-      allow write: if isAdmin();
+      allow create, update: if isSignedIn();
+      allow delete: if isAdmin();
     }
     match /old_items_master/{id} {
       allow read: if isSignedIn();
-      allow write: if isAdmin();
+      allow create, update: if isSignedIn();
+      allow delete: if isAdmin();
     }
 
     // ---- Expenses -------------------------------------------------------
@@ -100,12 +104,13 @@ service cloud.firestore {
     }
 
     // ---- Shop settings --------------------------------------------------
-    // Everyone reads. Admin may write anything. Regular staff may write ONLY
-    // to bump the invoice counter at checkout — they can no longer overwrite
-    // the shop's UPI IDs, name, or address (previous payment-diversion hole).
+    // Everyone reads. Admin may write anything. Regular staff may bump the
+    // invoice counter at checkout and change the app language / font size —
+    // but NOT the shop's UPI IDs, name, or address (payment-diversion hole).
     match /settings/shopProfile {
       allow read: if isSignedIn();
-      allow write: if isAdmin() || (isSignedIn() && changedKeys().hasOnly(['nextInvoiceNumber']));
+      allow write: if isAdmin() || (isSignedIn()
+        && changedKeys().hasOnly(['nextInvoiceNumber', 'appLanguage', 'appFontSize']));
     }
 
     // ---- Everything else ------------------------------------------------

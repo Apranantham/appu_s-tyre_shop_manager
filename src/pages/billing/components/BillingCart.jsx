@@ -244,7 +244,13 @@ const BillingCart = ({
                                                             min="0"
                                                             value={item.price}
                                                             onFocus={(e) => e.target.select()}
-                                                            onChange={(e) => onUpdatePrice && onUpdatePrice(item.id, item.type, Number(e.target.value))}
+                                                            onChange={(e) => {
+                                                                // Ignore a cleared field — Number('') is 0 and would
+                                                                // silently bill the line for free.
+                                                                if (e.target.value === '') return;
+                                                                const v = Number(e.target.value);
+                                                                if (Number.isFinite(v) && onUpdatePrice) onUpdatePrice(item.id, item.type, v);
+                                                            }}
                                                             className="w-24 bg-transparent text-right font-black text-xl text-[var(--color-primary)] border-b border-dashed border-[var(--color-border)] focus:border-[var(--color-primary)] focus:outline-none p-0"
                                                         />
                                                     </div>

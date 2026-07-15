@@ -15,6 +15,13 @@ const BarcodeScannerModal = ({ isOpen, onClose, onDetect, title }) => {
     const videoRef = useRef(null);
     const [error, setError] = useState('');
 
+    // Keep the latest callback in a ref: onDetect gets a new identity on every
+    // parent render (e.g. the billing clock ticks each minute), and having it
+    // in the camera effect's deps would tear down and re-acquire the stream
+    // mid-scan.
+    const onDetectRef = useRef(onDetect);
+    useEffect(() => { onDetectRef.current = onDetect; }, [onDetect]);
+
     useEffect(() => {
         if (!isOpen) return;
 
@@ -38,7 +45,7 @@ const BarcodeScannerModal = ({ isOpen, onClose, onDetect, title }) => {
                     const codes = await detector.detect(video);
                     if (!cancelled && codes.length > 0 && codes[0].rawValue) {
                         if (navigator.vibrate) navigator.vibrate(80);
-                        onDetect(codes[0].rawValue);
+                        onDetectRef.current(codes[0].rawValue);
                         return; // parent closes the modal — stop the loop
                     }
                 } catch { /* detector hiccup on a frame — keep scanning */ }
@@ -68,7 +75,7 @@ const BarcodeScannerModal = ({ isOpen, onClose, onDetect, title }) => {
             cancelAnimationFrame(rafId);
             if (stream) stream.getTracks().forEach(tr => tr.stop());
         };
-    }, [isOpen, onDetect]);
+    }, [isOpen]);
 
     if (!isOpen) return null;
 

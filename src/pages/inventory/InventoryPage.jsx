@@ -203,9 +203,11 @@ const InventoryPage = () => {
                                         <Button size="icon" variant="ghost" className="h-9 w-9 text-white hover:bg-white/20 rounded-xl" onClick={() => openEditModal(product)}>
                                             <Edit2 className="h-4 w-4" />
                                         </Button>
-                                        <Button size="icon" variant="ghost" className="h-9 w-9 text-red-500 hover:bg-red-500/20 rounded-xl" onClick={() => setProductToDelete(product)}>
-                                            <Trash2 className="h-4 w-4" />
-                                        </Button>
+                                        {isAdmin && (
+                                            <Button size="icon" variant="ghost" className="h-9 w-9 text-red-500 hover:bg-red-500/20 rounded-xl" onClick={() => setProductToDelete(product)}>
+                                                <Trash2 className="h-4 w-4" />
+                                            </Button>
+                                        )}
                                     </div>
                                 </div>
                                 {product.stock <= product.minStock && product.isActive !== false && (
@@ -312,6 +314,7 @@ const InventoryPage = () => {
                     initialData={editingProduct}
                     onSubmit={editingProduct ? handleEditProduct : handleAddProduct}
                     onCancel={() => setIsModalOpen(false)}
+                    canEditPrice={isAdmin || !editingProduct}
                 />
             </Modal>
 

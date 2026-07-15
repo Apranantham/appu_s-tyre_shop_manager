@@ -991,13 +991,17 @@ Thank you for your business!`;
                                     <Button
                                         className="flex-1 py-7 bg-gradient-to-br from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white rounded-2xl font-black uppercase tracking-[0.2em] text-[10px] shadow-xl shadow-orange-500/20 border-none transition-all active:scale-[0.98] h-auto"
                                         onClick={async () => {
-                                            if (settleAmount <= 0) return;
-                                            const newBalance = (selectedInvoice.balanceAmount || 0) - settleAmount;
+                                            // Clamp to the outstanding balance — the input's max is only a
+                                            // UI hint, and an over-entry would inflate paidAmount and every
+                                            // revenue report built from payments.
+                                            const pay = Math.min(Number(settleAmount) || 0, selectedInvoice.balanceAmount || 0);
+                                            if (pay <= 0) return;
+                                            const newBalance = (selectedInvoice.balanceAmount || 0) - pay;
                                             const newStatus = newBalance <= 0 ? 'paid' : 'partially_paid';
 
                                             const paymentEntry = {
                                                 date: settleDate,
-                                                amount: settleAmount,
+                                                amount: pay,
                                                 mode: settleMode,
                                                 recordedAt: new Date().toISOString()
                                             };
@@ -1007,7 +1011,7 @@ Thank you for your business!`;
                                             await updateInvoice(selectedInvoice.id, {
                                                 balanceAmount: Math.max(0, newBalance),
                                                 paymentStatus: newStatus,
-                                                paidAmount: (selectedInvoice.paidAmount || 0) + settleAmount,
+                                                paidAmount: (selectedInvoice.paidAmount || 0) + pay,
                                                 payments: updatedPayments,
                                                 isClosed: newStatus === 'paid',
                                                 settledDate: newStatus === 'paid' ? settleDate : (selectedInvoice.settledDate || null)

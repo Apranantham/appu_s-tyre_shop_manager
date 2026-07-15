@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Plus, Trash2, Edit2, History, ArrowLeft, Search } from 'lucide-react';
 import { useOldItemsMaster } from '../../context/OldItemContext';
+import { useAuth } from '../../context/AuthContext';
 import { useSettings } from '../../context/SettingsContext';
 import { translations } from '../../utils/translations';
 import { Card } from '../../components/ui/Card';
@@ -9,6 +10,7 @@ import { useNavigate } from 'react-router-dom';
 
 const OldItemsMasterPage = () => {
     const { oldItemsMaster, addMasterItem, updateMasterItem, deleteMasterItem, loading } = useOldItemsMaster();
+    const { isAdmin } = useAuth();
     const { shopDetails } = useSettings();
     const lang = shopDetails?.appLanguage || 'ta';
     const t = translations[lang];
@@ -121,12 +123,18 @@ const OldItemsMasterPage = () => {
                                 >
                                     <Edit2 className="h-4 w-4" />
                                 </button>
-                                <button
-                                    onClick={() => deleteMasterItem(item.id)}
-                                    className="p-2.5 rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white transition-all"
-                                >
-                                    <Trash2 className="h-4 w-4" />
-                                </button>
+                                {isAdmin && (
+                                    <button
+                                        onClick={() => {
+                                            if (window.confirm(lang === 'ta' ? `"${item.name}" நீக்கவா?` : `Delete "${item.name}"?`)) {
+                                                deleteMasterItem(item.id);
+                                            }
+                                        }}
+                                        className="p-2.5 rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white transition-all"
+                                    >
+                                        <Trash2 className="h-4 w-4" />
+                                    </button>
+                                )}
                             </div>
                         </Card>
                     ))

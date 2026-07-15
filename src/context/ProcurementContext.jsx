@@ -94,16 +94,9 @@ export const ProcurementProvider = ({ children }) => {
         const status = paid >= total ? 'paid' : (paid > 0 ? 'partially_paid' : 'pending');
         const dateISO = date || new Date().toISOString();
 
-        // Stock + cost updates in one transaction so a failure changes nothing.
-        await runTransaction(db, async (transaction) => {
-            for (const it of cleanItems) {
-                const ref = doc(db, 'inventory', String(it.productId));
-                const update = { stock: increment(Number(it.qty) || 0) };
-                if ((Number(it.unitCost) || 0) > 0) update.costPrice = Number(it.unitCost);
-                transaction.update(ref, update);
-            }
-        });
-
+        // Record the purchase FIRST, then move stock. If the stock transaction
+        // fails, the purchase doc is removed again — so a partial failure can
+        // never leave stock inflated with no purchase record (or vice versa).
         const purchaseDoc = await addDoc(collection(db, 'purchases'), {
             supplierId: supplier?.id || null,
             supplierName: supplier?.name || '',
@@ -121,6 +114,22 @@ export const ProcurementProvider = ({ children }) => {
             payments: paid > 0 ? [{ amount: paid, mode: paymentMode || 'cash', date: dateISO }] : [],
             ...stamp()
         });
+
+        try {
+            // Stock + cost updates in one transaction so a failure changes nothing.
+            await runTransaction(db, async (transaction) => {
+                for (const it of cleanItems) {
+                    const ref = doc(db, 'inventory', String(it.productId));
+                    const update = { stock: increment(Number(it.qty) || 0) };
+                    if ((Number(it.unitCost) || 0) > 0) update.costPrice = Number(it.unitCost);
+                    transaction.update(ref, update);
+                }
+            });
+        } catch (err) {
+            // Compensate: withdraw the purchase record so nothing half-applies.
+            await deleteDoc(doc(db, 'purchases', purchaseDoc.id)).catch(() => { });
+            throw err;
+        }
 
         logStockMovements(cleanItems.map(it => ({
             productId: it.productId,

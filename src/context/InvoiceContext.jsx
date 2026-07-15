@@ -8,7 +8,9 @@ import {
     runTransaction,
     increment,
     deleteDoc,
-    updateDoc
+    updateDoc,
+    getDoc,
+    setDoc
 } from 'firebase/firestore';
 import { db } from '../firebase';
 import { useAuth } from './AuthContext';
@@ -69,11 +71,19 @@ export const InvoiceProvider = ({ children }) => {
 
     const addInvoice = async (invoice) => {
         if (!user) throw new Error("Auth required");
-        try {
-            const plainInvoice = JSON.parse(JSON.stringify(invoice));
-            const settingsRef = doc(db, 'settings', 'shopProfile');
-            const billingCollection = collection(db, 'billing');
+        const plainInvoice = JSON.parse(JSON.stringify(invoice));
+        const settingsRef = doc(db, 'settings', 'shopProfile');
+        const billingCollection = collection(db, 'billing');
+        const stamp = {
+            createdBy: user.uid,
+            creatorEmail: user.email,
+            creatorName: user.name,
+            createdAt: new Date().toISOString(),
+            isDeleted: false
+        };
 
+        try {
+            // Preferred path: atomic numbering. Transactions need the server.
             return await runTransaction(db, async (transaction) => {
                 const settingsSnap = await transaction.get(settingsRef);
                 let nextNo = 101;
@@ -82,25 +92,32 @@ export const InvoiceProvider = ({ children }) => {
                 }
 
                 const newInvoiceRef = doc(billingCollection);
-                transaction.set(newInvoiceRef, {
-                    ...plainInvoice,
-                    invoiceNo: nextNo,
-                    createdBy: user.uid,
-                    creatorEmail: user.email,
-                    creatorName: user.name,
-                    createdAt: new Date().toISOString(),
-                    isDeleted: false
-                });
-
-                transaction.set(settingsRef, {
-                    nextInvoiceNumber: nextNo + 1
-                }, { merge: true });
+                transaction.set(newInvoiceRef, { ...plainInvoice, invoiceNo: nextNo, ...stamp });
+                transaction.set(settingsRef, { nextInvoiceNumber: nextNo + 1 }, { merge: true });
 
                 return { id: newInvoiceRef.id, invoiceNo: nextNo };
             });
         } catch (err) {
-            console.error("Add invoice error:", err);
-            throw err;
+            // Offline (or transient) fallback: transactions fail without a
+            // connection even though the local cache can queue plain writes.
+            // Number from the cached counter and queue the writes — they sync
+            // when the connection returns, so the shop can keep billing.
+            console.warn("Invoice transaction failed, falling back to offline numbering:", err);
+            let nextNo = 101;
+            try {
+                const cached = await getDoc(settingsRef); // served from cache when offline
+                if (cached.exists()) nextNo = cached.data().nextInvoiceNumber || 101;
+            } catch { /* no cached settings — keep the default */ }
+
+            const newInvoiceRef = doc(billingCollection);
+            // Deliberately NOT awaited: offline write promises only resolve on
+            // server ack. The writes are queued durably in IndexedDB.
+            setDoc(newInvoiceRef, { ...plainInvoice, invoiceNo: nextNo, ...stamp, offlineNumbered: true })
+                .catch(e => console.error("Queued invoice write failed:", e));
+            setDoc(settingsRef, { nextInvoiceNumber: increment(1) }, { merge: true })
+                .catch(e => console.error("Queued counter bump failed:", e));
+
+            return { id: newInvoiceRef.id, invoiceNo: nextNo };
         }
     };
 
