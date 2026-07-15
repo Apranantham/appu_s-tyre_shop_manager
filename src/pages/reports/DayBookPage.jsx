@@ -19,16 +19,9 @@ import { useAuth } from '../../context/AuthContext';
 import { useSettings } from '../../context/SettingsContext';
 import { translations } from '../../utils/translations';
 import { cn } from '../../utils/cn';
+import { formatMoney as fmt, toInputDate } from '../../utils/format';
+import { openWhatsApp } from '../../utils/whatsapp';
 import Loader from '../../components/ui/Loader';
-
-const fmt = (n) => `₹${(n || 0).toLocaleString('en-IN')}`;
-
-const toInputDate = (d) => {
-    const year = d.getFullYear();
-    const month = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-};
 
 // Flatten every payment across invoices, synthesizing the initial payment when
 // paidAmount exceeds the recorded payments — same convention the dashboard and
@@ -145,7 +138,7 @@ ${t.new_pending}: ${fmt(report.newPending)}
 ${line}
 ${t.expenses_paid}: ${fmt(report.totalExpenses)}
 ${t.net_cash}: ${fmt(report.netCash)}`;
-        window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+        openWhatsApp(null, msg);
     };
 
     if (invoicesLoading) return <Loader />;

@@ -16,11 +16,11 @@ import { useProducts } from '../../context/ProductContext';
 import { useSettings } from '../../context/SettingsContext';
 import { translations } from '../../utils/translations';
 import { cn } from '../../utils/cn';
+import { formatMoney as fmt, toInputDate } from '../../utils/format';
 import Modal from '../../components/ui/Modal';
 import { Button } from '../../components/ui/Button';
 import Loader from '../../components/ui/Loader';
 
-const fmt = (n) => `₹${(n || 0).toLocaleString('en-IN')}`;
 const inputCls = "w-full rounded-md border border-[var(--color-border)] bg-[var(--color-bg-dark)] px-3 py-2 text-sm text-[var(--color-text-white)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]";
 
 const STATUS_STYLE = {
@@ -59,7 +59,8 @@ const SuppliersPage = () => {
 
     const openNewPurchase = (supplierId = '') => setPurchaseModal({
         supplierId,
-        date: new Date().toISOString().slice(0, 10),
+        // Local date, not toISOString() — UTC would show yesterday before 5:30am IST.
+        date: toInputDate(),
         lines: [{ productId: '', qty: '', unitCost: '' }],
         paidAmount: '',
         paymentMode: 'cash'

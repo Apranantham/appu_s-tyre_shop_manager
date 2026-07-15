@@ -5,11 +5,13 @@
  * Falls back to downloading the PNG where file-sharing isn't available.
  */
 
+import { formatMoney } from './format';
+
 const W = 640;          // canvas width (px)
 const PAD = 36;         // outer padding
 const LH = 34;          // base line height
 
-const money = (n) => `Rs.${(n || 0).toLocaleString('en-IN')}`;
+const money = (n) => formatMoney(n, 'Rs.');
 
 // Wrap text to fit maxWidth; returns the lines drawn.
 const wrap = (ctx, text, maxWidth) => {

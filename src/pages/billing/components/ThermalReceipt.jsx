@@ -1,4 +1,5 @@
 import React, { forwardRef } from 'react';
+import { formatMoney } from '../../../utils/format';
 
 /**
  * 80mm thermal receipt (also prints fine on 58mm — content is single column).
@@ -9,7 +10,7 @@ const line = 'print-dashed';
 
 const ThermalReceipt = forwardRef(({ invoice, shopDetails }, ref) => {
     if (!invoice) return null;
-    const money = (n) => `Rs.${(n || 0).toLocaleString('en-IN')}`;
+    const money = (n) => formatMoney(n, 'Rs.');
     const items = invoice.items || [];
     const normalItems = items.filter(i => i.type !== 'old_part');
     const oldParts = items.filter(i => i.type === 'old_part');
