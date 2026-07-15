@@ -73,9 +73,9 @@ const BillingCart = ({
     ];
 
     const paymentStatuses = [
-        { id: 'paid', label: t.full_paid, color: 'bg-green-500' },
-        { id: 'partially_paid', label: t.partial_paid, color: 'bg-orange-500' },
-        { id: 'pending', label: t.pay_later, color: 'bg-blue-500' },
+        { id: 'paid', label: t.full_paid, color: 'bg-success' },
+        { id: 'partially_paid', label: t.partial_paid, color: 'bg-primary' },
+        { id: 'pending', label: t.pay_later, color: 'bg-primary' },
     ];
 
     return (
@@ -93,9 +93,9 @@ const BillingCart = ({
                 </h2>
                 <button
                     onClick={onToggleView}
-                    className="flex items-center gap-1.5 text-blue-600 hover:text-blue-700 transition-colors"
+                    className="flex items-center gap-1.5 text-primary hover:text-primary-hover transition-colors"
                 >
-                    <Plus className="h-4 w-4 bg-blue-600 text-white rounded-full p-0.5" />
+                    <Plus className="h-4 w-4 bg-primary text-white rounded-full p-0.5" />
                     <span className="text-xs font-bold">{t.add_item || 'Add Item'}</span>
                 </button>
             </div>
@@ -105,7 +105,7 @@ const BillingCart = ({
                 <div className="p-6 space-y-8">
                     {/* Customer Information */}
                     <div className="space-y-4">
-                        <div className="flex items-center gap-2 text-blue-600">
+                        <div className="flex items-center gap-2 text-primary">
                             <User className="h-4 w-4" />
                             <h3 className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-gray)]">{t.customer_info || 'Customer Information'}</h3>
                         </div>
@@ -123,7 +123,7 @@ const BillingCart = ({
                                             setShowSuggestions(true);
                                         }}
                                         onFocus={() => setShowSuggestions(true)}
-                                        className="w-full bg-[var(--color-bg-dark)] border border-[var(--color-border)] rounded-xl px-4 py-2.5 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-[var(--color-text-white)] shadow-sm"
+                                        className="w-full bg-[var(--color-bg-dark)] border border-[var(--color-border)] rounded-xl px-4 py-2.5 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-[var(--color-text-white)] shadow-sm"
                                     />
                                     {showSuggestions && customer.name && filteredHistory.length > 0 && (
                                         <>
@@ -142,7 +142,7 @@ const BillingCart = ({
                                                             onUpdateCustomer('vehicle', cust.vehicle);
                                                             setShowSuggestions(false);
                                                         }}
-                                                        className="w-full text-left px-4 py-3 hover:bg-blue-600/10 transition-colors flex items-center justify-between border-b border-[var(--color-border)]/50 last:border-none"
+                                                        className="w-full text-left px-4 py-3 hover:bg-primary-hover/10 transition-colors flex items-center justify-between border-b border-[var(--color-border)]/50 last:border-none"
                                                     >
                                                         <div>
                                                             <p className="font-bold text-sm text-[var(--color-text-white)]">{cust.name}</p>
@@ -169,27 +169,27 @@ const BillingCart = ({
                             <div className="space-y-1.5">
                                 <label className="text-[9px] font-bold text-[var(--color-text-gray)]/60 uppercase tracking-widest ml-1">{t.phone}</label>
                                 <div className="relative flex items-center group/input">
-                                    <div className="absolute left-4 text-xs font-black text-blue-500/60 pointer-events-none">
+                                    <div className="absolute left-4 text-xs font-black text-primary/60 pointer-events-none">
                                         +91
                                     </div>
                                     <input
                                         placeholder="00000 00000"
                                         value={customer.phone}
                                         onChange={(e) => onUpdateCustomer('phone', e.target.value)}
-                                        className="w-full bg-[var(--color-bg-dark)] border border-[var(--color-border)] rounded-xl pl-12 pr-4 py-2.5 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-[var(--color-text-white)] shadow-sm"
+                                        className="w-full bg-[var(--color-bg-dark)] border border-[var(--color-border)] rounded-xl pl-12 pr-4 py-2.5 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-[var(--color-text-white)] shadow-sm"
                                     />
                                 </div>
                             </div>
 
 
-                            <div className="space-y-1.5 text-blue-600">
+                            <div className="space-y-1.5 text-primary">
                                 <label className="text-[9px] font-bold text-[var(--color-text-gray)]/60 uppercase tracking-widest ml-1">{t.date || 'DATE'}</label>
                                 <div className="relative">
                                     <input
                                         type="datetime-local"
                                         value={billingDate}
                                         onChange={(e) => setBillingDate(e.target.value)}
-                                        className="w-full bg-[var(--color-bg-dark)] border border-[var(--color-border)] rounded-xl px-4 py-2.5 text-[11px] font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-[var(--color-text-white)] shadow-sm appearance-none"
+                                        className="w-full bg-[var(--color-bg-dark)] border border-[var(--color-border)] rounded-xl px-4 py-2.5 text-[11px] font-semibold focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-[var(--color-text-white)] shadow-sm appearance-none"
                                     />
                                     <Calendar className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--color-text-gray)] opacity-50 pointer-events-none" />
                                 </div>
@@ -201,7 +201,7 @@ const BillingCart = ({
                                     placeholder="KA-01-AB-1234"
                                     value={customer.vehicle}
                                     onChange={(e) => onUpdateCustomer('vehicle', e.target.value)}
-                                    className="w-full bg-[var(--color-bg-dark)] border border-[var(--color-border)] rounded-xl px-4 py-2.5 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-[var(--color-text-white)] shadow-sm"
+                                    className="w-full bg-[var(--color-bg-dark)] border border-[var(--color-border)] rounded-xl px-4 py-2.5 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-[var(--color-text-white)] shadow-sm"
                                 />
                             </div>
                         </div>
@@ -220,7 +220,7 @@ const BillingCart = ({
                                     <div key={`${item.type}-${item.id}`} className="relative bg-[var(--color-bg-card)] p-6 rounded-2xl border border-[var(--color-border)] shadow-sm transition-all group overflow-visible">
                                         <button
                                             onClick={() => onRemoveItem(item.id, item.type)}
-                                            className="absolute -top-3 -left-3 h-8 w-8 bg-[#FF5252] text-white rounded-full flex items-center justify-center shadow-lg hover:scale-110 active:scale-95 transition-all z-10 border-4 border-[var(--color-bg-card)]"
+                                            className="absolute -top-3 -left-3 h-8 w-8 bg-[var(--color-danger)] text-white rounded-full flex items-center justify-center shadow-lg hover:scale-110 active:scale-95 transition-all z-10 border-4 border-[var(--color-bg-card)]"
                                         >
                                             <X className="h-4 w-4 stroke-[3px]" />
                                         </button>
@@ -234,7 +234,7 @@ const BillingCart = ({
                                             </div>
                                             <div className="text-right">
                                                 {item.type === 'old_part' ? (
-                                                    <span className="font-black text-xl text-red-400">-₹{(item.exchangeValue || 0).toLocaleString()}</span>
+                                                    <span className="font-black text-xl text-danger">-₹{(item.exchangeValue || 0).toLocaleString()}</span>
                                                 ) : (
                                                     /* Editable unit price — counter staff negotiate per tyre */
                                                     <div className="flex items-center justify-end">
@@ -279,7 +279,7 @@ const BillingCart = ({
                                                 />
                                                 <button
                                                     onClick={() => onUpdateQuantity(item.id, item.type, 1)}
-                                                    className="w-10 h-10 flex items-center justify-center bg-[#3B82F6] text-white rounded-full shadow-md hover:bg-blue-700 transition-all hover:scale-105"
+                                                    className="w-10 h-10 flex items-center justify-center bg-[var(--color-primary)] text-white rounded-full shadow-md hover:bg-primary-hover transition-all hover:scale-105"
                                                 >
                                                     <Plus className="h-4 w-4" />
                                                 </button>
@@ -288,7 +288,7 @@ const BillingCart = ({
                                             <div className="text-right">
                                                 <p className="text-[10px] font-black text-[var(--color-text-gray)]/60 uppercase tracking-[0.2em] mb-1">{item.type === 'old_part' ? 'DEDUCTION' : 'SUBTOTAL'}</p>
                                                 {item.type === 'old_part' ? (
-                                                    <p className="text-xl font-black text-red-400">-₹{((item.exchangeValue || 0) * item.quantity).toLocaleString()}</p>
+                                                    <p className="text-xl font-black text-danger">-₹{((item.exchangeValue || 0) * item.quantity).toLocaleString()}</p>
                                                 ) : (
                                                     <p className="text-xl font-black text-[var(--color-text-white)]">₹{(item.price * item.quantity).toLocaleString()}</p>
                                                 )}
@@ -321,7 +321,7 @@ const BillingCart = ({
                                     className={cn(
                                         "flex-1 py-3 text-[9px] font-black uppercase tracking-wider rounded-lg transition-all",
                                         paymentStatus === status.id
-                                            ? "bg-blue-600 text-white shadow-lg shadow-blue-500/20"
+                                            ? "bg-primary text-white shadow-lg shadow-black/25"
                                             : "text-[var(--color-text-gray)]/60 hover:text-[var(--color-text-white)]"
                                     )}
                                 >
@@ -358,15 +358,15 @@ const BillingCart = ({
 
                     {/* Partially Paid Input */}
                     {paymentStatus === 'partially_paid' && (
-                        <div className="p-4 bg-orange-500/10 rounded-2xl border border-orange-500/20 flex justify-between items-center shadow-sm">
-                            <span className="text-[11px] font-black uppercase text-orange-500 tracking-widest">{t.amount_paid}</span>
+                        <div className="p-4 bg-warning-soft rounded-2xl border border-warning/20 flex justify-between items-center shadow-sm">
+                            <span className="text-[11px] font-black uppercase text-warning tracking-widest">{t.amount_paid}</span>
                             <div className="relative w-32">
-                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-black text-orange-400">₹</span>
+                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-black text-warning">₹</span>
                                 <input
                                     type="number"
                                     value={paidAmount}
                                     onChange={(e) => setPaidAmount(Number(e.target.value))}
-                                    className="w-full bg-[var(--color-bg-card)] border border-orange-500/30 rounded-xl px-3 pl-7 py-2 text-right text-base font-black text-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500/20"
+                                    className="w-full bg-[var(--color-bg-card)] border border-warning/30 rounded-xl px-3 pl-7 py-2 text-right text-base font-black text-warning focus:outline-none focus:ring-2 focus:ring-orange-500/20"
                                 />
                             </div>
                         </div>
@@ -383,7 +383,7 @@ const BillingCart = ({
                             value={paymentNote}
                             onChange={(e) => setPaymentNote(e.target.value)}
                             rows={2}
-                            className="w-full bg-[var(--color-bg-dark)] border border-[var(--color-border)] rounded-xl px-4 py-3 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500/20 text-[var(--color-text-white)] shadow-sm"
+                            className="w-full bg-[var(--color-bg-dark)] border border-[var(--color-border)] rounded-xl px-4 py-3 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-primary/20 text-[var(--color-text-white)] shadow-sm"
                         />
                     </div>
                 </div>
@@ -401,10 +401,10 @@ const BillingCart = ({
                         </div>
 
                         {/* Discount Row - Spacious Input */}
-                        <div className="flex justify-between items-center gap-4 bg-[var(--color-bg-dark)]/50 border border-[var(--color-border)] px-4 py-3 rounded-2xl transition-all focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-500 group shadow-sm">
+                        <div className="flex justify-between items-center gap-4 bg-[var(--color-bg-dark)]/50 border border-[var(--color-border)] px-4 py-3 rounded-2xl transition-all focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary group shadow-sm">
                             <div className="flex items-center gap-2 flex-shrink-0">
                                 <span className="text-[9px] font-black text-[var(--color-text-gray)] uppercase tracking-widest">{t.discount || 'DISCOUNT'}</span>
-                                <span className="text-xs font-black text-blue-500">₹</span>
+                                <span className="text-xs font-black text-primary">₹</span>
                             </div>
                             <input
                                 type="number"
@@ -424,7 +424,7 @@ const BillingCart = ({
                         {/* Grand Total Row */}
                         <div className="flex justify-between items-center pt-2 border-t border-[var(--color-border)]/50">
                             <span className="text-[11px] font-black text-[var(--color-text-white)] uppercase tracking-widest opacity-40">{t.total_amount || 'TOTAL AMOUNT'}</span>
-                            <span className="text-3xl font-black text-[#3B82F6] leading-none">₹{total.toLocaleString()}</span>
+                            <span className="text-3xl font-black text-[var(--color-primary)] leading-none">₹{total.toLocaleString()}</span>
                         </div>
                     </div>
 
@@ -441,7 +441,7 @@ const BillingCart = ({
                         </Button>
                     )}
                     <Button
-                        className="flex-1 h-14 bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white rounded-2xl shadow-[0_10px_20px_rgba(59,130,246,0.25)] active:scale-[0.98] transition-all flex flex-row items-center justify-center gap-3 border-none"
+                        className="flex-1 h-14 bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white rounded-2xl shadow-[0_10px_20px_rgba(255,122,47,0.25)] active:scale-[0.98] transition-all flex flex-row items-center justify-center gap-3 border-none"
                         onClick={onCheckout}
                         isLoading={isSubmitting}
                         disabled={cart.length === 0}

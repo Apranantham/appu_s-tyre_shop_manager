@@ -110,7 +110,7 @@ const SettingsPage = () => {
                         <div className="flex items-center space-x-5">
                             <div className="relative shrink-0">
                                 <img src={user.picture} alt={user.name} className="h-16 w-16 aspect-square object-cover rounded-[1.2rem] border-4 border-white/5 active:scale-95 transition-all shadow-xl" />
-                                <div className="absolute -bottom-1 -right-1 h-5 w-5 bg-green-500 rounded-full border-4 border-[var(--color-bg-dark)]" />
+                                <div className="absolute -bottom-1 -right-1 h-5 w-5 bg-success rounded-full border-4 border-[var(--color-bg-dark)]" />
                             </div>
                             <div>
                                 <p className="font-black text-xl text-[var(--color-text)] tracking-tight leading-tight">{user.name}</p>
@@ -119,7 +119,7 @@ const SettingsPage = () => {
                         </div>
                         <Button
                             variant="ghost"
-                            className="text-red-500 hover:bg-red-500/10 h-14 px-8 rounded-[1.5rem] font-black uppercase tracking-[0.2em] text-[10px] border border-red-500/10 active:scale-95 transition-all shadow-sm hover:shadow-red-500/5 group/logout"
+                            className="text-danger hover:bg-danger-soft h-14 px-8 rounded-[1.5rem] font-black uppercase tracking-[0.2em] text-[10px] border border-danger/10 active:scale-95 transition-all shadow-sm hover:shadow-red-500/5 group/logout"
                             onClick={logout}
                         >
                             <LogOut className="h-4 w-4 mr-2 group-hover/logout:-translate-x-1 transition-transform" /> {t.logout}
@@ -178,7 +178,7 @@ const SettingsPage = () => {
                             />
                         </div>
 
-                        <Button type="submit" className="w-full h-18 py-5 bg-[var(--color-primary)] hover:bg-blue-600 shadow-2xl shadow-blue-500/30 text-[11px] font-black uppercase tracking-[0.25em] rounded-[1.5rem] transition-all active:scale-95 border-none mt-2" disabled={isSaving}>
+                        <Button type="submit" className="w-full h-18 py-5 bg-[var(--color-primary)] hover:bg-primary-hover shadow-2xl shadow-black/25 text-[11px] font-black uppercase tracking-[0.25em] rounded-[1.5rem] transition-all active:scale-95 border-none mt-2" disabled={isSaving}>
                             {isSaving ? (
                                 <div className="h-6 w-6 border-3 border-white border-t-transparent rounded-full animate-spin mx-auto"></div>
                             ) : (
@@ -192,7 +192,7 @@ const SettingsPage = () => {
                         {saveMessage && (
                             <div className={cn(
                                 "flex items-center justify-center py-5 px-8 rounded-[1.5rem] border animate-in slide-in-from-top duration-300 shadow-lg",
-                                saveMessage.includes('successfully') ? "bg-green-500/10 border-green-500/20 text-green-500" : "bg-red-500/10 border-red-500/20 text-red-500"
+                                saveMessage.includes('successfully') ? "bg-success-soft border-success/20 text-success" : "bg-danger-soft border-danger/20 text-danger"
                             )}>
                                 <p className="text-[10px] font-black uppercase tracking-[0.1em]">{saveMessage}</p>
                             </div>
@@ -283,7 +283,7 @@ const SettingsPage = () => {
                 </div>
 
                 <div className="flex items-center space-x-3 mb-8 relative z-10">
-                    <div className="h-10 w-10 rounded-2xl bg-purple-500/10 flex items-center justify-center text-purple-500">
+                    <div className="h-10 w-10 rounded-2xl bg-secondary-soft flex items-center justify-center text-secondary">
                         <Monitor className="h-5 w-5" />
                     </div>
                     <div>
@@ -386,7 +386,7 @@ const SettingsPage = () => {
                 <div className="space-y-6">
                     <div className="flex justify-between items-center text-sm border-b border-[var(--color-border)]/50 pb-5">
                         <span className="text-[var(--color-text-gray)] font-bold uppercase tracking-widest text-[10px] opacity-60">App Version</span>
-                        <span className="font-black bg-[var(--color-bg-dark)] px-4 py-2 rounded-xl text-[10px] text-[var(--color-primary)] tracking-widest border border-blue-500/10 shadow-inner">
+                        <span className="font-black bg-[var(--color-bg-dark)] px-4 py-2 rounded-xl text-[10px] text-[var(--color-primary)] tracking-widest border border-primary/10 shadow-inner">
                             V1.5.0 (PREMIUM)
                         </span>
                     </div>
@@ -394,7 +394,7 @@ const SettingsPage = () => {
                         <span className="text-[var(--color-text-gray)] font-bold uppercase tracking-widest text-[10px] opacity-60">Licence Status</span>
                         <span className="text-[var(--color-text)] font-black uppercase text-[10px] tracking-widest flex items-center gap-2">
                             Commercial
-                            <Shield className="h-3 w-3 text-green-500" />
+                            <Shield className="h-3 w-3 text-success" />
                         </span>
                     </div>
                     <div className="text-center pt-4 space-y-2">

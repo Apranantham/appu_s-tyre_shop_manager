@@ -223,7 +223,7 @@ const SalesChart = ({ staffFilter = 'all' }) => {
             <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 gap-4">
                 <div className="w-full lg:w-auto">
                     <h3 className="text-xl font-bold flex items-center">
-                        <Calendar className="h-5 w-5 mr-2 text-[#3B82F6]" />
+                        <Calendar className="h-5 w-5 mr-2 text-[var(--color-primary)]" />
                         Analytics
                     </h3>
                     <p className="text-sm text-[var(--color-text-gray)] whitespace-nowrap">{getRangeLabel()}</p>
@@ -235,19 +235,19 @@ const SalesChart = ({ staffFilter = 'all' }) => {
                         {showRevenue && (
                             <div className="text-right">
                                 <p className="text-[9px] font-black uppercase tracking-widest text-[var(--color-text-gray)]">Revenue</p>
-                                <p className="text-[#3B82F6] font-bold text-xl">₹{totalRevenue.toLocaleString()}</p>
+                                <p className="text-[var(--color-primary)] font-bold text-xl">₹{totalRevenue.toLocaleString()}</p>
                             </div>
                         )}
                         {showExpense && (
                             <div className="text-right">
                                 <p className="text-[9px] font-black uppercase tracking-widest text-[var(--color-text-gray)]">Expense</p>
-                                <p className="text-red-500 font-bold text-xl">₹{totalExpense.toLocaleString()}</p>
+                                <p className="text-danger font-bold text-xl">₹{totalExpense.toLocaleString()}</p>
                             </div>
                         )}
                         {view === 'both' && (
                             <div className="text-right">
                                 <p className="text-[9px] font-black uppercase tracking-widest text-[var(--color-text-gray)]">Profit</p>
-                                <p className={cn("font-bold text-xl", totalRevenue - totalExpense >= 0 ? "text-green-500" : "text-orange-500")}>
+                                <p className={cn("font-bold text-xl", totalRevenue - totalExpense >= 0 ? "text-success" : "text-warning")}>
                                     ₹{(totalRevenue - totalExpense).toLocaleString()}
                                 </p>
                             </div>
@@ -259,9 +259,9 @@ const SalesChart = ({ staffFilter = 'all' }) => {
                         {/* View Toggle */}
                         <div className="flex bg-[var(--color-bg-dark)] rounded-lg p-1 border border-[var(--color-border)]">
                             {[
-                                { id: 'revenue', label: 'Revenue', color: 'bg-[#3B82F6]' },
-                                { id: 'both', label: 'Both', color: 'bg-[#3B82F6]' },
-                                { id: 'expense', label: 'Expense', color: 'bg-red-500' },
+                                { id: 'revenue', label: 'Revenue', color: 'bg-[var(--color-primary)]' },
+                                { id: 'both', label: 'Both', color: 'bg-[var(--color-primary)]' },
+                                { id: 'expense', label: 'Expense', color: 'bg-danger' },
                             ].map((v) => (
                                 <button
                                     key={v.id}
@@ -285,7 +285,7 @@ const SalesChart = ({ staffFilter = 'all' }) => {
                                     key={r}
                                     onClick={() => { setRange(r); setOffset(0); }}
                                     className={`px-3 py-1 text-[10px] uppercase font-bold rounded-md transition-all whitespace-nowrap ${range === r
-                                        ? 'bg-[#3B82F6] text-white shadow-lg shadow-blue-500/20'
+                                        ? 'bg-[var(--color-primary)] text-white shadow-lg shadow-black/25'
                                         : 'text-[var(--color-text-gray)] hover:text-[var(--color-text-white)]'
                                         }`}
                                 >
@@ -352,7 +352,7 @@ const SalesChart = ({ staffFilter = 'all' }) => {
                         {showRevenue && (
                             <Bar
                                 dataKey="revenue"
-                                fill="#3B82F6"
+                                fill="var(--color-primary)"
                                 radius={[6, 6, 0, 0]}
                                 barSize={barSize}
                                 activeBar={false}
@@ -362,7 +362,7 @@ const SalesChart = ({ staffFilter = 'all' }) => {
                         {showExpense && (
                             <Bar
                                 dataKey="expense"
-                                fill="#EF4444"
+                                fill="var(--color-danger)"
                                 radius={[6, 6, 0, 0]}
                                 barSize={barSize}
                                 activeBar={false}

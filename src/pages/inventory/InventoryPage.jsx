@@ -154,7 +154,7 @@ const InventoryPage = () => {
                             className={cn(
                                 "px-5 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap border",
                                 activeCategory === cat.id
-                                    ? "bg-[var(--color-primary)] text-white border-[var(--color-primary)] shadow-lg shadow-blue-500/20"
+                                    ? "bg-[var(--color-primary)] text-white border-[var(--color-primary)] shadow-lg shadow-black/25"
                                     : "bg-[var(--color-bg-dark)] text-[var(--color-text-gray)] border-[var(--color-border)] hover:text-[var(--color-primary)]"
                             )}
                         >
@@ -204,14 +204,14 @@ const InventoryPage = () => {
                                             <Edit2 className="h-4 w-4" />
                                         </Button>
                                         {isAdmin && (
-                                            <Button size="icon" variant="ghost" className="h-9 w-9 text-red-500 hover:bg-red-500/20 rounded-xl" onClick={() => setProductToDelete(product)}>
+                                            <Button size="icon" variant="ghost" className="h-9 w-9 text-danger hover:bg-danger-soft rounded-xl" onClick={() => setProductToDelete(product)}>
                                                 <Trash2 className="h-4 w-4" />
                                             </Button>
                                         )}
                                     </div>
                                 </div>
                                 {product.stock <= product.minStock && product.isActive !== false && (
-                                    <div className="absolute top-4 left-4 px-3 py-1.5 bg-red-600 text-white text-[9px] font-black uppercase tracking-widest rounded-full flex items-center shadow-lg border border-red-500/50">
+                                    <div className="absolute top-4 left-4 px-3 py-1.5 bg-danger text-white text-[9px] font-black uppercase tracking-widest rounded-full flex items-center shadow-lg border border-danger/50">
                                         <AlertTriangle className="h-3 w-3 mr-1.5" />
                                         {t.low_stock}
                                     </div>
@@ -283,8 +283,8 @@ const InventoryPage = () => {
                                         {t.stock}: <span className={cn(
                                             "ml-1.5 px-2 py-0.5 rounded-lg border",
                                             product.stock <= product.minStock
-                                                ? "text-red-500 bg-red-500/10 border-red-500/20"
-                                                : "text-green-500 bg-green-500/10 border-green-500/20"
+                                                ? "text-danger bg-danger-soft border-danger/20"
+                                                : "text-success bg-success-soft border-success/20"
                                         )}>{product.stock}</span>
                                     </div>
                                     <div className="text-[9px] font-black text-gray-500 uppercase tracking-[0.2em] bg-[var(--color-bg-dark)] px-2 py-1 rounded-lg">
@@ -323,7 +323,7 @@ const InventoryPage = () => {
                 <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
                     <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setProductToDelete(null)}></div>
                     <Card className="relative w-full max-w-sm p-6 space-y-6 text-center animate-in zoom-in-95 duration-200">
-                        <div className="mx-auto h-16 w-16 rounded-full bg-red-100 flex items-center justify-center text-red-600">
+                        <div className="mx-auto h-16 w-16 rounded-full bg-danger-soft flex items-center justify-center text-danger">
                             <Trash2 className="h-8 w-8" />
                         </div>
                         <div>
@@ -334,7 +334,7 @@ const InventoryPage = () => {
                         </div>
                         <div className="flex space-x-3">
                             <Button variant="outline" className="flex-1" onClick={() => setProductToDelete(null)}>Cancel</Button>
-                            <Button className="flex-1 bg-red-600 hover:bg-red-700" onClick={() => { deleteProduct(productToDelete.id); setProductToDelete(null); }}>Delete</Button>
+                            <Button className="flex-1 bg-danger hover:bg-danger" onClick={() => { deleteProduct(productToDelete.id); setProductToDelete(null); }}>Delete</Button>
                         </div>
                     </Card>
                 </div>,

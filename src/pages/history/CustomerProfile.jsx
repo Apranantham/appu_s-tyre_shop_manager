@@ -257,7 +257,7 @@ _Generated via ${shopDisplayName}_`;
                 <div className="flex items-center space-x-2 relative">
                     <button
                         onClick={shareProfileSummary}
-                        className="p-2 hover:bg-[var(--color-bg-dark)] rounded-full text-[var(--color-text-gray)] hover:text-[#3B82F6] transition-colors"
+                        className="p-2 hover:bg-[var(--color-bg-dark)] rounded-full text-[var(--color-text-gray)] hover:text-[var(--color-primary)] transition-colors"
                         title="Share Profile Summary"
                     >
                         <Share2 className="h-5 w-5" />
@@ -265,7 +265,7 @@ _Generated via ${shopDisplayName}_`;
                     <div className="relative">
                         <button
                             onClick={() => setShowOptions(!showOptions)}
-                            className={`p-2 hover:bg-[var(--color-bg-dark)] rounded-full transition-colors ${showOptions ? 'bg-[var(--color-bg-dark)] text-[#3B82F6]' : 'text-[var(--color-text-gray)]'}`}
+                            className={`p-2 hover:bg-[var(--color-bg-dark)] rounded-full transition-colors ${showOptions ? 'bg-[var(--color-bg-dark)] text-[var(--color-primary)]' : 'text-[var(--color-text-gray)]'}`}
                         >
                             <MoreVertical className="h-5 w-5" />
                         </button>
@@ -303,10 +303,10 @@ _Generated via ${shopDisplayName}_`;
             {/* Profile Card */}
             <Card className="rounded-3xl p-6 bg-[var(--color-bg-card)] border border-[var(--color-border)] text-center relative overflow-hidden">
                 <div className="relative inline-block mb-4">
-                    <div className="h-20 w-20 rounded-full bg-gradient-to-tr from-[#3B82F6] to-cyan-400 overflow-hidden mx-auto border-4 border-[var(--color-bg-card)] flex items-center justify-center">
+                    <div className="h-20 w-20 rounded-full bg-gradient-to-tr from-[var(--color-primary)] to-cyan-400 overflow-hidden mx-auto border-4 border-[var(--color-bg-card)] flex items-center justify-center">
                         <span className="text-2xl font-bold text-white uppercase">{customer.name.charAt(0)}</span>
                     </div>
-                    <div className="absolute bottom-0 right-0 bg-green-500 text-white p-1 rounded-full border-2 border-[var(--color-bg-card)]">
+                    <div className="absolute bottom-0 right-0 bg-success text-white p-1 rounded-full border-2 border-[var(--color-bg-card)]">
                         <Check className="h-3 w-3" />
                     </div>
                 </div>
@@ -321,7 +321,7 @@ _Generated via ${shopDisplayName}_`;
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
-                    <Button className="w-full bg-[#3B82F6] hover:bg-blue-600 rounded-xl py-6 shadow-lg shadow-blue-500/20 font-black uppercase tracking-widest text-xs" onClick={() => window.open(`tel:${customer.phone}`)}>
+                    <Button className="w-full bg-[var(--color-primary)] hover:bg-primary-hover rounded-xl py-6 shadow-lg shadow-black/25 font-black uppercase tracking-widest text-xs" onClick={() => window.open(`tel:${customer.phone}`)}>
                         <Phone className="h-4 w-4 mr-2" /> {t.call}
                     </Button>
                     <Button variant="outline" className="w-full border-[var(--color-border)] hover:bg-[var(--color-bg-dark)] rounded-xl py-6 font-black uppercase tracking-widest text-xs" onClick={() => window.open(`sms:${customer.phone}`)}>
@@ -335,8 +335,8 @@ _Generated via ${shopDisplayName}_`;
                 <Card className="rounded-3xl p-5 bg-[var(--color-bg-card)] border border-[var(--color-border)]">
                     <p className="text-[var(--color-text-gray)] text-xs font-black uppercase tracking-widest mb-1">{t.lifetime_spend}</p>
                     <div className="flex items-baseline space-x-2">
-                        <h3 className="text-3xl font-bold text-[#3B82F6]">{customer.spend}</h3>
-                        <span className="text-green-500 text-sm font-bold">{customer.spendGrowth}</span>
+                        <h3 className="text-3xl font-bold text-[var(--color-primary)]">{customer.spend}</h3>
+                        <span className="text-success text-sm font-bold">{customer.spendGrowth}</span>
                     </div>
                 </Card>
 
@@ -352,7 +352,7 @@ _Generated via ${shopDisplayName}_`;
                         <p className="text-[var(--color-text-gray)] text-[10px] font-black uppercase tracking-widest mb-1">{t.fav_brand}</p>
                         <div className="flex items-center space-x-1">
                             <h3 className="text-lg font-bold text-white truncate">{customer.topBrand}</h3>
-                            <CheckCircle2 className="h-4 w-4 text-[#3B82F6]" />
+                            <CheckCircle2 className="h-4 w-4 text-[var(--color-primary)]" />
                         </div>
                     </Card>
                 </div>
@@ -362,7 +362,7 @@ _Generated via ${shopDisplayName}_`;
                     <div className="flex items-baseline space-x-2">
                         <h3 className={cn(
                             "text-3xl font-bold",
-                            customerInvoices.reduce((sum, inv) => sum + (inv.balanceAmount || 0), 0) > 0 ? "text-orange-500" : "text-green-500"
+                            customerInvoices.reduce((sum, inv) => sum + (inv.balanceAmount || 0), 0) > 0 ? "text-warning" : "text-success"
                         )}>
                             ₹{customerInvoices.reduce((sum, inv) => sum + (inv.balanceAmount || 0), 0).toLocaleString()}
                         </h3>
@@ -374,7 +374,7 @@ _Generated via ${shopDisplayName}_`;
             {/* Timeline */}
             <div>
                 <div className="flex items-center mb-6">
-                    <FileText className="h-5 w-5 mr-2 text-[#3B82F6]" />
+                    <FileText className="h-5 w-5 mr-2 text-[var(--color-primary)]" />
                     <h3 className="font-black text-lg uppercase tracking-tight">{t.billing_records}</h3>
                 </div>
 
@@ -382,7 +382,7 @@ _Generated via ${shopDisplayName}_`;
                     <div className="absolute left-0 top-2 bottom-0 w-0.5 bg-[var(--color-border)] rounded-full"></div>
                     {customerInvoices.map((item, index) => (
                         <div key={item.id} className="relative pl-8">
-                            <div className={`absolute left-[-7px] top-5 h-3.5 w-3.5 rounded-full border-2 border-[var(--color-bg-dark)] z-10 transition-colors duration-300 ${index === 0 ? 'bg-[#3B82F6] shadow-[0_0_10px_rgba(59,130,246,0.5)]' : 'bg-[var(--color-text-gray)]'}`}></div>
+                            <div className={`absolute left-[-7px] top-5 h-3.5 w-3.5 rounded-full border-2 border-[var(--color-bg-dark)] z-10 transition-colors duration-300 ${index === 0 ? 'bg-[var(--color-primary)] shadow-[0_0_10px_rgba(255,122,47,0.5)]' : 'bg-[var(--color-text-gray)]'}`}></div>
 
                             <Card
                                 onClick={() => { setSelectedInvoice(item); setShowPreview(true); }}
@@ -390,7 +390,7 @@ _Generated via ${shopDisplayName}_`;
                             >
                                 <div className="flex justify-between items-start">
                                     <div>
-                                        <h4 className="font-bold text-[#3B82F6] text-sm">
+                                        <h4 className="font-bold text-[var(--color-primary)] text-sm">
                                             {new Date(item.paymentStatus === 'paid' && item.settledDate ? item.settledDate : item.date).toLocaleString(lang === 'ta' ? 'ta-IN' : 'en-IN', {
                                                 day: '2-digit',
                                                 month: 'short',
@@ -406,14 +406,14 @@ _Generated via ${shopDisplayName}_`;
                                     <div className="flex space-x-2">
                                         <button
                                             onClick={(e) => { e.stopPropagation(); handleEdit(item); }}
-                                            className="p-2 bg-[var(--color-bg-dark)] rounded-lg text-[var(--color-text-gray)] hover:text-[#3B82F6] transition-colors"
+                                            className="p-2 bg-[var(--color-bg-dark)] rounded-lg text-[var(--color-text-gray)] hover:text-[var(--color-primary)] transition-colors"
                                             title="Edit Invoice"
                                         >
                                             <Edit3 className="h-4 w-4" />
                                         </button>
                                         <button
                                             onClick={(e) => { e.stopPropagation(); setInvoiceToDelete(item); }}
-                                            className="p-2 bg-[var(--color-bg-dark)] rounded-lg text-[var(--color-text-gray)] hover:text-red-500 transition-colors"
+                                            className="p-2 bg-[var(--color-bg-dark)] rounded-lg text-[var(--color-text-gray)] hover:text-danger transition-colors"
                                             title="Delete Invoice"
                                         >
                                             <Trash2 className="h-4 w-4" />
@@ -439,11 +439,11 @@ _Generated via ${shopDisplayName}_`;
                                             ₹{item.total.toFixed(2)}
                                         </div>
                                         {item.balanceAmount > 0 ? (
-                                            <span className="text-[10px] font-bold text-orange-500 bg-orange-500/10 px-2 py-0.5 rounded-full inline-block mt-1 w-fit">
+                                            <span className="text-[10px] font-bold text-warning bg-warning-soft px-2 py-0.5 rounded-full inline-block mt-1 w-fit">
                                                 Balance: ₹{item.balanceAmount.toFixed(2)}
                                             </span>
                                         ) : (
-                                            <span className="text-[10px] font-bold text-green-500 bg-green-500/10 px-2 py-0.5 rounded-full inline-block mt-1 w-fit">
+                                            <span className="text-[10px] font-bold text-success bg-success-soft px-2 py-0.5 rounded-full inline-block mt-1 w-fit">
                                                 Paid
                                             </span>
                                         )}
@@ -469,7 +469,7 @@ _Generated via ${shopDisplayName}_`;
                                 <Button
                                     size="sm"
                                     onClick={() => shareOnWhatsApp(selectedInvoice)}
-                                    className="bg-green-600 hover:bg-green-700 text-white shadow-lg shadow-green-500/20"
+                                    className="bg-success hover:bg-success text-white shadow-lg shadow-black/25"
                                 >
                                     WhatsApp
                                 </Button>
@@ -484,7 +484,7 @@ _Generated via ${shopDisplayName}_`;
                             <div className="flex space-x-2">
                                 <Button
                                     size="sm"
-                                    className="bg-[#3B82F6] text-white"
+                                    className="bg-[var(--color-primary)] text-white"
                                     onClick={() => handlePrint()}
                                 >
                                     <Printer className="h-4 w-4 mr-2" /> Print
@@ -512,7 +512,7 @@ _Generated via ${shopDisplayName}_`;
                 <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
                     <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setInvoiceToDelete(null)}></div>
                     <Card className="relative w-full max-w-sm p-6 space-y-6 text-center animate-in zoom-in-95 duration-200">
-                        <div className="mx-auto h-16 w-16 rounded-full bg-red-100 flex items-center justify-center text-red-600">
+                        <div className="mx-auto h-16 w-16 rounded-full bg-danger-soft flex items-center justify-center text-danger">
                             <Trash2 className="h-8 w-8" />
                         </div>
                         <div>
@@ -521,7 +521,7 @@ _Generated via ${shopDisplayName}_`;
                         </div>
                         <div className="flex space-x-3">
                             <Button variant="outline" className="flex-1" onClick={() => setInvoiceToDelete(null)}>{t.cancel}</Button>
-                            <Button className="flex-1 bg-red-600 hover:bg-red-700" onClick={handleDelete}>{t.delete}</Button>
+                            <Button className="flex-1 bg-danger hover:bg-danger" onClick={handleDelete}>{t.delete}</Button>
                         </div>
                     </Card>
                 </div>,

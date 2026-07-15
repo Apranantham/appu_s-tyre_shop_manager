@@ -594,7 +594,7 @@ Thank you for your business!`;
                                             ? 'bg-emerald-500/15 text-emerald-500 ring-1 ring-emerald-500/20'
                                             : lastInvoice.paymentStatus === 'partially_paid'
                                                 ? 'bg-amber-500/15 text-amber-500 ring-1 ring-amber-500/20'
-                                                : 'bg-red-500/15 text-red-500 ring-1 ring-red-500/20'
+                                                : 'bg-danger/15 text-danger ring-1 ring-danger/20'
                                             }`}>
                                             {lastInvoice.paymentStatus === 'paid' ? (t.full_paid || 'Paid') : lastInvoice.paymentStatus === 'partially_paid' ? (t.partial_paid || 'Partial') : (t.pay_later || 'Pending')}
                                         </span>
@@ -609,7 +609,7 @@ Thank you for your business!`;
                                     {/* Print */}
                                     <button
                                         onClick={() => handlePrint()}
-                                        className="group relative bg-blue-600 hover:bg-blue-700 text-white rounded-2xl p-3.5 flex flex-col items-center gap-2 transition-all active:scale-95 shadow-lg shadow-blue-500/20 overflow-hidden"
+                                        className="group relative bg-primary hover:bg-primary-hover text-white rounded-2xl p-3.5 flex flex-col items-center gap-2 transition-all active:scale-95 shadow-lg shadow-black/25 overflow-hidden"
                                     >
                                         <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent pointer-events-none" />
                                         <div className="h-10 w-10 rounded-xl bg-white/20 flex items-center justify-center group-hover:scale-110 transition-transform relative z-10">
@@ -624,7 +624,7 @@ Thank you for your business!`;
                                     {/* WhatsApp */}
                                     <button
                                         onClick={shareOnWhatsApp}
-                                        className="group relative bg-[#25D366] hover:bg-[#1fb855] text-white rounded-2xl p-3.5 flex flex-col items-center gap-2 transition-all active:scale-95 shadow-lg shadow-green-500/20 overflow-hidden"
+                                        className="group relative bg-[#25D366] hover:bg-[#1fb855] text-white rounded-2xl p-3.5 flex flex-col items-center gap-2 transition-all active:scale-95 shadow-lg shadow-black/25 overflow-hidden"
                                     >
                                         <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent pointer-events-none" />
                                         <div className="h-10 w-10 rounded-xl bg-white/20 flex items-center justify-center group-hover:scale-110 transition-transform relative z-10">
@@ -748,7 +748,7 @@ Thank you for your business!`;
                                     </button>
                                     <button
                                         onClick={() => discardHeldBill(h.id)}
-                                        className="p-1 text-[var(--color-text-gray)] hover:text-red-500 transition-colors"
+                                        className="p-1 text-[var(--color-text-gray)] hover:text-danger transition-colors"
                                         aria-label="Discard held bill"
                                     >
                                         <X className="h-3.5 w-3.5" />
@@ -812,7 +812,7 @@ Thank you for your business!`;
 
                     <Button
                         onClick={() => setShowCart(true)}
-                        className="w-full h-20 bg-[var(--color-primary)] hover:bg-[var(--color-primary)]/90 text-white shadow-[0_20px_40px_rgba(59,130,246,0.3)] rounded-[2rem] flex items-center justify-between px-8 border-none active:scale-[0.98] transition-all group overflow-hidden relative"
+                        className="w-full h-20 bg-[var(--color-primary)] hover:bg-[var(--color-primary)]/90 text-white shadow-[0_20px_40px_rgba(255,122,47,0.3)] rounded-[2rem] flex items-center justify-between px-8 border-none active:scale-[0.98] transition-all group overflow-hidden relative"
                     >
                         {/* Shimmer Effect */}
                         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:animate-shimmer" />

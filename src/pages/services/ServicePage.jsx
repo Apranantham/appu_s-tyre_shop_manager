@@ -136,7 +136,7 @@ const ServicePage = () => {
                                         </div>
                                     </div>
                                     <div className="shrink-0">
-                                        <div className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-widest border ${service.active ? 'bg-green-500/10 text-green-500 border-green-500/20' : 'bg-[var(--color-text-gray)]/10 text-[var(--color-text-gray)] border-[var(--color-text-gray)]/20'}`}>
+                                        <div className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-widest border ${service.active ? 'bg-success-soft text-success border-success/20' : 'bg-[var(--color-text-gray)]/10 text-[var(--color-text-gray)] border-[var(--color-text-gray)]/20'}`}>
                                             <span className="hidden sm:inline">{service.active ? t.active : t.disabled}</span>
                                             <span className="sm:hidden">{service.active ? 'A' : 'D'}</span>
                                         </div>
@@ -153,7 +153,7 @@ const ServicePage = () => {
                                             <Button
                                                 size="sm"
                                                 variant="ghost"
-                                                className="h-9 w-9 sm:h-8 sm:w-auto px-0 sm:px-2 text-red-500 text-xs hover:bg-red-500/10"
+                                                className="h-9 w-9 sm:h-8 sm:w-auto px-0 sm:px-2 text-danger text-xs hover:bg-danger-soft"
                                                 onClick={() => {
                                                     if (window.confirm(lang === 'ta' ? `"${service.name}" சேவையை நீக்கவா?` : `Delete service "${service.name}"?`)) {
                                                         deleteService(service.id);
@@ -169,7 +169,7 @@ const ServicePage = () => {
                                         size="sm"
                                         variant="outline"
                                         onClick={() => toggleService(service.id)}
-                                        className={`h-9 sm:h-8 px-2 sm:px-3 text-[10px] uppercase font-bold tracking-widest border-2 whitespace-nowrap ${service.active ? 'text-orange-500 border-orange-500/20 hover:bg-orange-500/10' : 'text-green-500 border-green-500/20 hover:bg-green-500/10'}`}
+                                        className={`h-9 sm:h-8 px-2 sm:px-3 text-[10px] uppercase font-bold tracking-widest border-2 whitespace-nowrap ${service.active ? 'text-warning border-warning/20 hover:bg-warning-soft' : 'text-success border-success/20 hover:bg-success-soft'}`}
                                     >
                                         <Power className="h-4 w-4 sm:h-3 sm:w-3 sm:mr-1.5" />
                                         <span className="hidden sm:inline">{service.active ? t.disable : t.enable}</span>

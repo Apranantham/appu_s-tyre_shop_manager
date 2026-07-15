@@ -130,7 +130,7 @@ const OldItemsMasterPage = () => {
                                                 deleteMasterItem(item.id);
                                             }
                                         }}
-                                        className="p-2.5 rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white transition-all"
+                                        className="p-2.5 rounded-lg bg-danger-soft text-danger hover:bg-danger hover:text-white transition-all"
                                     >
                                         <Trash2 className="h-4 w-4" />
                                     </button>

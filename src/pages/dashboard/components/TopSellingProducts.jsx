@@ -48,12 +48,12 @@ const TopSellingProducts = ({ invoices = [] }) => {
                                 </div>
                                 <h4 className="font-bold text-sm text-[var(--color-text-white)]">{item.name}</h4>
                             </div>
-                            <span className="text-[#3B82F6] font-bold text-sm">{item.sales} Sold</span>
+                            <span className="text-[var(--color-primary)] font-bold text-sm">{item.sales} Sold</span>
                         </div>
 
                         <div className="w-full bg-[var(--color-bg-dark)] rounded-full h-1.5 overflow-hidden">
                             <div
-                                className="bg-[#3B82F6] h-1.5 rounded-full"
+                                className="bg-[var(--color-primary)] h-1.5 rounded-full"
                                 style={{ width: `${(item.sales / maxSales) * 100}%` }}
                             />
                         </div>

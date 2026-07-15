@@ -122,8 +122,8 @@ const AdminPanel = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <Card className="p-6 bg-[var(--color-bg-card)] border-[var(--color-border)] border-l-4 border-l-blue-500">
                     <div className="flex items-center justify-between mb-2">
-                        <TrendingUp className="h-5 w-5 text-blue-500" />
-                        <span className="text-[10px] font-bold text-blue-500 uppercase tracking-widest">{t.global_revenue}</span>
+                        <TrendingUp className="h-5 w-5 text-primary" />
+                        <span className="text-[10px] font-bold text-primary uppercase tracking-widest">{t.global_revenue}</span>
                     </div>
                     <div className="text-2xl font-black">₹{totalRevenue.toLocaleString(lang === 'ta' ? 'ta-IN' : 'en-IN')}</div>
                     <p className="text-[10px] text-[var(--color-text-gray)] mt-1">{lang === 'ta' ? 'அனைத்து பயனர்களிடமிருந்து' : 'Across all users'}</p>
@@ -131,17 +131,17 @@ const AdminPanel = () => {
 
                 <Card className="p-6 bg-[var(--color-bg-card)] border-[var(--color-border)] border-l-4 border-l-green-500">
                     <div className="flex items-center justify-between mb-2">
-                        <ShoppingCart className="h-5 w-5 text-green-500" />
-                        <span className="text-[10px] font-bold text-green-500 uppercase tracking-widest">{lang === 'ta' ? 'மொத்த விற்பனை' : 'Total Sales'}</span>
+                        <ShoppingCart className="h-5 w-5 text-success" />
+                        <span className="text-[10px] font-bold text-success uppercase tracking-widest">{lang === 'ta' ? 'மொத்த விற்பனை' : 'Total Sales'}</span>
                     </div>
                     <div className="text-2xl font-black">{totalInvoices}</div>
                     <p className="text-[10px] text-[var(--color-text-gray)] mt-1">{lang === 'ta' ? 'உருவாக்கப்பட்ட மொத்த பில்கள்' : 'Total invoices generated'}</p>
                 </Card>
 
-                <Card className="p-6 bg-[var(--color-bg-card)] border-[var(--color-border)] border-l-4 border-l-purple-500">
+                <Card className="p-6 bg-[var(--color-bg-card)] border-[var(--color-border)] border-l-4 border-l-secondary">
                     <div className="flex items-center justify-between mb-2">
-                        <Users className="h-5 w-5 text-purple-500" />
-                        <span className="text-[10px] font-bold text-purple-500 uppercase tracking-widest">{t.active_staff}</span>
+                        <Users className="h-5 w-5 text-secondary" />
+                        <span className="text-[10px] font-bold text-secondary uppercase tracking-widest">{t.active_staff}</span>
                     </div>
                     <div className="text-2xl font-black">{usersList.length}</div>
                     <p className="text-[10px] text-[var(--color-text-gray)] mt-1">{lang === 'ta' ? 'விற்பனை பதிவு உள்ள பயனர்கள்' : 'Users with sales records'}</p>
@@ -158,7 +158,7 @@ const AdminPanel = () => {
                         <Button
                             variant="ghost"
                             size="sm"
-                            className="bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white rounded-xl h-10 px-4 font-black uppercase tracking-widest text-[10px] border border-red-500/10 shadow-sm transition-all"
+                            className="bg-danger-soft text-danger hover:bg-danger hover:text-white rounded-xl h-10 px-4 font-black uppercase tracking-widest text-[10px] border border-danger/10 shadow-sm transition-all"
                             onClick={() => navigate('/admin/recycle-bin')}
                         >
                             <Trash2 className="h-4 w-4 mr-2" />
@@ -190,7 +190,7 @@ const AdminPanel = () => {
                                         <div className="font-bold text-sm tracking-tight">{usr.label}</div>
                                         <div className="text-[10px] text-[var(--color-text-gray)] font-mono opacity-50">{usr.id}</div>
                                     </td>
-                                    <td className="px-6 py-4 font-bold text-blue-500">₹{usr.sales.toLocaleString(lang === 'ta' ? 'ta-IN' : 'en-IN')}</td>
+                                    <td className="px-6 py-4 font-bold text-primary">₹{usr.sales.toLocaleString(lang === 'ta' ? 'ta-IN' : 'en-IN')}</td>
                                     <td className="px-6 py-4 text-sm">{usr.count}</td>
                                     <td className="px-6 py-4 text-xs text-[var(--color-text-gray)]">
                                         {usr.lastSeen !== 'N/A'

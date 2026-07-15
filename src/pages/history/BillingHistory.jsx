@@ -322,7 +322,7 @@ Thank you for your business!`;
                     className={cn(
                         "px-5 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest whitespace-nowrap transition-all flex items-center gap-2",
                         viewMode === 'invoices'
-                            ? "bg-[var(--color-primary)] text-white shadow-lg shadow-blue-500/20"
+                            ? "bg-[var(--color-primary)] text-white shadow-lg shadow-black/25"
                             : "text-[var(--color-text-gray)] hover:text-[var(--color-primary)]"
                     )}
                 >
@@ -334,7 +334,7 @@ Thank you for your business!`;
                     className={cn(
                         "px-5 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest whitespace-nowrap transition-all flex items-center gap-2",
                         viewMode === 'payments'
-                            ? "bg-[var(--color-primary)] text-white shadow-lg shadow-blue-500/20"
+                            ? "bg-[var(--color-primary)] text-white shadow-lg shadow-black/25"
                             : "text-[var(--color-text-gray)] hover:text-[var(--color-primary)]"
                     )}
                 >
@@ -430,7 +430,7 @@ Thank you for your business!`;
                                 className={cn(
                                     "px-5 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest whitespace-nowrap transition-all border",
                                     statusFilter === status
-                                        ? "bg-[var(--color-primary)] text-white border-[var(--color-primary)] shadow-lg shadow-blue-500/20"
+                                        ? "bg-[var(--color-primary)] text-white border-[var(--color-primary)] shadow-lg shadow-black/25"
                                         : "bg-transparent text-[var(--color-text-gray)] border-transparent hover:text-[var(--color-primary)]"
                                 )}
                             >
@@ -538,9 +538,9 @@ Thank you for your business!`;
                                                 <td className="px-6 py-4">
                                                     <span className={cn(
                                                         "text-[8px] font-black uppercase tracking-[0.2em] px-2 py-1 rounded-full border",
-                                                        inv.paymentStatus === 'paid' ? "bg-green-500/10 border-green-500/20 text-green-500" :
-                                                            inv.paymentStatus === 'partially_paid' ? "bg-orange-500/10 border-orange-500/20 text-orange-500" :
-                                                                "bg-red-500/10 border-red-500/20 text-red-500"
+                                                        inv.paymentStatus === 'paid' ? "bg-success-soft border-success/20 text-success" :
+                                                            inv.paymentStatus === 'partially_paid' ? "bg-warning-soft border-warning/20 text-warning" :
+                                                                "bg-danger-soft border-danger/20 text-danger"
                                                     )}>
                                                         {(inv.paymentStatus || 'unknown').replace('_', ' ')}
                                                     </span>
@@ -548,7 +548,7 @@ Thank you for your business!`;
                                                 <td className="px-6 py-4">
                                                     <p className="font-black text-sm text-[var(--color-primary)]">₹{inv.total.toFixed(2)}</p>
                                                     {inv.paymentStatus !== 'paid' && (
-                                                        <p className="text-[9px] font-black text-orange-500 mt-0.5 italic">Bal: ₹{(inv.balanceAmount || 0).toLocaleString()}</p>
+                                                        <p className="text-[9px] font-black text-warning mt-0.5 italic">Bal: ₹{(inv.balanceAmount || 0).toLocaleString()}</p>
                                                     )}
                                                 </td>
                                                 <td className="px-6 py-4 text-right">
@@ -561,7 +561,7 @@ Thank you for your business!`;
                                                                     setSettleAmount(inv.balanceAmount || 0);
                                                                     setShowSettleModal(true);
                                                                 }}
-                                                                className="h-8 w-8 bg-orange-500 text-white rounded-lg flex items-center justify-center hover:scale-110 active:scale-95 transition-all shadow-lg shadow-orange-500/20"
+                                                                className="h-8 w-8 bg-primary text-white rounded-lg flex items-center justify-center hover:scale-110 active:scale-95 transition-all shadow-lg shadow-black/25"
                                                                 title="Settle Payment"
                                                             >
                                                                 <Coins className="h-4 w-4" />
@@ -575,13 +575,13 @@ Thank you for your business!`;
                                                         </button>
                                                         <button
                                                             onClick={() => navigate('/billing', { state: { editInvoice: inv } })}
-                                                            className="p-2 hover:bg-[var(--color-bg-dark)] rounded-lg text-[var(--color-text-gray)] hover:text-green-500"
+                                                            className="p-2 hover:bg-[var(--color-bg-dark)] rounded-lg text-[var(--color-text-gray)] hover:text-success"
                                                         >
                                                             <Edit3 className="h-4 w-4" />
                                                         </button>
                                                         <button
                                                             onClick={() => setInvoiceToDelete(inv)}
-                                                            className="p-2 hover:bg-[var(--color-bg-dark)] rounded-lg text-[var(--color-text-gray)] hover:text-red-500"
+                                                            className="p-2 hover:bg-[var(--color-bg-dark)] rounded-lg text-[var(--color-text-gray)] hover:text-danger"
                                                         >
                                                             <Trash2 className="h-4 w-4" />
                                                         </button>
@@ -611,9 +611,9 @@ Thank you for your business!`;
                                             <p className="text-xl font-black text-[var(--color-text-white)]">₹{inv.total.toLocaleString()}</p>
                                             <span className={cn(
                                                 "inline-block mt-2 text-[8px] font-black uppercase tracking-[0.1em] px-2.5 py-1 rounded-lg border",
-                                                inv.paymentStatus === 'paid' ? "bg-green-500/10 border-green-500/20 text-green-500" :
-                                                    inv.paymentStatus === 'partially_paid' ? "bg-orange-500/10 border-orange-500/20 text-orange-500" :
-                                                        "bg-red-500/10 border-red-500/20 text-red-500"
+                                                inv.paymentStatus === 'paid' ? "bg-success-soft border-success/20 text-success" :
+                                                    inv.paymentStatus === 'partially_paid' ? "bg-warning-soft border-warning/20 text-warning" :
+                                                        "bg-danger-soft border-danger/20 text-danger"
                                             )}>
                                                 {inv.paymentStatus}
                                             </span>
@@ -630,7 +630,7 @@ Thank you for your business!`;
                                                         setSettleAmount(inv.balanceAmount || 0);
                                                         setShowSettleModal(true);
                                                     }}
-                                                    className="flex-1 flex items-center justify-center gap-2 bg-orange-500 text-white px-4 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest active:scale-95 transition-all shadow-lg shadow-orange-500/20"
+                                                    className="flex-1 flex items-center justify-center gap-2 bg-primary text-white px-4 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest active:scale-95 transition-all shadow-lg shadow-black/25"
                                                 >
                                                     <Coins className="h-4 w-4" /> {lang === 'ta' ? 'செட்டில்' : 'Settle'}
                                                 </button>
@@ -644,7 +644,7 @@ Thank you for your business!`;
                                         </div>
                                         <div className="flex gap-2">
                                             <button onClick={(e) => { e.stopPropagation(); navigate('/billing', { state: { editInvoice: inv } }); }} className="w-11 h-11 flex items-center justify-center bg-[var(--color-bg-dark)] text-gray-500 rounded-2xl border border-[var(--color-border)]"><Edit3 className="h-4 w-4" /></button>
-                                            <button onClick={(e) => { e.stopPropagation(); setInvoiceToDelete(inv); }} className="w-11 h-11 flex items-center justify-center bg-red-500/10 text-red-500 rounded-2xl border border-red-500/20"><Trash2 className="h-4 w-4" /></button>
+                                            <button onClick={(e) => { e.stopPropagation(); setInvoiceToDelete(inv); }} className="w-11 h-11 flex items-center justify-center bg-danger-soft text-danger rounded-2xl border border-danger/20"><Trash2 className="h-4 w-4" /></button>
                                         </div>
                                     </div>
                                 </div>
@@ -697,11 +697,11 @@ Thank you for your business!`;
                                                     <p className="font-bold text-sm">{p.customer?.name || (lang === 'ta' ? 'வாடிக்கையாளர்' : 'Walk-in')}</p>
                                                 </td>
                                                 <td className="px-6 py-4">
-                                                    <span className="text-[10px] px-2 py-1 rounded-full bg-blue-500/10 text-blue-400 font-bold uppercase tracking-widest border border-blue-500/20">
+                                                    <span className="text-[10px] px-2 py-1 rounded-full bg-primary-soft text-primary font-bold uppercase tracking-widest border border-primary/20">
                                                         {p.mode}
                                                     </span>
                                                 </td>
-                                                <td className="px-6 py-4 font-black text-sm text-green-500">
+                                                <td className="px-6 py-4 font-black text-sm text-success">
                                                     ₹{p.amount?.toLocaleString()}
                                                 </td>
                                                 <td className="px-6 py-4 text-right">
@@ -732,8 +732,8 @@ Thank you for your business!`;
                                             </p>
                                         </div>
                                         <div className="text-right">
-                                            <p className="text-xl font-black text-green-500">₹{p.amount?.toLocaleString()}</p>
-                                            <span className="text-[8px] font-black uppercase tracking-widest text-blue-400 px-2 py-0.5 rounded-full bg-blue-500/10 border border-blue-500/20">{p.mode}</span>
+                                            <p className="text-xl font-black text-success">₹{p.amount?.toLocaleString()}</p>
+                                            <span className="text-[8px] font-black uppercase tracking-widest text-primary px-2 py-0.5 rounded-full bg-primary-soft border border-primary/20">{p.mode}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -768,7 +768,7 @@ Thank you for your business!`;
                                     <Button
                                         size="sm"
                                         onClick={() => shareOnWhatsApp(selectedInvoice)}
-                                        className="bg-green-600 hover:bg-green-700 text-white rounded-xl px-4"
+                                        className="bg-success hover:bg-success text-white rounded-xl px-4"
                                     >
                                         WhatsApp
                                     </Button>
@@ -821,7 +821,7 @@ Thank you for your business!`;
                     <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
                         <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setInvoiceToDelete(null)}></div>
                         <Card className="relative w-full max-w-sm p-6 space-y-6 text-center animate-in zoom-in-95 duration-200">
-                            <div className="mx-auto h-16 w-16 rounded-full bg-red-100 flex items-center justify-center text-red-600">
+                            <div className="mx-auto h-16 w-16 rounded-full bg-danger-soft flex items-center justify-center text-danger">
                                 <Trash2 className="h-8 w-8" />
                             </div>
                             <div>
@@ -829,12 +829,12 @@ Thank you for your business!`;
                                 <p className="text-[var(--color-text-gray)] text-sm">
                                     {lang === 'ta' ? 'இதை மாற்ற முடியாது. இந்த ரசீதை நீக்கலாமா?' : 'This action cannot be undone. Delete invoice?'}
                                     <br />
-                                    <strong className="text-red-600">#{invoiceToDelete.invoiceNo || invoiceToDelete.id}</strong> - <strong>{invoiceToDelete.customer?.name || (lang === 'ta' ? 'வாடிக்கையாளர்' : 'Walk-in')}</strong>
+                                    <strong className="text-danger">#{invoiceToDelete.invoiceNo || invoiceToDelete.id}</strong> - <strong>{invoiceToDelete.customer?.name || (lang === 'ta' ? 'வாடிக்கையாளர்' : 'Walk-in')}</strong>
                                 </p>
                             </div>
                             <div className="flex space-x-3">
                                 <Button variant="outline" className="flex-1 rounded-xl" onClick={() => setInvoiceToDelete(null)}>{t.cancel}</Button>
-                                <Button className="flex-1 bg-red-600 hover:bg-red-700 text-white rounded-xl" onClick={() => { deleteInvoice(invoiceToDelete.id); setInvoiceToDelete(null); }}>{t.delete}</Button>
+                                <Button className="flex-1 bg-danger hover:bg-danger text-white rounded-xl" onClick={() => { deleteInvoice(invoiceToDelete.id); setInvoiceToDelete(null); }}>{t.delete}</Button>
                             </div>
                         </Card>
                     </div>,
@@ -847,11 +847,11 @@ Thank you for your business!`;
                 showSettleModal && selectedInvoice && createPortal(
                     <div className="fixed inset-0 z-[120] flex items-start justify-center overflow-y-auto bg-black/80 backdrop-blur-sm p-4 py-8 md:py-12 no-scrollbar">
                         <div className="absolute inset-0" onClick={() => setShowSettleModal(false)}></div>
-                        <Card className="relative w-full max-w-sm bg-[var(--color-bg-card)] border-orange-500/30 font-black shadow-2xl animate-in zoom-in-95 duration-200 rounded-[2rem] overflow-hidden flex flex-col max-h-fit">
+                        <Card className="relative w-full max-w-sm bg-[var(--color-bg-card)] border-warning/30 font-black shadow-2xl animate-in zoom-in-95 duration-200 rounded-[2rem] overflow-hidden flex flex-col max-h-fit">
                             {/* Modal Header */}
                             <div className="p-6 pb-2">
                                 <div className="flex items-center gap-4">
-                                    <div className="h-14 w-14 rounded-2xl bg-orange-500/10 flex items-center justify-center text-orange-500 shadow-inner ring-1 ring-orange-500/20">
+                                    <div className="h-14 w-14 rounded-2xl bg-warning-soft flex items-center justify-center text-warning shadow-inner ring-1 ring-orange-500/20">
                                         <Coins className="h-7 w-7" />
                                     </div>
                                     <div>
@@ -859,7 +859,7 @@ Thank you for your business!`;
                                             {lang === 'ta' ? 'பணத்தை செட்டில் செய்க' : 'Settle Payment'}
                                         </h3>
                                         <p className="text-[10px] font-black text-[var(--color-text-gray)]/60 uppercase tracking-[0.2em] mt-1">
-                                            Inv #{selectedInvoice.invoiceNo || selectedInvoice.id} • Bal: <span className="text-orange-500">₹{(selectedInvoice.balanceAmount || 0).toLocaleString()}</span>
+                                            Inv #{selectedInvoice.invoiceNo || selectedInvoice.id} • Bal: <span className="text-warning">₹{(selectedInvoice.balanceAmount || 0).toLocaleString()}</span>
                                         </p>
                                     </div>
                                 </div>
@@ -877,7 +877,7 @@ Thank you for your business!`;
                                         type="date"
                                         value={settleDate}
                                         onChange={(e) => setSettleDate(e.target.value)}
-                                        className="w-full bg-[var(--color-bg-dark)] border border-[var(--color-border)] rounded-2xl px-5 py-4 text-sm font-black focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all text-[var(--color-text-white)] shadow-inner"
+                                        className="w-full bg-[var(--color-bg-dark)] border border-[var(--color-border)] rounded-2xl px-5 py-4 text-sm font-black focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-warning transition-all text-[var(--color-text-white)] shadow-inner"
                                     />
                                 </div>
 
@@ -888,13 +888,13 @@ Thank you for your business!`;
                                         {lang === 'ta' ? 'தொகை' : 'SETTLEMENT AMOUNT'}
                                     </label>
                                     <div className="relative group">
-                                        <span className="absolute left-5 top-1/2 -translate-y-1/2 text-2xl font-black text-orange-500/40 group-focus-within:text-orange-500 transition-colors">₹</span>
+                                        <span className="absolute left-5 top-1/2 -translate-y-1/2 text-2xl font-black text-warning/40 group-focus-within:text-warning transition-colors">₹</span>
                                         <input
                                             type="number"
                                             value={settleAmount}
                                             onChange={(e) => setSettleAmount(Number(e.target.value))}
                                             max={selectedInvoice.balanceAmount}
-                                            className="w-full bg-[var(--color-bg-dark)] border-2 border-orange-500/20 rounded-2xl pl-11 pr-5 py-5 text-3xl font-black text-orange-500 focus:outline-none focus:ring-4 focus:ring-orange-500/10 focus:border-orange-500 transition-all shadow-xl placeholder:text-orange-500/20"
+                                            className="w-full bg-[var(--color-bg-dark)] border-2 border-warning/20 rounded-2xl pl-11 pr-5 py-5 text-3xl font-black text-warning focus:outline-none focus:ring-4 focus:ring-orange-500/10 focus:border-warning transition-all shadow-xl placeholder:text-warning/20"
                                             placeholder="0.00"
                                         />
                                     </div>
@@ -903,25 +903,25 @@ Thank you for your business!`;
                                 {/* Settlement History */}
                                 {selectedInvoice.payments && selectedInvoice.payments.length > 0 && (
                                     <div className="space-y-4">
-                                        <div className="flex items-center justify-between text-blue-500/80 mb-1">
+                                        <div className="flex items-center justify-between text-primary/80 mb-1">
                                             <div className="flex items-center gap-2">
                                                 <History className="h-3.5 w-3.5" />
                                                 <h4 className="text-[10px] font-black uppercase tracking-[0.2em]">{t.payment_history || 'History'}</h4>
                                             </div>
-                                            <span className="text-[8px] font-black bg-blue-500/10 px-2 py-0.5 rounded-full border border-blue-500/10">{selectedInvoice.payments.length} Payments</span>
+                                            <span className="text-[8px] font-black bg-primary-soft px-2 py-0.5 rounded-full border border-primary/10">{selectedInvoice.payments.length} Payments</span>
                                         </div>
                                         <div className="space-y-2.5">
                                             {selectedInvoice.payments.map((payment, idx) => (
                                                 <div key={idx} className="relative group/payment overflow-hidden">
-                                                    <div className="flex items-center justify-between p-4 bg-[var(--color-bg-dark)]/60 border border-[var(--color-border)] rounded-2xl group-hover/payment:border-blue-500/30 transition-all duration-300">
+                                                    <div className="flex items-center justify-between p-4 bg-[var(--color-bg-dark)]/60 border border-[var(--color-border)] rounded-2xl group-hover/payment:border-primary/30 transition-all duration-300">
                                                         <div className="flex items-center gap-4">
-                                                            <div className="h-10 w-10 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-500 shadow-inner group-hover/payment:scale-110 transition-transform">
+                                                            <div className="h-10 w-10 rounded-xl bg-primary-soft flex items-center justify-center text-primary shadow-inner group-hover/payment:scale-110 transition-transform">
                                                                 <ArrowUpRight className="h-5 w-5" />
                                                             </div>
                                                             <div>
                                                                 <div className="flex items-center gap-2 mb-0.5">
                                                                     <p className="text-base font-black text-[var(--color-text-white)] tracking-tight">₹{payment.amount.toLocaleString()}</p>
-                                                                    <span className="text-[8px] font-black uppercase tracking-widest px-1.5 py-0.5 bg-blue-500/10 text-blue-400 rounded-lg border border-blue-500/10">{payment.mode}</span>
+                                                                    <span className="text-[8px] font-black uppercase tracking-widest px-1.5 py-0.5 bg-primary-soft text-primary rounded-lg border border-primary/10">{payment.mode}</span>
                                                                 </div>
                                                                 <p className="text-[9px] font-bold text-[var(--color-text-gray)]/40 uppercase tracking-widest">
                                                                     {new Date(payment.date).toLocaleDateString(lang === 'ta' ? 'ta-IN' : 'en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
@@ -935,7 +935,7 @@ Thank you for your business!`;
                                                                 e.preventDefault();
                                                                 setPaymentToDelete({ idx, payment });
                                                             }}
-                                                            className="h-10 w-10 bg-red-500/5 hover:bg-red-500 text-red-500/50 hover:text-white rounded-xl transition-all active:scale-90 flex items-center justify-center border border-red-500/10 hover:border-red-500 shadow-sm"
+                                                            className="h-10 w-10 bg-danger/5 hover:bg-danger text-danger/50 hover:text-white rounded-xl transition-all active:scale-90 flex items-center justify-center border border-danger/10 hover:border-danger shadow-sm"
                                                             title="Delete Payment"
                                                         >
                                                             <Trash2 className="h-4 w-4" />
@@ -966,7 +966,7 @@ Thank you for your business!`;
                                                 className={cn(
                                                     "flex flex-col items-center justify-center py-4 rounded-2xl border-2 transition-all active:scale-95 gap-1.5",
                                                     settleMode === mode.id
-                                                        ? "border-orange-500 bg-orange-500/10 text-orange-500 shadow-lg shadow-orange-500/10"
+                                                        ? "border-warning bg-warning-soft text-warning shadow-lg shadow-orange-500/10"
                                                         : "border-[var(--color-border)] bg-[var(--color-bg-dark)]/50 text-gray-500 hover:border-gray-600"
                                                 )}
                                             >
@@ -989,7 +989,7 @@ Thank you for your business!`;
                                         {t.cancel}
                                     </Button>
                                     <Button
-                                        className="flex-1 py-7 bg-gradient-to-br from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white rounded-2xl font-black uppercase tracking-[0.2em] text-[10px] shadow-xl shadow-orange-500/20 border-none transition-all active:scale-[0.98] h-auto"
+                                        className="flex-1 py-7 bg-gradient-to-br from-primary to-primary-hover hover:from-primary-hover hover:to-primary-hover text-white rounded-2xl font-black uppercase tracking-[0.2em] text-[10px] shadow-xl shadow-black/25 border-none transition-all active:scale-[0.98] h-auto"
                                         onClick={async () => {
                                             // Clamp to the outstanding balance — the input's max is only a
                                             // UI hint, and an over-entry would inflate paidAmount and every
@@ -1035,15 +1035,15 @@ Thank you for your business!`;
                 paymentToDelete && createPortal(
                     <div className="fixed inset-0 z-[130] flex items-center justify-center p-4">
                         <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setPaymentToDelete(null)}></div>
-                        <Card className="relative w-full max-w-sm p-6 space-y-6 text-center animate-in zoom-in-95 duration-200 bg-[var(--color-bg-card)] border-red-500/30 font-black rounded-[2rem]">
-                            <div className="mx-auto h-20 w-20 rounded-full bg-red-500/10 flex items-center justify-center text-red-600 shadow-inner ring-4 ring-red-500/5">
+                        <Card className="relative w-full max-w-sm p-6 space-y-6 text-center animate-in zoom-in-95 duration-200 bg-[var(--color-bg-card)] border-danger/30 font-black rounded-[2rem]">
+                            <div className="mx-auto h-20 w-20 rounded-full bg-danger-soft flex items-center justify-center text-danger shadow-inner ring-4 ring-danger/5">
                                 <Trash2 className="h-10 w-10" />
                             </div>
                             <div>
                                 <h3 className="text-2xl font-black uppercase tracking-tight text-[var(--color-text-white)]">{lang === 'ta' ? 'பணத்தை நீக்கவா?' : 'Delete Payment?'}</h3>
-                                <p className="text-[10px] font-black text-orange-500 uppercase tracking-widest mt-1">Inv #{selectedInvoice.invoiceNo || selectedInvoice.id}</p>
+                                <p className="text-[10px] font-black text-warning uppercase tracking-widest mt-1">Inv #{selectedInvoice.invoiceNo || selectedInvoice.id}</p>
                                 <div className="mt-4 p-4 bg-[var(--color-bg-dark)]/50 rounded-2xl border border-[var(--color-border)]">
-                                    <p className="text-xl font-black text-red-500 tracking-tight">₹{paymentToDelete.payment.amount.toLocaleString()}</p>
+                                    <p className="text-xl font-black text-danger tracking-tight">₹{paymentToDelete.payment.amount.toLocaleString()}</p>
                                     <p className="text-[10px] font-bold text-[var(--color-text-gray)]/50 uppercase tracking-[0.2em] mt-1">
                                         {paymentToDelete.payment.mode} • {new Date(paymentToDelete.payment.date).toLocaleDateString(lang === 'ta' ? 'ta-IN' : 'en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
                                     </p>
@@ -1057,7 +1057,7 @@ Thank you for your business!`;
                                     {t.cancel}
                                 </Button>
                                 <Button
-                                    className="flex-1 py-7 bg-red-600 hover:bg-red-700 text-white rounded-2xl font-black uppercase tracking-[0.2em] text-[10px] shadow-xl shadow-red-500/20 border-none transition-all active:scale-[0.98] h-auto"
+                                    className="flex-1 py-7 bg-danger hover:bg-danger text-white rounded-2xl font-black uppercase tracking-[0.2em] text-[10px] shadow-xl shadow-red-500/20 border-none transition-all active:scale-[0.98] h-auto"
                                     onClick={async () => {
                                         const { idx, payment } = paymentToDelete;
                                         const updatedPayments = selectedInvoice.payments.filter((_, i) => i !== idx);
