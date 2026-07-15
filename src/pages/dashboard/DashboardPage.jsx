@@ -213,7 +213,11 @@ const DashboardPage = () => {
             monthlyExpenses: filteredMonthlyExpenses,
             oldPartProfit
         };
-    }, [filteredInvoices, filteredMonthlyExpenses]);
+        // Loading flags MUST be deps: the memo returns null while loading, and
+        // without them it never recomputes when the SECOND collection finishes
+        // (e.g. products after invoices) — leaving stats null while the render
+        // guard has already moved past the skeletons. That was a real crash.
+    }, [filteredInvoices, filteredMonthlyExpenses, invoicesLoading, productsLoading]);
 
     return (
         <div className="space-y-8 w-full max-w-full overflow-hidden pb-10">
@@ -290,7 +294,7 @@ const DashboardPage = () => {
 
             {/* Featured Stats Grid */}
             <div className="grid gap-4 grid-cols-1 lg:grid-cols-3">
-                {(invoicesLoading || productsLoading) ? (
+                {(invoicesLoading || productsLoading || !stats) ? (
                     <StatSkeleton />
                 ) : (
                     <div className="relative h-44 md:h-auto lg:h-full overflow-hidden rounded-3xl group">
@@ -342,7 +346,7 @@ const DashboardPage = () => {
                 )}
 
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 lg:col-span-2">
-                    {(invoicesLoading || productsLoading) ? (
+                    {(invoicesLoading || productsLoading || !stats) ? (
                         <>
                             <CompactStatSkeleton />
                             <CompactStatSkeleton />
