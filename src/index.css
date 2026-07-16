@@ -22,8 +22,10 @@
   /* Grounds */
   --color-bg-dark: #0B0D12;
   /* Asphalt */
-  --color-bg-card: #12151D;
-  /* Graphite */
+  --color-bg-card: rgba(20, 24, 34, 0.62);
+  /* Graphite glass — translucent so panels refract the ambient background */
+  --color-bg-solid: #12151D;
+  /* Opaque fallback for surfaces that must not be see-through */
   --color-bg-light: #F2F5F9;
 
   /* Canonical text tokens. Legacy --color-text-white/gray alias to these so
@@ -35,7 +37,8 @@
   --color-text-gray: var(--color-text-muted);
   --color-text-dark: #12151D;
 
-  --color-border: #232937;
+  --color-border: rgba(255, 255, 255, 0.09);
+  /* Hairline light borders — glass edges, not hard lines */
   --color-success: #3ECF8E;
   --color-danger: #FF5C5C;
   --color-warning: #F0B44C;
@@ -54,10 +57,14 @@
   --color-danger-soft: rgba(255, 92, 92, 0.12);
   --color-warning-soft: rgba(240, 180, 76, 0.14);
 
-  /* Ambience — a faint warm glow at the top of dark screens gives the panel
-     depth without competing with content. */
-  --ambient: radial-gradient(1100px 420px at 78% -12%, rgba(255, 122, 47, 0.07), transparent 60%),
-    radial-gradient(900px 380px at -10% 0%, rgba(51, 216, 192, 0.05), transparent 55%);
+  /* Ambience — glass only reads as glass when there is color behind it to
+     refract. Amber + cyan aurora blobs over the asphalt base. */
+  --ambient: radial-gradient(1100px 480px at 80% -12%, rgba(255, 122, 47, 0.13), transparent 62%),
+    radial-gradient(900px 420px at -8% 4%, rgba(51, 216, 192, 0.09), transparent 58%),
+    radial-gradient(760px 420px at 55% 108%, rgba(255, 122, 47, 0.07), transparent 60%),
+    linear-gradient(180deg, #0B0D12 0%, #0D1018 100%);
+  /* Top-light sheen painted onto every glass surface */
+  --glass-sheen: linear-gradient(180deg, rgba(255, 255, 255, 0.05), transparent 42%);
 
   /* Radius scale — the single source of corner radii. */
   --radius-sm: 0.5rem;
@@ -113,11 +120,12 @@
   --color-secondary: #0E93A8;
   --color-secondary-hover: #0B7A8C;
 
-  --color-bg-dark: #F2F5F9;
-  --color-bg-card: #FFFFFF;
+  --color-bg-dark: #EEF2F8;
+  --color-bg-card: rgba(255, 255, 255, 0.62);
+  --color-bg-solid: #FFFFFF;
   --color-text: #131822;
   --color-text-muted: #5D6779;
-  --color-border: #E4E9F1;
+  --color-border: rgba(19, 24, 34, 0.10);
 
   --color-success: #189A5F;
   --color-danger: #D63A3A;
@@ -135,7 +143,11 @@
   --color-danger-soft: rgba(214, 58, 58, 0.10);
   --color-warning-soft: rgba(181, 127, 10, 0.12);
 
-  --ambient: radial-gradient(1100px 420px at 78% -12%, rgba(232, 98, 15, 0.05), transparent 60%);
+  --ambient: radial-gradient(1100px 480px at 80% -12%, rgba(232, 98, 15, 0.10), transparent 62%),
+    radial-gradient(900px 420px at -8% 4%, rgba(14, 147, 168, 0.08), transparent 58%),
+    radial-gradient(760px 420px at 55% 108%, rgba(232, 98, 15, 0.05), transparent 60%),
+    linear-gradient(180deg, #EEF2F8 0%, #E8EDF5 100%);
+  --glass-sheen: linear-gradient(180deg, rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0.25) 55%);
 
   --shadow-card: 0 1px 2px rgba(19, 24, 34, 0.06), 0 8px 24px rgba(19, 24, 34, 0.07);
   --shadow-pop: 0 12px 32px rgba(19, 24, 34, 0.16);
@@ -194,12 +206,22 @@ body {
 body {
   font-family: var(--font-family);
   background-color: var(--color-bg-dark);
-  background-image: var(--ambient);
-  background-attachment: fixed;
   color: var(--color-text-white);
   transition: background-color 0.3s ease, color 0.3s ease;
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
+}
+
+/* Ambient aurora on a fixed pseudo-element: composited once by the GPU,
+   never repainted on scroll (background-attachment: fixed forces full
+   repaints and janks low-end phones). */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background-image: var(--ambient);
+  pointer-events: none;
 }
 
 button {
@@ -232,6 +254,30 @@ input[type='number'] {
   -webkit-backdrop-filter: blur(var(--glass-blur));
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-lg);
+}
+
+/* ---- Glassmorphism, system-wide -------------------------------------
+   --color-bg-card is translucent, so every element painted with it becomes
+   frosted glass: this rule adds the blur + a top-light sheen to each of
+   those surfaces without touching the components themselves. */
+[class*='bg-[var(--color-bg-card)]'] {
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  background-image: var(--glass-sheen);
+}
+
+/* Blur is expensive on weak GPUs — flatten to solid panels when the user
+   asks for reduced transparency. */
+@media (prefers-reduced-transparency: reduce) {
+  :root {
+    --color-bg-card: var(--color-bg-solid);
+    --glass-sheen: none;
+  }
+
+  [class*='bg-[var(--color-bg-card)]'] {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
 }
 
 /* The "instrument readout" voice — data labels, codes, counters. */
