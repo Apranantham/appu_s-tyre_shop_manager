@@ -236,7 +236,7 @@ const DashboardPage = () => {
                                 className={cn(
                                     "flex items-center gap-2 px-3 py-2 rounded-xl border text-xs font-bold transition-all",
                                     staffFilter !== 'all'
-                                        ? "border-purple-500 bg-purple-500/10 text-purple-400"
+                                        ? "border-secondary bg-secondary-soft text-secondary"
                                         : "border-[var(--color-border)] bg-[var(--color-bg-card)] text-[var(--color-text-gray)]"
                                 )}
                             >
@@ -252,7 +252,7 @@ const DashboardPage = () => {
                                             onClick={() => { setStaffFilter('all'); setShowStaffDropdown(false); }}
                                             className={cn(
                                                 "w-full text-left px-4 py-2.5 text-sm font-bold hover:bg-[var(--color-bg-dark)] transition-colors flex items-center gap-2",
-                                                staffFilter === 'all' && "text-purple-400"
+                                                staffFilter === 'all' && "text-secondary"
                                             )}
                                         >
                                             <Users className="h-4 w-4" />
@@ -265,7 +265,7 @@ const DashboardPage = () => {
                                                 onClick={() => { setStaffFilter(s.id); setShowStaffDropdown(false); }}
                                                 className={cn(
                                                     "w-full text-left px-4 py-2.5 text-sm font-bold hover:bg-[var(--color-bg-dark)] transition-colors truncate",
-                                                    staffFilter === s.id && "text-purple-400"
+                                                    staffFilter === s.id && "text-secondary"
                                                 )}
                                             >
                                                 {s.label}
@@ -389,7 +389,7 @@ const DashboardPage = () => {
                                     trendValue={t.view_details || 'View Details'}
                                     icon={Wallet}
                                     variant="compact"
-                                    className="border-red-500/30 min-h-[10rem] md:min-h-0 group-hover/stat:border-red-500/60 transition-colors"
+                                    className="border-danger/30 min-h-[10rem] md:min-h-0 group-hover/stat:border-danger/60 transition-colors"
                                 />
                             </div>
                             <div
@@ -403,7 +403,7 @@ const DashboardPage = () => {
                                     trendValue={t.action_required}
                                     icon={Clock}
                                     variant="compact"
-                                    className="border-orange-500/30 min-h-[10rem] md:min-h-0 hover:border-orange-500/60 transition-colors"
+                                    className="border-warning/30 min-h-[10rem] md:min-h-0 hover:border-warning/60 transition-colors"
                                 />
                             </div>
 

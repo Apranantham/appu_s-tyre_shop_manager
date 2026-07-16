@@ -173,7 +173,7 @@ const CustomerHistory = () => {
                                     <p className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-gray)]">{t.total_pending || 'Total Pending'}</p>
                                     <p className={cn(
                                         "font-bold text-xl",
-                                        c.pending > 0 ? "text-orange-500" : "text-green-500"
+                                        c.pending > 0 ? "text-warning" : "text-success"
                                     )}>
                                         ₹{c.pending.toLocaleString()}
                                     </p>

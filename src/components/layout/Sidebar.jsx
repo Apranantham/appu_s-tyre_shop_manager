@@ -52,31 +52,45 @@ const Sidebar = ({ isMobile }) => {
             isMobile ? "relative" : "fixed left-0 top-0"
         )}>
             <div className="flex h-full flex-col">
-                {/* Logo Area */}
-                <div className="flex h-16 items-center border-b border-[var(--color-border)] px-6">
-                    <Wrench className="h-8 w-8 text-[var(--color-primary)] mr-3" />
-                    <span className="text-xl font-bold tracking-tight text-[var(--color-text-white)] truncate">
-                        {shopDetails?.shopName || 'TurboTyre'}
-                    </span>
+                {/* Brand block */}
+                <div className="flex h-16 items-center border-b border-[var(--color-border)] px-5">
+                    <div className="h-10 w-10 mr-3 shrink-0 rounded-control bg-primary-soft border border-primary/30 flex items-center justify-center">
+                        <Wrench className="h-5 w-5 text-primary" />
+                    </div>
+                    <div className="min-w-0">
+                        <span className="block text-base font-black tracking-tight text-[var(--color-text-white)] truncate leading-tight">
+                            {shopDetails?.shopName || 'TurboTyre'}
+                        </span>
+                        <span className="block font-mono text-[9px] font-semibold uppercase tracking-[0.22em] text-primary">
+                            Tyre&nbsp;POS
+                        </span>
+                    </div>
                 </div>
 
                 {/* Navigation */}
-                <nav className="flex-1 space-y-1 px-3 py-4">
+                <nav className="flex-1 space-y-0.5 px-3 py-4 overflow-y-auto">
                     {navItems.map((item) => (
                         <NavLink
                             key={item.path}
                             to={item.path}
                             className={({ isActive }) =>
                                 cn(
-                                    'flex items-center rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
+                                    'relative flex items-center rounded-control px-3 py-2.5 text-sm font-semibold transition-colors',
                                     isActive
-                                        ? 'bg-[var(--color-primary)] text-white'
+                                        ? 'bg-primary-soft text-primary'
                                         : 'text-[var(--color-text-gray)] hover:bg-[var(--color-bg-dark)] hover:text-[var(--color-text-white)]'
                                 )
                             }
                         >
-                            <item.icon className="mr-3 h-5 w-5" />
-                            {item.label}
+                            {({ isActive }) => (
+                                <>
+                                    {isActive && (
+                                        <span className="absolute left-0 top-2 bottom-2 w-1 rounded-pill bg-primary" />
+                                    )}
+                                    <item.icon className="mr-3 h-5 w-5" />
+                                    {item.label}
+                                </>
+                            )}
                         </NavLink>
                     ))}
                 </nav>
@@ -107,7 +121,7 @@ const Sidebar = ({ isMobile }) => {
                     {isAuthenticated && (
                         <button
                             onClick={logout}
-                            className="flex w-full items-center rounded-lg px-3 py-2.5 text-sm font-medium text-red-500 hover:bg-red-500/10 transition-colors"
+                            className="flex w-full items-center rounded-lg px-3 py-2.5 text-sm font-medium text-danger hover:bg-danger-soft transition-colors"
                         >
                             <LogOut className="mr-3 h-5 w-5" />
                             {t.logout}

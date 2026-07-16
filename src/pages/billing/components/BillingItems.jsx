@@ -105,7 +105,7 @@ const BillingItems = ({ onAddToCart, onUpdateQuantity, onRemoveItem, cart = [], 
                         <span className="text-xs font-black uppercase tracking-widest">{t.exit || 'Exit'}</span>
                     </button>
                     <div className="flex items-center gap-2">
-                        <span className="h-1.5 w-1.5 rounded-full bg-blue-500 animate-pulse"></span>
+                        <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse"></span>
                         <h2 className="text-[10px] font-black tracking-[0.2em] text-[var(--color-text-gray)] uppercase">
                             {editingInvoiceNo ? (lang === 'ta' ? `திருத்துதல் #${editingInvoiceNo}` : `EDITING BILL #${editingInvoiceNo}`) : (t.billing_mode || 'BILLING MODE')}
                         </h2>
@@ -269,7 +269,7 @@ const BillingItems = ({ onAddToCart, onUpdateQuantity, onRemoveItem, cart = [], 
                                                     onFocus={(e) => e.target.select()}
                                                     onChange={(e) => updateRow(row.id, 'exchangeValue', e.target.value)}
                                                     placeholder="0"
-                                                    className="w-full bg-[var(--color-bg-card)] border border-[var(--color-border)] rounded-xl px-3 py-2.5 text-sm font-bold focus:border-red-400 outline-none text-right text-red-400 shadow-sm focus:ring-2 focus:ring-red-400/20"
+                                                    className="w-full bg-[var(--color-bg-card)] border border-[var(--color-border)] rounded-xl px-3 py-2.5 text-sm font-bold focus:border-red-400 outline-none text-right text-danger shadow-sm focus:ring-2 focus:ring-red-400/20"
                                                 />
                                             </div>
                                             {/* Scrap Value */}
@@ -290,7 +290,7 @@ const BillingItems = ({ onAddToCart, onUpdateQuantity, onRemoveItem, cart = [], 
                                         <div className="w-full sm:w-auto mt-2 sm:mt-0 pt-3 sm:pt-0 border-t border-[var(--color-border)] sm:border-none flex justify-center">
                                             <button
                                                 onClick={() => removeRow(row.id)}
-                                                className="w-full sm:w-9 h-10 sm:h-9 flex items-center justify-center rounded-xl bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white transition-all active:scale-95 border border-red-500/20 hover:border-red-500"
+                                                className="w-full sm:w-9 h-10 sm:h-9 flex items-center justify-center rounded-xl bg-danger-soft text-danger hover:bg-danger hover:text-white transition-all active:scale-95 border border-danger/20 hover:border-danger"
                                             >
                                                 <Trash2 className="h-4 w-4" />
                                                 <span className="text-[11px] uppercase font-black tracking-[0.2em] ml-2 sm:hidden">Remove Row</span>
@@ -332,7 +332,7 @@ const BillingItems = ({ onAddToCart, onUpdateQuantity, onRemoveItem, cart = [], 
                                             key={product.id}
                                             className={cn(
                                                 "relative cursor-pointer border-2 transition-all p-4 flex flex-col h-full group shadow-md hover:shadow-xl active:scale-[0.98] rounded-2xl bg-[var(--color-bg-dark)]/40",
-                                                qtyInCart > 0 ? "border-[var(--color-primary)] bg-[var(--color-primary)]/10" : "border-[var(--color-border)] hover:border-blue-500"
+                                                qtyInCart > 0 ? "border-[var(--color-primary)] bg-[var(--color-primary)]/10" : "border-[var(--color-border)] hover:border-primary"
                                             )}
                                             onClick={() => product.stock > 0 && onAddToCart(product, 'product')}
                                         >
@@ -340,7 +340,7 @@ const BillingItems = ({ onAddToCart, onUpdateQuantity, onRemoveItem, cart = [], 
                                                 <>
                                                     <button
                                                         onClick={(e) => { e.stopPropagation(); onRemoveItem(product.id, 'product'); }}
-                                                        className="absolute -top-2 -left-2 h-8 w-8 bg-red-500 text-white rounded-full flex items-center justify-center font-black text-sm shadow-lg border-4 border-[var(--color-bg-card)] z-20 hover:scale-110 active:scale-95 transition-all"
+                                                        className="absolute -top-2 -left-2 h-8 w-8 bg-danger text-white rounded-full flex items-center justify-center font-black text-sm shadow-lg border-4 border-[var(--color-bg-card)] z-20 hover:scale-110 active:scale-95 transition-all"
                                                         title="Remove Item"
                                                     >
                                                         <X className="h-4 w-4 stroke-[3px]" />
@@ -356,20 +356,20 @@ const BillingItems = ({ onAddToCart, onUpdateQuantity, onRemoveItem, cart = [], 
                                                 <p className="text-[10px] md:text-xs text-[var(--color-text-gray)] font-bold mt-1">{product.size}</p>
                                             </div>
 
-                                            <div className="aspect-square rounded-2xl mb-4 bg-[var(--color-bg-dark)]/50 overflow-hidden border border-[var(--color-border)]/50 relative group-hover:border-blue-500/30 transition-colors">
+                                            <div className="aspect-square rounded-2xl mb-4 bg-[var(--color-bg-dark)]/50 overflow-hidden border border-[var(--color-border)]/50 relative group-hover:border-primary/30 transition-colors">
                                                 <img src={product.image || FALLBACK_IMAGE} alt={product.name} className="h-full w-full object-cover group-hover:scale-110 transition-transform duration-500" />
                                                 <div className="absolute top-2 right-2 bg-black/60 backdrop-blur-md px-2 py-1 rounded-lg border border-white/10">
-                                                    <span className="font-black text-sm text-blue-400">₹{product.price}</span>
+                                                    <span className="font-black text-sm text-primary">₹{product.price}</span>
                                                 </div>
                                             </div>
 
                                             <div className="mt-auto flex justify-between items-center">
-                                                <span className={`text-[9px] font-black tracking-widest px-2 py-1 rounded-md ${product.stock > 0 ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'}`}>
+                                                <span className={`text-[9px] font-black tracking-widest px-2 py-1 rounded-md ${product.stock > 0 ? 'bg-success-soft text-success' : 'bg-danger-soft text-danger'}`}>
                                                     {product.stock > 0 ? `${t.in_stock.toUpperCase()}: ${product.stock}` : t.out_of_stock.toUpperCase()}
                                                 </span>
 
                                                 {qtyInCart > 0 && (
-                                                    <div className="flex items-center bg-blue-500/10 rounded-xl p-1 border border-blue-500/20 shadow-inner" onClick={(e) => e.stopPropagation()}>
+                                                    <div className="flex items-center bg-primary-soft rounded-xl p-1 border border-primary/20 shadow-inner" onClick={(e) => e.stopPropagation()}>
                                                         <button
                                                             onClick={() => qtyInCart > 1 ? onUpdateQuantity(product.id, 'product', -1) : onRemoveItem(product.id, 'product')}
                                                             className="p-1 hover:text-[var(--color-primary)] transition-colors"
@@ -414,8 +414,8 @@ const BillingItems = ({ onAddToCart, onUpdateQuantity, onRemoveItem, cart = [], 
                                             className={cn(
                                                 "relative cursor-pointer border-2 transition-all p-5 flex flex-col group min-h-[14rem] shadow-xl hover:shadow-2xl active:scale-[0.98] rounded-3xl overflow-visible",
                                                 qtyInCart > 0
-                                                    ? "border-orange-500 bg-[var(--color-bg-dark)]"
-                                                    : "border-[var(--color-border)] bg-[var(--color-bg-dark)] hover:border-orange-500/50"
+                                                    ? "border-warning bg-[var(--color-bg-dark)]"
+                                                    : "border-[var(--color-border)] bg-[var(--color-bg-dark)] hover:border-warning/50"
                                             )}
                                             onClick={() => onAddToCart(service, 'service')}
                                         >
@@ -423,7 +423,7 @@ const BillingItems = ({ onAddToCart, onUpdateQuantity, onRemoveItem, cart = [], 
                                             {qtyInCart > 0 && (
                                                 <button
                                                     onClick={(e) => { e.stopPropagation(); onRemoveItem(service.id, 'service'); }}
-                                                    className="absolute -top-3 -left-3 h-9 w-9 bg-[#FF5252] text-white rounded-full flex items-center justify-center shadow-lg hover:scale-110 active:scale-95 transition-all z-20 border-4 border-[var(--color-bg-dark)]"
+                                                    className="absolute -top-3 -left-3 h-9 w-9 bg-[var(--color-danger)] text-white rounded-full flex items-center justify-center shadow-lg hover:scale-110 active:scale-95 transition-all z-20 border-4 border-[var(--color-bg-dark)]"
                                                     title="Remove Item"
                                                 >
                                                     <X className="h-5 w-5 stroke-[3px]" />
@@ -432,7 +432,7 @@ const BillingItems = ({ onAddToCart, onUpdateQuantity, onRemoveItem, cart = [], 
 
                                             {/* Quantity Badge - Top Right Circle */}
                                             {qtyInCart > 0 && (
-                                                <div className="absolute -top-3 -right-3 h-9 w-9 bg-orange-500 text-white rounded-full flex items-center justify-center font-black text-sm shadow-lg border-4 border-[var(--color-bg-dark)] z-10 animate-in zoom-in-50">
+                                                <div className="absolute -top-3 -right-3 h-9 w-9 bg-primary text-white rounded-full flex items-center justify-center font-black text-sm shadow-lg border-4 border-[var(--color-bg-dark)] z-10 animate-in zoom-in-50">
                                                     {qtyInCart}
                                                 </div>
                                             )}
@@ -445,14 +445,14 @@ const BillingItems = ({ onAddToCart, onUpdateQuantity, onRemoveItem, cart = [], 
 
                                                 <div className="flex items-center justify-between gap-4">
                                                     {/* Wrench Icon Box */}
-                                                    <div className="h-16 w-16 bg-[var(--color-bg-card)] rounded-2xl flex items-center justify-center text-orange-500 shadow-inner group-hover:scale-105 transition-transform duration-300 border border-white/5">
+                                                    <div className="h-16 w-16 bg-[var(--color-bg-card)] rounded-2xl flex items-center justify-center text-warning shadow-inner group-hover:scale-105 transition-transform duration-300 border border-white/5">
                                                         <Wrench className="h-8 w-8" />
                                                     </div>
 
                                                     {/* Price Section */}
                                                     <div className="text-right">
                                                         <span className="block text-[8px] text-[var(--color-text-gray)]/60 font-black uppercase tracking-[0.2em] mb-1">SERVICE COST</span>
-                                                        <span className="font-black text-2xl text-orange-500 italic flex items-center justify-end">
+                                                        <span className="font-black text-2xl text-warning italic flex items-center justify-end">
                                                             <span className="text-lg mr-0.5">₹</span>{service.price}
                                                         </span>
                                                     </div>
@@ -471,18 +471,18 @@ const BillingItems = ({ onAddToCart, onUpdateQuantity, onRemoveItem, cart = [], 
                                                     <button
                                                         onClick={() => qtyInCart > 1 ? onUpdateQuantity(service.id, 'service', -1) : qtyInCart === 1 ? onRemoveItem(service.id, 'service') : null}
                                                         disabled={qtyInCart === 0}
-                                                        className="h-10 w-10 flex items-center justify-center text-orange-500 hover:bg-orange-500/10 rounded-xl transition-colors disabled:opacity-20"
+                                                        className="h-10 w-10 flex items-center justify-center text-warning hover:bg-warning-soft rounded-xl transition-colors disabled:opacity-20"
                                                     >
                                                         <Minus className="h-5 w-5 stroke-[3px]" />
                                                     </button>
 
-                                                    <span className="text-lg font-black text-orange-500 min-w-[2rem] text-center">
+                                                    <span className="text-lg font-black text-warning min-w-[2rem] text-center">
                                                         {qtyInCart || 0}
                                                     </span>
 
                                                     <button
                                                         onClick={() => onAddToCart(service, 'service')}
-                                                        className="h-10 w-10 flex items-center justify-center text-orange-500 hover:bg-orange-500/10 rounded-xl transition-colors"
+                                                        className="h-10 w-10 flex items-center justify-center text-warning hover:bg-warning-soft rounded-xl transition-colors"
                                                     >
                                                         <Plus className="h-5 w-5 stroke-[3px]" />
                                                     </button>
@@ -499,7 +499,7 @@ const BillingItems = ({ onAddToCart, onUpdateQuantity, onRemoveItem, cart = [], 
                                         variant="outline"
                                         size="sm"
                                         onClick={() => setSearchTerm('')}
-                                        className="border-2 border-orange-500 text-orange-500 hover:bg-orange-500 hover:text-[var(--color-text-white)] rounded-full px-8 py-6 font-black uppercase text-xs"
+                                        className="border-2 border-warning text-warning hover:bg-primary hover:text-[var(--color-text-white)] rounded-full px-8 py-6 font-black uppercase text-xs"
                                     >
                                         {t.clear}
                                     </Button>

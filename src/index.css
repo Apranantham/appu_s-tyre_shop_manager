@@ -2,42 +2,70 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  /* Colors */
-  --color-primary: #3B82F6;
-  /* Neon Blue */
-  --color-primary-hover: #2563EB;
-  --color-secondary: #F97316;
-  /* Neon Orange */
-  --color-secondary-hover: #EA580C;
+/* ============================================================
+   GARAGE INSTRUMENT — the app's design system.
+   Asphalt grounds, one molten signal-amber accent, grip-cyan
+   support, gold/green/red semantics, mono "readout" data voice.
+   Every component reads THESE tokens; changing the theme means
+   changing this file only.
+   ============================================================ */
 
-  --color-bg-dark: #111827;
-  /* Very Dark Gray */
-  --color-bg-card: #1F2937;
-  /* Dark Gray */
-  --color-bg-light: #F3F4F6;
-  /* Light Gray */
+:root {
+  /* Brand */
+  --color-primary: #FF7A2F;
+  /* Signal amber */
+  --color-primary-hover: #E9660F;
+  --color-secondary: #33D8C0;
+  /* Grip cyan */
+  --color-secondary-hover: #14B8A3;
+
+  /* Grounds */
+  --color-bg-dark: #0B0D12;
+  /* Asphalt */
+  --color-bg-card: rgba(20, 24, 34, 0.62);
+  /* Graphite glass — translucent so panels refract the ambient background */
+  --color-bg-solid: #12151D;
+  /* Opaque fallback for surfaces that must not be see-through */
+  --color-bg-light: #F2F5F9;
 
   /* Canonical text tokens. Legacy --color-text-white/gray alias to these so
      every naming convention in the app resolves correctly, and a future palette
      swap only needs to touch these values (not 140+ scattered literals). */
-  --color-text: #F9FAFB;
-  --color-text-muted: #9CA3AF;
+  --color-text: #EEF1F7;
+  --color-text-muted: #909AAD;
   --color-text-white: var(--color-text);
   --color-text-gray: var(--color-text-muted);
-  --color-text-dark: #1F2937;
+  --color-text-dark: #12151D;
 
-  --color-border: #4B5563;
-  --color-success: #10B981;
-  --color-danger: #EF4444;
-  --color-warning: #F59E0B;
+  --color-border: rgba(255, 255, 255, 0.09);
+  /* Hairline light borders — glass edges, not hard lines */
+  --color-success: #3ECF8E;
+  --color-danger: #FF5C5C;
+  --color-warning: #F0B44C;
+
+  /* RGB triplets — let Tailwind opacity modifiers (border-primary/20 …) work. */
+  --rgb-primary: 255 122 47;
+  --rgb-secondary: 51 216 192;
+  --rgb-success: 62 207 142;
+  --rgb-danger: 255 92 92;
+  --rgb-warning: 240 180 76;
 
   /* Soft tints for chips / badges / selected states (work over dark or light). */
-  --color-primary-soft: rgba(59, 130, 246, 0.14);
-  --color-secondary-soft: rgba(249, 115, 22, 0.14);
-  --color-success-soft: rgba(16, 185, 129, 0.14);
-  --color-danger-soft: rgba(239, 68, 68, 0.14);
-  --color-warning-soft: rgba(245, 158, 11, 0.16);
+  --color-primary-soft: rgba(255, 122, 47, 0.13);
+  --color-secondary-soft: rgba(51, 216, 192, 0.12);
+  --color-success-soft: rgba(62, 207, 142, 0.13);
+  --color-danger-soft: rgba(255, 92, 92, 0.12);
+  --color-warning-soft: rgba(240, 180, 76, 0.14);
+
+  /* Ambience — glass only reads as glass when there is color behind it to
+     refract. Accent + cyan aurora blobs over the asphalt base; built from
+     the --rgb-primary triplet so it re-tints with the user's accent. */
+  --ambient: radial-gradient(1100px 480px at 80% -12%, rgb(var(--rgb-primary) / 0.13), transparent 62%),
+    radial-gradient(900px 420px at -8% 4%, rgb(var(--rgb-secondary) / 0.09), transparent 58%),
+    radial-gradient(760px 420px at 55% 108%, rgb(var(--rgb-primary) / 0.07), transparent 60%),
+    linear-gradient(180deg, #0B0D12 0%, #0D1018 100%);
+  /* Top-light sheen painted onto every glass surface */
+  --glass-sheen: linear-gradient(180deg, rgba(255, 255, 255, 0.05), transparent 42%);
 
   /* Radius scale — the single source of corner radii. */
   --radius-sm: 0.5rem;
@@ -47,13 +75,18 @@
   --radius-2xl: 2rem;
   --radius-full: 9999px;
 
+  /* Elevation */
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.35), 0 10px 30px rgba(0, 0, 0, 0.25);
+  --shadow-pop: 0 8px 24px rgba(0, 0, 0, 0.45);
+
   /* Typography */
-  --font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-family: 'Inter', 'Noto Sans Tamil', system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'Cascadia Code', Menlo, monospace;
 
   /* Glassmorphism */
-  --glass-bg: rgba(31, 41, 55, 0.7);
-  --glass-border: rgba(255, 255, 255, 0.1);
-  --glass-blur: 10px;
+  --glass-bg: rgba(18, 21, 29, 0.72);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-blur: 14px;
 
   /* Font Sizes */
   --app-font-base: 16px;
@@ -81,21 +114,108 @@
   --app-spacing-scale: 0.75;
 }
 
-/* Light Theme Variables */
+/* Light Theme — cool paper, ink text, deeper amber for contrast. */
 [data-theme='light'] {
-  --color-bg-dark: #F1F5F9;
-  /* Softer light blue-gray */
-  --color-bg-card: #F8FAFC;
-  /* Slate 50 - Very light gray, not pure white */
-  --color-text: #0F172A;
-  /* Slate 900 for main text */
-  --color-text-muted: #64748B;
-  /* Slate 500 for secondary text — distinct from primary text, fixes the
-     collapsed light-theme contrast where both were near-black slate. */
-  --color-border: #E2E8F0;
-  /* Slate 200 */
-  --glass-bg: rgba(248, 250, 252, 0.8);
-  --glass-border: rgba(15, 23, 42, 0.1);
+  --color-primary: #E8620F;
+  --color-primary-hover: #CD5307;
+  --color-secondary: #0E93A8;
+  --color-secondary-hover: #0B7A8C;
+
+  --color-bg-dark: #EEF2F8;
+  --color-bg-card: rgba(255, 255, 255, 0.62);
+  --color-bg-solid: #FFFFFF;
+  --color-text: #131822;
+  --color-text-muted: #5D6779;
+  --color-border: rgba(19, 24, 34, 0.10);
+
+  --color-success: #189A5F;
+  --color-danger: #D63A3A;
+  --color-warning: #B57F0A;
+
+  --rgb-primary: 232 98 15;
+  --rgb-secondary: 14 147 168;
+  --rgb-success: 24 154 95;
+  --rgb-danger: 214 58 58;
+  --rgb-warning: 181 127 10;
+
+  --color-primary-soft: rgba(232, 98, 15, 0.10);
+  --color-secondary-soft: rgba(14, 147, 168, 0.10);
+  --color-success-soft: rgba(24, 154, 95, 0.12);
+  --color-danger-soft: rgba(214, 58, 58, 0.10);
+  --color-warning-soft: rgba(181, 127, 10, 0.12);
+
+  --ambient: radial-gradient(1100px 480px at 80% -12%, rgb(var(--rgb-primary) / 0.10), transparent 62%),
+    radial-gradient(900px 420px at -8% 4%, rgb(var(--rgb-secondary) / 0.08), transparent 58%),
+    radial-gradient(760px 420px at 55% 108%, rgb(var(--rgb-primary) / 0.05), transparent 60%),
+    linear-gradient(180deg, #EEF2F8 0%, #E8EDF5 100%);
+  --glass-sheen: linear-gradient(180deg, rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0.25) 55%);
+
+  --shadow-card: 0 1px 2px rgba(19, 24, 34, 0.06), 0 8px 24px rgba(19, 24, 34, 0.07);
+  --shadow-pop: 0 12px 32px rgba(19, 24, 34, 0.16);
+
+  --glass-bg: rgba(255, 255, 255, 0.78);
+  --glass-border: rgba(19, 24, 34, 0.08);
+}
+
+/* ---- User accent colours ---------------------------------------------
+   Set via data-accent on <html> (ThemeContext). Amber is the default and
+   needs no block. Each accent defines dark values, then a combined
+   light-theme override so specificity resolves correctly. -------------- */
+
+[data-accent='blue'] {
+  --color-primary: #4F8DFF;
+  --color-primary-hover: #2E6FEA;
+  --rgb-primary: 79 141 255;
+  --color-primary-soft: rgba(79, 141, 255, 0.13);
+}
+
+[data-theme='light'][data-accent='blue'] {
+  --color-primary: #2563EB;
+  --color-primary-hover: #1D4FD7;
+  --rgb-primary: 37 99 235;
+  --color-primary-soft: rgba(37, 99, 235, 0.10);
+}
+
+[data-accent='violet'] {
+  --color-primary: #8B7CFF;
+  --color-primary-hover: #6D5AE8;
+  --rgb-primary: 139 124 255;
+  --color-primary-soft: rgba(139, 124, 255, 0.13);
+}
+
+[data-theme='light'][data-accent='violet'] {
+  --color-primary: #6D28D9;
+  --color-primary-hover: #5B21B6;
+  --rgb-primary: 109 40 217;
+  --color-primary-soft: rgba(109, 40, 217, 0.10);
+}
+
+[data-accent='emerald'] {
+  --color-primary: #34D399;
+  --color-primary-hover: #10B981;
+  --rgb-primary: 52 211 153;
+  --color-primary-soft: rgba(52, 211, 153, 0.13);
+}
+
+[data-theme='light'][data-accent='emerald'] {
+  --color-primary: #059669;
+  --color-primary-hover: #047857;
+  --rgb-primary: 5 150 105;
+  --color-primary-soft: rgba(5, 150, 105, 0.10);
+}
+
+[data-accent='rose'] {
+  --color-primary: #FB6F84;
+  --color-primary-hover: #E84C64;
+  --rgb-primary: 251 111 132;
+  --color-primary-soft: rgba(251, 111, 132, 0.13);
+}
+
+[data-theme='light'][data-accent='rose'] {
+  --color-primary: #E11D48;
+  --color-primary-hover: #BE123C;
+  --rgb-primary: 225 29 72;
+  --color-primary-soft: rgba(225, 29, 72, 0.10);
 }
 
 * {
@@ -151,6 +271,19 @@ body {
   color: var(--color-text-white);
   transition: background-color 0.3s ease, color 0.3s ease;
   min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Ambient aurora on a fixed pseudo-element: composited once by the GPU,
+   never repainted on scroll (background-attachment: fixed forces full
+   repaints and janks low-end phones). */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background-image: var(--ambient);
+  pointer-events: none;
 }
 
 button {
@@ -163,13 +296,56 @@ a {
   color: inherit;
 }
 
+/* Keyboard focus is always visible, always amber. */
+:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Numbers line up in columns everywhere. */
+.tabular-nums,
+input[type='number'] {
+  font-variant-numeric: tabular-nums;
+}
+
 /* Utility Classes */
 .glass-panel {
   background: var(--glass-bg);
   backdrop-filter: blur(var(--glass-blur));
   -webkit-backdrop-filter: blur(var(--glass-blur));
   border: 1px solid var(--glass-border);
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
+}
+
+/* ---- Glassmorphism, system-wide -------------------------------------
+   --color-bg-card is translucent, so every element painted with it becomes
+   frosted glass: this rule adds the blur + a top-light sheen to each of
+   those surfaces without touching the components themselves. */
+[class*='bg-[var(--color-bg-card)]'] {
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  background-image: var(--glass-sheen);
+}
+
+/* Blur is expensive on weak GPUs — flatten to solid panels when the user
+   asks for reduced transparency. */
+@media (prefers-reduced-transparency: reduce) {
+  :root {
+    --color-bg-card: var(--color-bg-solid);
+    --glass-sheen: none;
+  }
+
+  [class*='bg-[var(--color-bg-card)]'] {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+}
+
+/* The "instrument readout" voice — data labels, codes, counters. */
+.font-readout {
+  font-family: var(--font-mono);
+  letter-spacing: 0.08em;
 }
 
 .flex-center {
@@ -197,10 +373,11 @@ a {
 /* Scrollbar */
 ::-webkit-scrollbar {
   width: 8px;
+  height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--color-bg-dark);
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
@@ -227,4 +404,14 @@ a {
 
 .animate-fade-in {
   animation: fade-in 0.4s ease-out forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
 }

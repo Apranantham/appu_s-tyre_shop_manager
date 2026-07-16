@@ -68,7 +68,7 @@ const Layout = () => {
                         className="flex items-center space-x-3 cursor-pointer active:opacity-70 transition-opacity"
                         onClick={() => navigate('/settings')}
                     >
-                        <div className="h-10 w-10 rounded-full bg-gradient-to-tr from-cyan-400 to-blue-500 p-0.5">
+                        <div className="h-10 w-10 rounded-full bg-gradient-to-tr from-secondary to-primary p-0.5">
                             <div className="h-full w-full rounded-full bg-[var(--color-bg-card)] overflow-hidden">
                                 <img
                                     src={isAuthenticated ? user.picture : "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&q=80"}
@@ -81,7 +81,7 @@ const Layout = () => {
                             <h1 className="text-sm font-bold leading-tight line-clamp-1">
                                 {isAuthenticated ? user.name : "TurboTyre Central"}
                             </h1>
-                            <p className="text-[10px] font-bold text-[#3B82F6] tracking-wide uppercase">
+                            <p className="text-[10px] font-bold text-[var(--color-primary)] tracking-wide uppercase">
                                 {isAuthenticated ? t.store_manager : t.guest_mode}
                             </p>
                         </div>
@@ -95,7 +95,7 @@ const Layout = () => {
                         to="/settings"
                         className={({ isActive }) => cn(
                             "h-10 w-10 rounded-full bg-[var(--color-bg-card)] flex items-center justify-center transition-colors",
-                            isActive ? "text-[#3B82F6]" : "text-[var(--color-text-gray)] hover:text-[var(--color-text-white)]"
+                            isActive ? "text-[var(--color-primary)]" : "text-[var(--color-text-gray)] hover:text-[var(--color-text-white)]"
                         )}
                     >
                         <Settings className="h-5 w-5" />

@@ -19,11 +19,11 @@ import { Button } from '../../components/ui/Button';
 import Modal from '../../components/ui/Modal';
 
 const CATEGORIES = [
-    { id: 'rent', label: 'Rent', labelTa: 'வாடகை', icon: Home, color: 'text-purple-500' },
+    { id: 'rent', label: 'Rent', labelTa: 'வாடகை', icon: Home, color: 'text-secondary' },
     { id: 'electricity', label: 'Electricity', labelTa: 'மின்சாரம்', icon: Zap, color: 'text-yellow-500' },
-    { id: 'stock_purchase', label: 'Stock Purchase', labelTa: 'பொருள் வாங்கல்', icon: Package, color: 'text-blue-500' },
-    { id: 'salary', label: 'Salary / Wages', labelTa: 'சம்பளம்', icon: Users, color: 'text-green-500' },
-    { id: 'maintenance', label: 'Maintenance', labelTa: 'பராமரிப்பு', icon: Wrench, color: 'text-orange-500' },
+    { id: 'stock_purchase', label: 'Stock Purchase', labelTa: 'பொருள் வாங்கல்', icon: Package, color: 'text-primary' },
+    { id: 'salary', label: 'Salary / Wages', labelTa: 'சம்பளம்', icon: Users, color: 'text-success' },
+    { id: 'maintenance', label: 'Maintenance', labelTa: 'பராமரிப்பு', icon: Wrench, color: 'text-warning' },
     { id: 'transport', label: 'Transport', labelTa: 'போக்குவரத்து', icon: Truck, color: 'text-cyan-500' },
     { id: 'miscellaneous', label: 'Miscellaneous', labelTa: 'இதர செலவு', icon: Coffee, color: 'text-pink-500' },
 ];
@@ -254,7 +254,7 @@ const ExpensesPage = () => {
                 </div>
                 <Button
                     onClick={openAdd}
-                    className="bg-[#3B82F6] hover:bg-blue-700 text-white rounded-2xl px-5 py-3 font-black uppercase tracking-widest text-xs shadow-lg shadow-blue-500/20 border-none flex items-center gap-2"
+                    className="bg-[var(--color-primary)] hover:bg-primary-hover text-white rounded-2xl px-5 py-3 font-black uppercase tracking-widest text-xs shadow-lg shadow-black/25 border-none flex items-center gap-2"
                 >
                     <Plus className="h-4 w-4 stroke-[3px]" />
                     {t.add_expense || 'Add Expense'}
@@ -270,7 +270,7 @@ const ExpensesPage = () => {
                             : (t.monthly_expenses || 'Total Expenses')
                         }
                     </p>
-                    <h3 className="text-3xl font-bold text-red-500">
+                    <h3 className="text-3xl font-bold text-danger">
                         ₹{filteredTotal.toLocaleString()}
                     </h3>
                     <p className="text-[10px] text-[var(--color-text-gray)] mt-1">
@@ -298,13 +298,13 @@ const ExpensesPage = () => {
                                         className={cn(
                                             "flex items-center gap-2 px-3 py-2 rounded-xl border transition-all cursor-pointer",
                                             filterCategory === cat
-                                                ? "border-blue-500 bg-blue-500/10"
+                                                ? "border-primary bg-primary-soft"
                                                 : "border-[var(--color-border)] bg-[var(--color-bg-dark)] hover:border-[var(--color-text-gray)]/40"
                                         )}
                                     >
                                         <Icon className={cn("h-4 w-4", info.color)} />
                                         <span className="text-xs font-bold">{lang === 'ta' ? info.labelTa : info.label}</span>
-                                        <span className="text-xs font-black text-red-400">₹{amount.toLocaleString()}</span>
+                                        <span className="text-xs font-black text-danger">₹{amount.toLocaleString()}</span>
                                     </button>
                                 );
                             })
@@ -322,7 +322,7 @@ const ExpensesPage = () => {
                         placeholder={t.search_expenses || 'Search expenses...'}
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full bg-[var(--color-bg-dark)] border border-[var(--color-border)] rounded-xl pl-9 pr-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                        className="w-full bg-[var(--color-bg-dark)] border border-[var(--color-border)] rounded-xl pl-9 pr-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                     />
                 </div>
 
@@ -335,7 +335,7 @@ const ExpensesPage = () => {
                             className={cn(
                                 "px-3 py-1.5 text-[10px] uppercase font-bold rounded-lg transition-all whitespace-nowrap",
                                 dateFilter === df.id
-                                    ? "bg-[#3B82F6] text-white shadow-lg shadow-blue-500/20"
+                                    ? "bg-[var(--color-primary)] text-white shadow-lg shadow-black/25"
                                     : "text-[var(--color-text-gray)] hover:text-[var(--color-text-white)]"
                             )}
                         >
@@ -353,7 +353,7 @@ const ExpensesPage = () => {
                             className={cn(
                                 "flex items-center gap-2 px-3 py-2.5 rounded-xl border text-xs font-bold transition-all",
                                 filterCategory !== 'all'
-                                    ? "border-blue-500 bg-blue-500/10 text-blue-500"
+                                    ? "border-primary bg-primary-soft text-primary"
                                     : "border-[var(--color-border)] bg-[var(--color-bg-dark)] text-[var(--color-text-gray)]"
                             )}
                         >
@@ -372,7 +372,7 @@ const ExpensesPage = () => {
                                 <div className="absolute right-0 mt-2 w-56 bg-[var(--color-bg-card)] border border-[var(--color-border)] rounded-2xl shadow-2xl z-50 py-2 animate-in fade-in slide-in-from-top-2 duration-200">
                                     <button
                                         onClick={() => { setFilterCategory('all'); setShowCategoryFilter(false); }}
-                                        className={cn("w-full text-left px-4 py-2.5 text-sm font-bold hover:bg-[var(--color-bg-dark)] transition-colors", filterCategory === 'all' && "text-blue-500")}
+                                        className={cn("w-full text-left px-4 py-2.5 text-sm font-bold hover:bg-[var(--color-bg-dark)] transition-colors", filterCategory === 'all' && "text-primary")}
                                     >
                                         {t.all_categories || 'All Categories'}
                                     </button>
@@ -380,7 +380,7 @@ const ExpensesPage = () => {
                                         <button
                                             key={cat.id}
                                             onClick={() => { setFilterCategory(cat.id); setShowCategoryFilter(false); }}
-                                            className={cn("w-full text-left px-4 py-2.5 text-sm font-bold hover:bg-[var(--color-bg-dark)] transition-colors flex items-center gap-2", filterCategory === cat.id && "text-blue-500")}
+                                            className={cn("w-full text-left px-4 py-2.5 text-sm font-bold hover:bg-[var(--color-bg-dark)] transition-colors flex items-center gap-2", filterCategory === cat.id && "text-primary")}
                                         >
                                             <cat.icon className={cn("h-4 w-4", cat.color)} />
                                             {lang === 'ta' ? cat.labelTa : cat.label}
@@ -399,7 +399,7 @@ const ExpensesPage = () => {
                                 className={cn(
                                     "flex items-center gap-2 px-3 py-2.5 rounded-xl border text-xs font-bold transition-all",
                                     staffFilter !== 'all'
-                                        ? "border-purple-500 bg-purple-500/10 text-purple-400"
+                                        ? "border-secondary bg-secondary-soft text-secondary"
                                         : "border-[var(--color-border)] bg-[var(--color-bg-dark)] text-[var(--color-text-gray)]"
                                 )}
                             >
@@ -413,7 +413,7 @@ const ExpensesPage = () => {
                                     <div className="absolute right-0 mt-2 w-64 bg-[var(--color-bg-card)] border border-[var(--color-border)] rounded-2xl shadow-2xl z-50 py-2 animate-in fade-in slide-in-from-top-2 duration-200 max-h-72 overflow-y-auto">
                                         <button
                                             onClick={() => { setStaffFilter('all'); setShowStaffFilter(false); }}
-                                            className={cn("w-full text-left px-4 py-2.5 text-sm font-bold hover:bg-[var(--color-bg-dark)] transition-colors flex items-center gap-2", staffFilter === 'all' && "text-purple-400")}
+                                            className={cn("w-full text-left px-4 py-2.5 text-sm font-bold hover:bg-[var(--color-bg-dark)] transition-colors flex items-center gap-2", staffFilter === 'all' && "text-secondary")}
                                         >
                                             <Users className="h-4 w-4" />
                                             {lang === 'ta' ? 'அனைவரும்' : 'All Staff'}
@@ -423,7 +423,7 @@ const ExpensesPage = () => {
                                             <button
                                                 key={s.id}
                                                 onClick={() => { setStaffFilter(s.id); setShowStaffFilter(false); }}
-                                                className={cn("w-full text-left px-4 py-2.5 text-sm font-bold hover:bg-[var(--color-bg-dark)] transition-colors truncate", staffFilter === s.id && "text-purple-400")}
+                                                className={cn("w-full text-left px-4 py-2.5 text-sm font-bold hover:bg-[var(--color-bg-dark)] transition-colors truncate", staffFilter === s.id && "text-secondary")}
                                             >
                                                 {s.label}
                                             </button>
@@ -438,7 +438,7 @@ const ExpensesPage = () => {
                     {activeFilterCount > 0 && (
                         <button
                             onClick={clearAllFilters}
-                            className="flex items-center gap-1 px-3 py-2.5 rounded-xl text-xs font-bold text-red-400 hover:bg-red-500/10 transition-all border border-transparent hover:border-red-500/20"
+                            className="flex items-center gap-1 px-3 py-2.5 rounded-xl text-xs font-bold text-danger hover:bg-danger-soft transition-all border border-transparent hover:border-danger/20"
                         >
                             <X className="h-3 w-3" />
                             {lang === 'ta' ? 'அழி' : 'Clear'}
@@ -457,7 +457,7 @@ const ExpensesPage = () => {
                             type="date"
                             value={customDateFrom}
                             onChange={(e) => setCustomDateFrom(e.target.value)}
-                            className="bg-[var(--color-bg-card)] border border-[var(--color-border)] rounded-lg px-3 py-1.5 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                            className="bg-[var(--color-bg-card)] border border-[var(--color-border)] rounded-lg px-3 py-1.5 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-primary/20"
                         />
                     </div>
                     <div className="flex items-center gap-2">
@@ -466,7 +466,7 @@ const ExpensesPage = () => {
                             type="date"
                             value={customDateTo}
                             onChange={(e) => setCustomDateTo(e.target.value)}
-                            className="bg-[var(--color-bg-card)] border border-[var(--color-border)] rounded-lg px-3 py-1.5 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                            className="bg-[var(--color-bg-card)] border border-[var(--color-border)] rounded-lg px-3 py-1.5 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-primary/20"
                         />
                     </div>
                 </div>
@@ -498,7 +498,7 @@ const ExpensesPage = () => {
                             <div className="flex items-center gap-3 mb-3">
                                 <Calendar className="h-4 w-4 text-[var(--color-text-gray)]" />
                                 <h3 className="text-xs font-black uppercase tracking-widest text-[var(--color-text-gray)]">{date}</h3>
-                                <span className="text-xs font-black text-red-400">
+                                <span className="text-xs font-black text-danger">
                                     ₹{items.reduce((s, e) => s + (e.amount || 0), 0).toLocaleString()}
                                 </span>
                             </div>
@@ -533,7 +533,7 @@ const ExpensesPage = () => {
                                                             {new Date(expense.date).toLocaleTimeString(lang === 'ta' ? 'ta-IN' : 'en-IN', { hour: '2-digit', minute: '2-digit', hour12: true })}
                                                         </span>
                                                         {isAdmin && expense.creatorEmail && (
-                                                            <span className="text-[9px] font-bold text-purple-400 bg-purple-500/10 px-2 py-0.5 rounded-full truncate max-w-[120px]">
+                                                            <span className="text-[9px] font-bold text-secondary bg-secondary-soft px-2 py-0.5 rounded-full truncate max-w-[120px]">
                                                                 {expense.creatorEmail}
                                                             </span>
                                                         )}
@@ -541,12 +541,12 @@ const ExpensesPage = () => {
                                                 </div>
                                             </div>
                                             <div className="flex items-center gap-3">
-                                                <span className="font-black text-lg text-red-500">₹{(expense.amount || 0).toLocaleString()}</span>
+                                                <span className="font-black text-lg text-danger">₹{(expense.amount || 0).toLocaleString()}</span>
                                                 <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                    <button onClick={() => openEdit(expense)} className="p-2 hover:bg-[var(--color-bg-dark)] rounded-lg text-[var(--color-text-gray)] hover:text-blue-500 transition-colors">
+                                                    <button onClick={() => openEdit(expense)} className="p-2 hover:bg-[var(--color-bg-dark)] rounded-lg text-[var(--color-text-gray)] hover:text-primary transition-colors">
                                                         <Edit3 className="h-4 w-4" />
                                                     </button>
-                                                    <button onClick={() => setDeleteTarget(expense)} className="p-2 hover:bg-[var(--color-bg-dark)] rounded-lg text-[var(--color-text-gray)] hover:text-red-500 transition-colors">
+                                                    <button onClick={() => setDeleteTarget(expense)} className="p-2 hover:bg-[var(--color-bg-dark)] rounded-lg text-[var(--color-text-gray)] hover:text-danger transition-colors">
                                                         <Trash2 className="h-4 w-4" />
                                                     </button>
                                                 </div>
@@ -573,20 +573,20 @@ const ExpensesPage = () => {
                             {CATEGORIES.map(cat => (
                                 <button key={cat.id} onClick={() => setForm({ ...form, category: cat.id })}
                                     className={cn("flex flex-col items-center justify-center py-3 px-1 rounded-xl border transition-all gap-1.5",
-                                        form.category === cat.id ? "border-blue-500 bg-blue-50 shadow-sm ring-2 ring-blue-500/20" : "border-[var(--color-border)] bg-[var(--color-bg-dark)]/50 hover:border-[var(--color-text-gray)]/40"
+                                        form.category === cat.id ? "border-primary bg-primary-soft shadow-sm ring-2 ring-primary/20" : "border-[var(--color-border)] bg-[var(--color-bg-dark)]/50 hover:border-[var(--color-text-gray)]/40"
                                     )}>
-                                    <cat.icon className={cn("h-5 w-5", form.category === cat.id ? "text-blue-600" : cat.color)} />
-                                    <span className={cn("text-[9px] font-black uppercase tracking-tighter leading-tight text-center", form.category === cat.id ? "text-blue-600" : "text-[var(--color-text-gray)]")}>
+                                    <cat.icon className={cn("h-5 w-5", form.category === cat.id ? "text-primary" : cat.color)} />
+                                    <span className={cn("text-[9px] font-black uppercase tracking-tighter leading-tight text-center", form.category === cat.id ? "text-primary" : "text-[var(--color-text-gray)]")}>
                                         {lang === 'ta' ? cat.labelTa : cat.label}
                                     </span>
                                 </button>
                             ))}
                             <button onClick={() => setForm({ ...form, category: 'custom' })}
                                 className={cn("flex flex-col items-center justify-center py-3 px-1 rounded-xl border transition-all gap-1.5",
-                                    form.category === 'custom' ? "border-blue-500 bg-blue-50 shadow-sm ring-2 ring-blue-500/20" : "border-[var(--color-border)] bg-[var(--color-bg-dark)]/50 hover:border-[var(--color-text-gray)]/40"
+                                    form.category === 'custom' ? "border-primary bg-primary-soft shadow-sm ring-2 ring-primary/20" : "border-[var(--color-border)] bg-[var(--color-bg-dark)]/50 hover:border-[var(--color-text-gray)]/40"
                                 )}>
-                                <FileText className={cn("h-5 w-5", form.category === 'custom' ? "text-blue-600" : "text-[var(--color-text-gray)]")} />
-                                <span className={cn("text-[9px] font-black uppercase tracking-tighter", form.category === 'custom' ? "text-blue-600" : "text-[var(--color-text-gray)]")}>
+                                <FileText className={cn("h-5 w-5", form.category === 'custom' ? "text-primary" : "text-[var(--color-text-gray)]")} />
+                                <span className={cn("text-[9px] font-black uppercase tracking-tighter", form.category === 'custom' ? "text-primary" : "text-[var(--color-text-gray)]")}>
                                     {lang === 'ta' ? 'மற்றவை' : 'Custom'}
                                 </span>
                             </button>
@@ -594,16 +594,16 @@ const ExpensesPage = () => {
                         {form.category === 'custom' && (
                             <input placeholder={lang === 'ta' ? 'வகையை உள்ளிடவும்...' : 'Enter category name...'} value={form.customCategory}
                                 onChange={(e) => setForm({ ...form, customCategory: e.target.value })}
-                                className="w-full mt-2 bg-[var(--color-bg-dark)] border border-[var(--color-border)] rounded-xl px-4 py-2.5 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500/20 text-[var(--color-text-white)]"
+                                className="w-full mt-2 bg-[var(--color-bg-dark)] border border-[var(--color-border)] rounded-xl px-4 py-2.5 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-primary/20 text-[var(--color-text-white)]"
                             />
                         )}
                     </div>
                     <div className="space-y-2">
                         <label className="text-[9px] font-bold text-[var(--color-text-gray)]/60 uppercase tracking-widest">{t.amount || 'Amount'}</label>
                         <div className="relative">
-                            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-lg font-black text-blue-500">₹</span>
+                            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-lg font-black text-primary">₹</span>
                             <input type="number" placeholder="0" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })}
-                                className="w-full bg-[var(--color-bg-dark)] border border-[var(--color-border)] rounded-xl pl-10 pr-4 py-3 text-2xl font-black focus:outline-none focus:ring-2 focus:ring-blue-500/20 text-[var(--color-text-white)]"
+                                className="w-full bg-[var(--color-bg-dark)] border border-[var(--color-border)] rounded-xl pl-10 pr-4 py-3 text-2xl font-black focus:outline-none focus:ring-2 focus:ring-primary/20 text-[var(--color-text-white)]"
                             />
                         </div>
                     </div>
@@ -611,7 +611,7 @@ const ExpensesPage = () => {
                         <label className="text-[9px] font-bold text-[var(--color-text-gray)]/60 uppercase tracking-widest">{t.description || 'Description'}</label>
                         <input placeholder={lang === 'ta' ? 'விவரம் (விருப்பமானது)...' : 'Description (optional)...'} value={form.description}
                             onChange={(e) => setForm({ ...form, description: e.target.value })}
-                            className="w-full bg-[var(--color-bg-dark)] border border-[var(--color-border)] rounded-xl px-4 py-2.5 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500/20 text-[var(--color-text-white)]"
+                            className="w-full bg-[var(--color-bg-dark)] border border-[var(--color-border)] rounded-xl px-4 py-2.5 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-primary/20 text-[var(--color-text-white)]"
                         />
                     </div>
                     <div className="space-y-2">
@@ -620,7 +620,7 @@ const ExpensesPage = () => {
                             {PAYMENT_MODES.map(mode => (
                                 <button key={mode.id} onClick={() => setForm({ ...form, paymentMode: mode.id })}
                                     className={cn("flex flex-col items-center justify-center py-3 rounded-xl border transition-all h-14",
-                                        form.paymentMode === mode.id ? "border-blue-500 bg-blue-50 text-blue-600 shadow-sm ring-2 ring-blue-500/20" : "border-[var(--color-border)] bg-[var(--color-bg-dark)]/50 text-[var(--color-text-gray)]"
+                                        form.paymentMode === mode.id ? "border-primary bg-primary-soft text-primary shadow-sm ring-2 ring-primary/20" : "border-[var(--color-border)] bg-[var(--color-bg-dark)]/50 text-[var(--color-text-gray)]"
                                     )}>
                                     <mode.icon className="h-5 w-5 mb-1" />
                                     <span className="text-[10px] font-black uppercase">{t[mode.id]}</span>
@@ -631,11 +631,11 @@ const ExpensesPage = () => {
                     <div className="space-y-2">
                         <label className="text-[9px] font-bold text-[var(--color-text-gray)]/60 uppercase tracking-widest">{t.date || 'Date'}</label>
                         <input type="datetime-local" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })}
-                            className="w-full bg-[var(--color-bg-dark)] border border-[var(--color-border)] rounded-xl px-4 py-2.5 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500/20 text-[var(--color-text-white)]"
+                            className="w-full bg-[var(--color-bg-dark)] border border-[var(--color-border)] rounded-xl px-4 py-2.5 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-primary/20 text-[var(--color-text-white)]"
                         />
                     </div>
                     <Button onClick={handleSave} disabled={!form.amount || Number(form.amount) <= 0}
-                        className="w-full h-14 bg-[#3B82F6] hover:bg-blue-700 text-white rounded-2xl shadow-lg shadow-blue-500/20 font-black uppercase tracking-widest text-sm border-none mt-2">
+                        className="w-full h-14 bg-[var(--color-primary)] hover:bg-primary-hover text-white rounded-2xl shadow-lg shadow-black/25 font-black uppercase tracking-widest text-sm border-none mt-2">
                         {editingExpense ? (t.save || 'Save') : (t.add_expense || 'Add Expense')}
                     </Button>
                 </div>
@@ -646,7 +646,7 @@ const ExpensesPage = () => {
                 <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
                     <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setDeleteTarget(null)}></div>
                     <Card className="relative w-full max-w-sm p-6 space-y-6 text-center animate-in zoom-in-95 duration-200">
-                        <div className="mx-auto h-16 w-16 rounded-full bg-red-100 flex items-center justify-center text-red-600">
+                        <div className="mx-auto h-16 w-16 rounded-full bg-danger-soft flex items-center justify-center text-danger">
                             <Trash2 className="h-8 w-8" />
                         </div>
                         <div>
@@ -657,7 +657,7 @@ const ExpensesPage = () => {
                         </div>
                         <div className="flex space-x-3">
                             <Button variant="outline" className="flex-1" onClick={() => setDeleteTarget(null)}>{t.cancel}</Button>
-                            <Button className="flex-1 bg-red-600 hover:bg-red-700 border-none" onClick={handleDelete}>{t.delete}</Button>
+                            <Button className="flex-1 bg-danger hover:bg-danger border-none" onClick={handleDelete}>{t.delete}</Button>
                         </div>
                     </Card>
                 </div>,

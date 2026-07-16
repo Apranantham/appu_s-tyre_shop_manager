@@ -65,7 +65,7 @@ const RecycleBin = () => {
                     </Button>
                     <div>
                         <h1 className="text-2xl font-black uppercase tracking-tight flex items-center gap-2">
-                            <Trash2 className="h-6 w-6 text-red-500" />
+                            <Trash2 className="h-6 w-6 text-danger" />
                             {lang === 'ta' ? 'குப்பைத் தொட்டி' : 'Recycle Bin'}
                         </h1>
                         <p className="text-[10px] font-bold text-[var(--color-text-gray)] uppercase tracking-widest opacity-60">
@@ -89,9 +89,9 @@ const RecycleBin = () => {
                 </Card>
             ) : (
                 <div className="grid gap-4">
-                    <div className="bg-red-500/10 border border-red-500/20 p-4 rounded-2xl flex items-center gap-3">
-                        <AlertCircle className="h-5 w-5 text-red-500 shrink-0" />
-                        <p className="text-[10px] font-bold text-red-500/90 uppercase tracking-widest leading-relaxed">
+                    <div className="bg-danger-soft border border-danger/20 p-4 rounded-2xl flex items-center gap-3">
+                        <AlertCircle className="h-5 w-5 text-danger shrink-0" />
+                        <p className="text-[10px] font-bold text-danger/90 uppercase tracking-widest leading-relaxed">
                             {lang === 'ta'
                                 ? 'குறிப்பு: தரவை மீட்டெடுக்கும்போது அதற்கான சரக்கு இருப்பு தானாகவே குறைக்கப்படும்.'
                                 : 'Note: Restoring an invoice will automatically deduct the items from your live inventory again.'}
@@ -126,7 +126,7 @@ const RecycleBin = () => {
                                                 </div>
                                             </td>
                                             <td className="px-6 py-5">
-                                                <span className="font-black text-red-500">₹{inv.total.toLocaleString()}</span>
+                                                <span className="font-black text-danger">₹{inv.total.toLocaleString()}</span>
                                             </td>
                                             <td className="px-6 py-5">
                                                 <div className="flex flex-col">
@@ -139,7 +139,7 @@ const RecycleBin = () => {
                                                     <Button
                                                         size="sm"
                                                         variant="ghost"
-                                                        className="h-10 px-4 rounded-xl bg-blue-500/10 text-blue-500 hover:bg-blue-500 hover:text-white transition-all font-black text-[10px] uppercase tracking-widest"
+                                                        className="h-10 px-4 rounded-xl bg-primary-soft text-primary hover:bg-primary hover:text-white transition-all font-black text-[10px] uppercase tracking-widest"
                                                         onClick={() => setConfirmAction({ type: 'restore', invoice: inv })}
                                                     >
                                                         <RefreshCcw className="h-3.5 w-3.5 mr-2" />
@@ -148,7 +148,7 @@ const RecycleBin = () => {
                                                     <Button
                                                         size="sm"
                                                         variant="ghost"
-                                                        className="h-10 px-4 rounded-xl bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white transition-all font-black text-[10px] uppercase tracking-widest"
+                                                        className="h-10 px-4 rounded-xl bg-danger-soft text-danger hover:bg-danger hover:text-white transition-all font-black text-[10px] uppercase tracking-widest"
                                                         onClick={() => setConfirmAction({ type: 'burn', invoice: inv })}
                                                     >
                                                         <Trash2 className="h-3.5 w-3.5 mr-2" />
@@ -172,7 +172,7 @@ const RecycleBin = () => {
                     <Card className="relative w-full max-w-sm p-8 space-y-6 text-center animate-in zoom-in-95 duration-200 border border-[var(--color-border)] rounded-[2.5rem] shadow-2xl">
                         <div className={cn(
                             "mx-auto h-20 w-20 rounded-full flex items-center justify-center",
-                            confirmAction.type === 'restore' ? "bg-blue-500/10 text-blue-500" : "bg-red-500/10 text-red-500"
+                            confirmAction.type === 'restore' ? "bg-primary-soft text-primary" : "bg-danger-soft text-danger"
                         )}>
                             {confirmAction.type === 'restore' ? <RefreshCcw className="h-10 w-10" /> : <Trash2 className="h-10 w-10" />}
                         </div>
@@ -206,8 +206,8 @@ const RecycleBin = () => {
                                 className={cn(
                                     "flex-1 py-6 text-white rounded-2xl font-black uppercase tracking-widest shadow-lg border-none",
                                     confirmAction.type === 'restore'
-                                        ? "bg-blue-600 hover:bg-blue-700 shadow-blue-500/20"
-                                        : "bg-red-600 hover:bg-red-700 shadow-red-500/20"
+                                        ? "bg-primary hover:bg-primary-hover shadow-black/25"
+                                        : "bg-danger hover:bg-danger shadow-red-500/20"
                                 )}
                                 onClick={() => {
                                     if (confirmAction.type === 'restore') handleRestore(confirmAction.invoice);

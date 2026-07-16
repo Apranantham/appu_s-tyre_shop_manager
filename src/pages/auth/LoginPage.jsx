@@ -143,7 +143,7 @@ const LoginPage = () => {
         <div className="min-h-screen bg-[var(--color-bg-dark)] text-[var(--color-text)] flex items-center justify-center p-4 relative overflow-hidden">
             <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none opacity-20 text-[var(--color-primary)]">
                 <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-current rounded-full blur-[120px] animate-pulse"></div>
-                <div className="absolute bottom-[-10%] right-[-10%] w-[30%] h-[30%] bg-blue-500 rounded-full blur-[100px] animate-pulse delay-700"></div>
+                <div className="absolute bottom-[-10%] right-[-10%] w-[30%] h-[30%] bg-primary rounded-full blur-[100px] animate-pulse delay-700"></div>
             </div>
 
             <div className="max-w-md w-full relative z-10">
@@ -169,7 +169,7 @@ const LoginPage = () => {
                                 className={cn(
                                     "flex-1 py-3 rounded-[1.2rem] text-[10px] font-black uppercase tracking-widest flex items-center justify-center transition-all duration-300",
                                     authMode === tab.id
-                                        ? "bg-[var(--color-primary)] text-white shadow-lg shadow-blue-500/20 scale-[1.02]"
+                                        ? "bg-[var(--color-primary)] text-white shadow-lg shadow-black/25 scale-[1.02]"
                                         : "text-[var(--color-text-gray)] hover:text-[var(--color-text-white)]"
                                 )}
                             >
@@ -181,13 +181,13 @@ const LoginPage = () => {
 
                     <div className="px-6 pb-10 pt-4">
                         {error && (
-                            <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-[1.2rem] text-red-500 text-[11px] text-center font-black uppercase tracking-wider animate-shake">
+                            <div className="mb-6 p-4 bg-danger-soft border border-danger/20 rounded-[1.2rem] text-danger text-[11px] text-center font-black uppercase tracking-wider animate-shake">
                                 {error}
                             </div>
                         )}
 
                         {successMessage && (
-                            <div className="mb-6 p-4 bg-green-500/10 border border-green-500/20 rounded-[1.2rem] text-green-500 text-[11px] text-center font-black uppercase tracking-wider flex items-center justify-center">
+                            <div className="mb-6 p-4 bg-success-soft border border-success/20 rounded-[1.2rem] text-success text-[11px] text-center font-black uppercase tracking-wider flex items-center justify-center">
                                 <CheckCircle2 className="h-4 w-4 mr-2" />
                                 {successMessage}
                             </div>
@@ -311,7 +311,7 @@ const LoginPage = () => {
 
                                 <Button
                                     type="submit"
-                                    className="w-full h-16 bg-[var(--color-primary)] hover:bg-blue-600 font-extrabold rounded-2xl flex items-center justify-center mt-8 shadow-xl shadow-blue-500/30 text-[11px] uppercase tracking-[0.2em] border-t border-white/20 transition-all hover:scale-[1.01] active:scale-[0.98]"
+                                    className="w-full h-16 bg-[var(--color-primary)] hover:bg-primary-hover font-extrabold rounded-2xl flex items-center justify-center mt-8 shadow-xl shadow-black/25 text-[11px] uppercase tracking-[0.2em] border-t border-white/20 transition-all hover:scale-[1.01] active:scale-[0.98]"
                                     disabled={loadingAction}
                                 >
                                     {loadingAction ? (
@@ -420,7 +420,7 @@ const LoginPage = () => {
 
                                 <Button
                                     type="submit"
-                                    className="w-full h-14 bg-[var(--color-primary)] hover:bg-blue-600 font-bold rounded-2xl flex items-center justify-center mt-6 shadow-lg shadow-blue-500/20"
+                                    className="w-full h-14 bg-[var(--color-primary)] hover:bg-primary-hover font-bold rounded-2xl flex items-center justify-center mt-6 shadow-lg shadow-black/25"
                                     disabled={loadingAction}
                                 >
                                     {loadingAction ? (

@@ -34,7 +34,7 @@ const InvoiceTemplate = React.forwardRef(({ invoice, showPreview = false }, ref)
                 }
             `}} />
             {/* Design Accent Top */}
-            <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-[var(--color-primary)] to-blue-600 print:bg-[var(--color-primary)]"></div>
+            <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-[var(--color-primary)] to-primary-hover print:bg-[var(--color-primary)]"></div>
 
             {/* Header Section */}
             <div className="flex justify-between items-start mb-10 pt-4">
@@ -127,7 +127,7 @@ const InvoiceTemplate = React.forwardRef(({ invoice, showPreview = false }, ref)
                                 <td className="text-right py-5 text-slate-600 font-medium">
                                     {item.type === 'old_part' ? `-₹${item.exchangeValue?.toLocaleString('en-IN')}` : `₹${item.price.toLocaleString('en-IN')}`}
                                 </td>
-                                <td className={`text-right py-5 font-bold ${item.type === 'old_part' ? 'text-red-500' : 'text-slate-900'}`}>
+                                <td className={`text-right py-5 font-bold ${item.type === 'old_part' ? 'text-danger' : 'text-slate-900'}`}>
                                     {item.type === 'old_part' ? `-₹${(item.exchangeValue * item.quantity).toLocaleString('en-IN')}` : `₹${(item.price * item.quantity).toLocaleString('en-IN')}`}
                                 </td>
                             </tr>
@@ -175,7 +175,7 @@ const InvoiceTemplate = React.forwardRef(({ invoice, showPreview = false }, ref)
                         <span className="font-bold text-slate-900">₹{(invoice.subtotal || invoice.total + (invoice.discount || 0)).toLocaleString('en-IN')}</span>
                     </div>
                     {invoice.discount > 0 && (
-                        <div className="flex justify-between text-sm text-red-500">
+                        <div className="flex justify-between text-sm text-danger">
                             <span>Discount Applied</span>
                             <span className="font-bold">- ₹{invoice.discount.toLocaleString('en-IN')}</span>
                         </div>
@@ -184,7 +184,7 @@ const InvoiceTemplate = React.forwardRef(({ invoice, showPreview = false }, ref)
                         <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Grand Total</span>
                         <span className="text-2xl font-black text-slate-900">₹{invoice.total.toLocaleString('en-IN')}</span>
                     </div>
-                    <div className="flex justify-between text-sm text-green-600 font-bold bg-green-50 px-3 py-2 rounded-lg">
+                    <div className="flex justify-between text-sm text-success font-bold bg-green-50 px-3 py-2 rounded-lg">
                         <span>Total Paid</span>
                         <span>₹{invoice.paidAmount.toLocaleString('en-IN')}</span>
                     </div>
