@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { useTheme } from '../../context/ThemeContext';
+import { useTheme, ACCENTS } from '../../context/ThemeContext';
 import { useSettings } from '../../context/SettingsContext';
 import { translations } from '../../utils/translations';
 import { cn } from '../../utils/cn'; // Assuming cn utility is available
@@ -10,7 +10,7 @@ import { User, LogOut, Sun, Moon, Info, Shield, Store, Save, Type, Monitor, Wall
 
 const SettingsPage = () => {
     const { user, login, logout, isAuthenticated } = useAuth();
-    const { theme, toggleTheme } = useTheme();
+    const { theme, toggleTheme, accent, setAccent } = useTheme();
     const { shopDetails, updateShopDetails } = useSettings();
     const { isAdmin } = useAuth();
     const lang = shopDetails?.appLanguage || 'ta';
@@ -313,6 +313,39 @@ const SettingsPage = () => {
                                 {theme === 'dark' ? <Moon className="h-3.5 w-3.5 text-[var(--color-primary)]" /> : <Sun className="h-3.5 w-3.5 text-gray-700" />}
                             </div>
                         </button>
+                    </div>
+
+                    {/* Accent colour — per-user (saved on this device, not the shop) */}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-6 rounded-[2rem] bg-[var(--color-bg-dark)]/40 border border-white/5 shadow-inner">
+                        <div>
+                            <p className="font-black text-xs uppercase tracking-widest text-[var(--color-text)]">
+                                {lang === 'ta' ? 'தீம் நிறம்' : 'Theme Colour'}
+                            </p>
+                            <p className="text-[10px] text-[var(--color-text-gray)] font-medium mt-1 opacity-70">
+                                {lang === 'ta' ? 'உங்களுக்கு மட்டும் — இந்த சாதனத்தில் சேமிக்கப்படும்' : 'Just for you — saved on this device'}
+                            </p>
+                        </div>
+                        <div className="flex items-center gap-2.5">
+                            {ACCENTS.map(a => (
+                                <button
+                                    key={a.id}
+                                    onClick={() => setAccent(a.id)}
+                                    title={lang === 'ta' ? a.label_ta : a.label}
+                                    aria-label={a.label}
+                                    className={cn(
+                                        "h-9 w-9 rounded-full transition-all duration-200 border-2",
+                                        accent === a.id
+                                            ? "border-[var(--color-text)] scale-110 shadow-pop"
+                                            : "border-transparent opacity-70 hover:opacity-100 hover:scale-105"
+                                    )}
+                                    style={{ backgroundColor: a.swatch }}
+                                >
+                                    {accent === a.id && (
+                                        <span className="block h-2 w-2 mx-auto rounded-full bg-white shadow" />
+                                    )}
+                                </button>
+                            ))}
+                        </div>
                     </div>
 
                     {/* Language Selection */}
