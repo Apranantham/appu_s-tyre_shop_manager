@@ -8,6 +8,7 @@ import { translations } from '../../utils/translations';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import WhatsAppIcon from '../../components/ui/WhatsAppIcon';
+import InitialAvatar from '../../components/ui/InitialAvatar';
 import { openWhatsApp } from '../../utils/whatsapp';
 import { CustomerCardSkeleton } from '../../components/ui/SkeletonVariants';
 
@@ -155,9 +156,7 @@ const CustomerHistory = () => {
                             className="flex flex-col md:flex-row md:items-center justify-between p-4 gap-4 transition-colors cursor-pointer hover:border-[var(--color-primary)]"
                         >
                             <div className="flex items-start space-x-4">
-                                <div className="h-12 w-12 rounded-full bg-[var(--color-primary)]/10 flex items-center justify-center text-[var(--color-primary)]">
-                                    <User className="h-6 w-6" />
-                                </div>
+                                <InitialAvatar name={c.name} />
                                 <div>
                                     <h3 className="font-bold text-lg">{c.name || (lang === 'ta' ? 'வாடிக்கையாளர்' : 'Walk-in')}</h3>
                                     <div className="flex items-center text-sm text-[var(--color-text-gray)] space-x-4">

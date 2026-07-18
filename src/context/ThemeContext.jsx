@@ -26,6 +26,13 @@ export const ThemeProvider = ({ children }) => {
         return ACCENTS.some(a => a.id === saved) ? saved : 'amber';
     });
 
+    // Per-user surface style: 'glass' (frosted panels + aurora) or
+    // 'clean' (flat, solid, Telegram-like).
+    const [style, setStyle] = useState(() => {
+        const saved = localStorage.getItem('surface_style');
+        return saved === 'clean' ? 'clean' : 'glass';
+    });
+
     useEffect(() => {
         const root = window.document.documentElement;
         root.setAttribute('data-theme', theme);
@@ -38,12 +45,18 @@ export const ThemeProvider = ({ children }) => {
         localStorage.setItem('accent_color', accent);
     }, [accent]);
 
+    useEffect(() => {
+        const root = window.document.documentElement;
+        root.setAttribute('data-style', style);
+        localStorage.setItem('surface_style', style);
+    }, [style]);
+
     const toggleTheme = () => {
         setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
     };
 
     return (
-        <ThemeContext.Provider value={{ theme, toggleTheme, accent, setAccent }}>
+        <ThemeContext.Provider value={{ theme, toggleTheme, accent, setAccent, style, setStyle }}>
             {children}
         </ThemeContext.Provider>
     );

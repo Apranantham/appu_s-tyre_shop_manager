@@ -10,7 +10,7 @@ import { User, LogOut, Sun, Moon, Info, Shield, Store, Save, Type, Monitor, Wall
 
 const SettingsPage = () => {
     const { user, login, logout, isAuthenticated } = useAuth();
-    const { theme, toggleTheme, accent, setAccent } = useTheme();
+    const { theme, toggleTheme, accent, setAccent, style, setStyle } = useTheme();
     const { shopDetails, updateShopDetails } = useSettings();
     const { isAdmin } = useAuth();
     const lang = shopDetails?.appLanguage || 'ta';
@@ -343,6 +343,37 @@ const SettingsPage = () => {
                                     {accent === a.id && (
                                         <span className="block h-2 w-2 mx-auto rounded-full bg-white shadow" />
                                     )}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Surface style — Glass vs Clean (Telegram-like), per user */}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-6 rounded-[2rem] bg-[var(--color-bg-dark)]/40 border border-white/5 shadow-inner">
+                        <div>
+                            <p className="font-black text-xs uppercase tracking-widest text-[var(--color-text)]">
+                                {lang === 'ta' ? 'தோற்ற பாணி' : 'App Style'}
+                            </p>
+                            <p className="text-[10px] text-[var(--color-text-gray)] font-medium mt-1 opacity-70">
+                                {lang === 'ta' ? 'உங்களுக்கு மட்டும் — இந்த சாதனத்தில் சேமிக்கப்படும்' : 'Just for you — saved on this device'}
+                            </p>
+                        </div>
+                        <div className="flex bg-[var(--color-bg-dark)]/60 p-1 rounded-pill border border-[var(--color-border)]">
+                            {[
+                                { id: 'glass', label: lang === 'ta' ? '✨ கிளாஸ்' : '✨ Glass' },
+                                { id: 'clean', label: lang === 'ta' ? '💬 க்ளீன்' : '💬 Clean' },
+                            ].map(s => (
+                                <button
+                                    key={s.id}
+                                    onClick={() => setStyle(s.id)}
+                                    className={cn(
+                                        "px-5 py-2.5 rounded-pill text-[11px] font-black uppercase tracking-wide transition-all",
+                                        style === s.id
+                                            ? "bg-primary text-white shadow-card"
+                                            : "text-[var(--color-text-gray)] hover:text-[var(--color-text)]"
+                                    )}
+                                >
+                                    {s.label}
                                 </button>
                             ))}
                         </div>
