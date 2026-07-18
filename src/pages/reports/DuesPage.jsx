@@ -7,9 +7,12 @@ import {
     Car,
     Clock,
     CheckCircle2,
-    ChevronRight
+    ChevronRight,
+    Banknote
 } from 'lucide-react';
 import { useInvoices } from '../../context/InvoiceContext';
+import Modal from '../../components/ui/Modal';
+import { Button } from '../../components/ui/Button';
 import { useAuth } from '../../context/AuthContext';
 import { useSettings } from '../../context/SettingsContext';
 import { translations } from '../../utils/translations';
@@ -33,7 +36,7 @@ const bucketFor = (days) => BUCKETS.find(b => days >= b.min && days <= b.max) ||
 
 const DuesPage = () => {
     const navigate = useNavigate();
-    const { invoices, loading } = useInvoices();
+    const { invoices, loading, updateInvoice } = useInvoices();
     const { isAdmin } = useAuth();
     const { shopDetails } = useSettings();
     const lang = shopDetails?.appLanguage || 'ta';
@@ -41,6 +44,37 @@ const DuesPage = () => {
 
     const [search, setSearch] = useState('');
     const [bucketFilter, setBucketFilter] = useState(null);
+    // Settle modal: { inv, amount, mode }. Amount prefills with the full
+    // balance — typing a smaller number records a partial payment.
+    const [settle, setSettle] = useState(null);
+    const [settling, setSettling] = useState(false);
+
+    const doSettle = async () => {
+        const inv = settle.inv;
+        // Clamp to the outstanding balance so an over-entry can't inflate revenue.
+        const pay = Math.min(Number(settle.amount) || 0, inv.balanceAmount || 0);
+        if (pay <= 0) return;
+        setSettling(true);
+        try {
+            const nowISO = new Date().toISOString();
+            const newBalance = (inv.balanceAmount || 0) - pay;
+            const newStatus = newBalance <= 0 ? 'paid' : 'partially_paid';
+            await updateInvoice(inv.id, {
+                balanceAmount: Math.max(0, newBalance),
+                paymentStatus: newStatus,
+                paidAmount: (inv.paidAmount || 0) + pay,
+                payments: [...(inv.payments || []), { amount: pay, date: nowISO, mode: settle.mode, recordedAt: nowISO }],
+                isClosed: newStatus === 'paid',
+                settledDate: newStatus === 'paid' ? nowISO : (inv.settledDate || null)
+            });
+            setSettle(null);
+        } catch (err) {
+            console.error('Settle from dues failed:', err);
+            alert(lang === 'ta' ? 'பணம் பதிவு செய்ய முடியவில்லை. மீண்டும் முயற்சிக்கவும்.' : 'Could not record the payment. Please try again.');
+        } finally {
+            setSettling(false);
+        }
+    };
 
     const { customers, bucketTotals, totalDue } = useMemo(() => {
         const now = Date.now();
@@ -74,7 +108,8 @@ const DuesPage = () => {
                 invoiceNo: inv.invoiceNo,
                 date: inv.date,
                 days,
-                balance: inv.balanceAmount || 0
+                balance: inv.balanceAmount || 0,
+                inv // full invoice — needed to settle from this page
             });
         });
 
@@ -240,17 +275,23 @@ const DuesPage = () => {
                                 </div>
                             </div>
 
-                            {/* Bill chips */}
+                            {/* Bill chips — tap one to collect (full or partial) */}
                             <div className="flex flex-wrap gap-2 mt-4">
                                 {c.bills.map(b => {
                                     const bb = bucketFor(b.days);
                                     return (
-                                        <span
+                                        <button
                                             key={b.id}
-                                            className={cn("px-2.5 py-1 rounded-pill text-[11px] font-bold", bb.soft, bb.color)}
+                                            onClick={() => setSettle({ inv: b.inv, amount: b.balance, mode: 'cash' })}
+                                            title={lang === 'ta' ? 'பணம் வசூலிக்க தட்டவும்' : 'Tap to collect payment'}
+                                            className={cn(
+                                                "flex items-center gap-1.5 px-2.5 py-1 rounded-pill text-[11px] font-bold transition-transform active:scale-95 hover:ring-1 hover:ring-current",
+                                                bb.soft, bb.color
+                                            )}
                                         >
                                             #{b.invoiceNo || '—'} · {fmt(b.balance)} · {b.days}{lang === 'ta' ? ' நாள்' : 'd'}
-                                        </span>
+                                            <Banknote className="h-3.5 w-3.5 opacity-70" />
+                                        </button>
                                     );
                                 })}
                             </div>
@@ -258,6 +299,82 @@ const DuesPage = () => {
                     ))}
                 </div>
             )}
+
+            {/* Collect payment — full or partial */}
+            <Modal
+                isOpen={!!settle}
+                onClose={() => setSettle(null)}
+                title={lang === 'ta' ? 'பணம் வசூல்' : 'Collect Payment'}
+            >
+                {settle && (
+                    <div className="space-y-4">
+                        <div className="p-4 rounded-card bg-[var(--color-bg-dark)]/50 border border-[var(--color-border)]">
+                            <p className="text-sm font-bold text-[var(--color-text)]">
+                                #{settle.inv.invoiceNo || settle.inv.id} — {settle.inv.customer?.name || (lang === 'ta' ? 'வாடிக்கையாளர்' : 'Walk-in')}
+                            </p>
+                            <p className="text-[12px] font-semibold text-[var(--color-text-gray)] mt-1">
+                                {lang === 'ta' ? 'நிலுவை' : 'Outstanding'}: <span className="text-[var(--color-warning)] font-black">{fmt(settle.inv.balanceAmount)}</span>
+                            </p>
+                        </div>
+
+                        <div className="space-y-2">
+                            <div className="flex items-center justify-between">
+                                <label className="text-sm font-medium text-[var(--color-text-gray)]">
+                                    {lang === 'ta' ? 'பெறும் தொகை' : 'Amount received'}
+                                </label>
+                                <button
+                                    onClick={() => setSettle(s => ({ ...s, amount: s.inv.balanceAmount || 0 }))}
+                                    className="text-[11px] font-black uppercase tracking-wide text-primary"
+                                >
+                                    {lang === 'ta' ? 'முழுத் தொகை' : 'Full amount'}
+                                </button>
+                            </div>
+                            <input
+                                type="number"
+                                min="1"
+                                max={settle.inv.balanceAmount}
+                                value={settle.amount}
+                                onFocus={(e) => e.target.select()}
+                                onChange={(e) => setSettle(s => ({ ...s, amount: e.target.value }))}
+                                className="w-full rounded-md border border-[var(--color-border)] bg-[var(--color-bg-dark)] px-3 py-3 text-lg font-black text-[var(--color-text-white)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] tabular-nums"
+                            />
+                            <p className="text-[11px] font-semibold text-[var(--color-text-gray)]">
+                                {lang === 'ta'
+                                    ? 'குறைந்த தொகை உள்ளிட்டால் பகுதி செலுத்துதலாக பதிவாகும்; மீதி நிலுவையில் இருக்கும்.'
+                                    : 'Enter a smaller amount to record a partial payment — the rest stays as due.'}
+                            </p>
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium text-[var(--color-text-gray)]">{lang === 'ta' ? 'முறை' : 'Mode'}</label>
+                            <div className="grid grid-cols-3 gap-2">
+                                {['cash', 'upi', 'card'].map(m => (
+                                    <button
+                                        key={m}
+                                        onClick={() => setSettle(s => ({ ...s, mode: m }))}
+                                        className={cn(
+                                            "py-2.5 rounded-control text-[11px] font-black uppercase tracking-wide border transition-all",
+                                            settle.mode === m
+                                                ? "bg-primary-soft border-primary/40 text-primary"
+                                                : "bg-[var(--color-bg-dark)] border-[var(--color-border)] text-[var(--color-text-gray)]"
+                                        )}
+                                    >
+                                        {m === 'cash' ? (t.cash || 'Cash') : m === 'upi' ? 'UPI' : (t.card || 'Card')}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="flex justify-end gap-2 pt-2">
+                            <Button variant="outline" onClick={() => setSettle(null)}>{t.cancel || 'Cancel'}</Button>
+                            <Button onClick={doSettle} isLoading={settling}>
+                                <Banknote className="mr-2 h-4 w-4" />
+                                {lang === 'ta' ? 'பதிவு செய்' : 'Record'} · {fmt(Math.min(Number(settle.amount) || 0, settle.inv.balanceAmount || 0))}
+                            </Button>
+                        </div>
+                    </div>
+                )}
+            </Modal>
         </div>
     );
 };
