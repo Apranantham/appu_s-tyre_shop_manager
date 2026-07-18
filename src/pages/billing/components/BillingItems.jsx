@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { Search, Package, Wrench, ChevronRight, Plus, Minus, X, ArrowLeft, History, Trash2, ScanLine } from 'lucide-react';
+import { Search, Package, Wrench, ChevronRight, Plus, Minus, X, ArrowLeft, History, Trash2, ScanLine, Activity, Disc, Circle, Wind } from 'lucide-react';
 import BarcodeScannerModal, { isBarcodeScanSupported } from '../../../components/common/BarcodeScannerModal';
 import { cn } from '../../../utils/cn';
 import { Card } from '../../../components/ui/Card';
@@ -10,6 +10,17 @@ import { useOldItemsMaster } from '../../../context/OldItemContext';
 import { useSettings } from '../../../context/SettingsContext';
 import { translations } from '../../../utils/translations';
 import { FALLBACK_IMAGE } from '../../../utils/constants';
+
+// Visual identity per service TYPE (the `icon` field set in the Services page).
+// Fixed categorical hues — deliberately not theme tokens, so the five types
+// stay distinguishable from each other whatever accent the user picks.
+const SERVICE_META = {
+    align: { Icon: Activity, color: '#22D3EE', soft: 'rgba(34, 211, 238, 0.13)', label: 'Alignment', label_ta: 'அலைன்மென்ட்' },
+    balance: { Icon: Disc, color: '#A78BFA', soft: 'rgba(167, 139, 250, 0.13)', label: 'Balancing', label_ta: 'பேலன்சிங்' },
+    tyre: { Icon: Circle, color: '#FB923C', soft: 'rgba(251, 146, 60, 0.15)', label: 'Tyre Work', label_ta: 'டயர் வேலை' },
+    gas: { Icon: Wind, color: '#34D399', soft: 'rgba(52, 211, 153, 0.13)', label: 'Air / Gas', label_ta: 'காற்று / கேஸ்' },
+    tool: { Icon: Wrench, color: '#60A5FA', soft: 'rgba(96, 165, 250, 0.13)', label: 'Repair', label_ta: 'பழுது' },
+};
 
 const BillingItems = ({ onAddToCart, onUpdateQuantity, onRemoveItem, cart = [], onBack, editingInvoiceNo }) => {
     const { products } = useProducts();
@@ -314,9 +325,13 @@ const BillingItems = ({ onAddToCart, onUpdateQuantity, onRemoveItem, cart = [], 
                         </div>
                     </div>
                 )}
+            </div>
 
-                {/* Grid */}
-                <div className="flex-1 overflow-y-auto px-4 pb-10 min-w-0 pt-6">
+            {/* Grid — a DIRECT child of the root flex column, so flex-1 +
+                overflow-y-auto genuinely constrain the height and scroll.
+                (It used to sit inside the bordered header box, where flex-1
+                was inert and the root's overflow-hidden just clipped it.) */}
+            <div className="flex-1 overflow-y-auto px-4 pb-10 min-w-0 pt-6">
                     <div className={cn(
                         "grid gap-4 min-w-0",
                         (activeTab === 'products' ? filteredProducts.length > 0 : filteredServices.length > 0)
@@ -437,27 +452,51 @@ const BillingItems = ({ onAddToCart, onUpdateQuantity, onRemoveItem, cart = [], 
                                                 </div>
                                             )}
 
-                                            <div className="flex-1 space-y-4">
-                                                {/* Service Name */}
-                                                <h4 className="font-black text-sm md:text-base uppercase tracking-tight text-[var(--color-text-white)] leading-tight min-h-[2.5rem]">
-                                                    {service.name}
-                                                </h4>
+                                            {(() => {
+                                                const meta = SERVICE_META[service.icon] || SERVICE_META.tool;
+                                                return (
+                                                    <div className="flex-1 space-y-4">
+                                                        {/* Type stripe — instant visual grouping */}
+                                                        <span
+                                                            className="absolute inset-x-0 top-0 h-1 rounded-t-3xl"
+                                                            style={{ backgroundColor: meta.color, opacity: 0.85 }}
+                                                        />
 
-                                                <div className="flex items-center justify-between gap-4">
-                                                    {/* Wrench Icon Box */}
-                                                    <div className="h-16 w-16 bg-[var(--color-bg-card)] rounded-2xl flex items-center justify-center text-warning shadow-inner group-hover:scale-105 transition-transform duration-300 border border-white/5">
-                                                        <Wrench className="h-8 w-8" />
-                                                    </div>
+                                                        {/* Category eyebrow + service name */}
+                                                        <div>
+                                                            <span
+                                                                className="font-mono text-[9px] font-bold uppercase tracking-[0.18em]"
+                                                                style={{ color: meta.color }}
+                                                            >
+                                                                {lang === 'ta' ? meta.label_ta : meta.label}
+                                                            </span>
+                                                            <h4 className="font-black text-sm md:text-base uppercase tracking-tight text-[var(--color-text-white)] leading-tight min-h-[2.5rem] mt-1">
+                                                                {service.name}
+                                                            </h4>
+                                                        </div>
 
-                                                    {/* Price Section */}
-                                                    <div className="text-right">
-                                                        <span className="block text-[8px] text-[var(--color-text-gray)]/60 font-black uppercase tracking-[0.2em] mb-1">SERVICE COST</span>
-                                                        <span className="font-black text-2xl text-warning italic flex items-center justify-end">
-                                                            <span className="text-lg mr-0.5">₹</span>{service.price}
-                                                        </span>
+                                                        <div className="flex items-center justify-between gap-4">
+                                                            {/* Type icon in its own colour */}
+                                                            <div
+                                                                className="h-16 w-16 rounded-2xl flex items-center justify-center shadow-inner group-hover:scale-105 transition-transform duration-300 border border-white/5"
+                                                                style={{ backgroundColor: meta.soft, color: meta.color }}
+                                                            >
+                                                                <meta.Icon className="h-8 w-8" />
+                                                            </div>
+
+                                                            {/* Price Section */}
+                                                            <div className="text-right">
+                                                                <span className="block text-[9px] text-[var(--color-text-gray)]/60 font-black uppercase tracking-[0.2em] mb-1">
+                                                                    {lang === 'ta' ? 'கட்டணம்' : 'SERVICE COST'}
+                                                                </span>
+                                                                <span className="font-black text-2xl text-[var(--color-text-white)] flex items-center justify-end tabular-nums">
+                                                                    <span className="text-lg mr-0.5 text-[var(--color-text-gray)]">₹</span>{service.price}
+                                                                </span>
+                                                            </div>
+                                                        </div>
                                                     </div>
-                                                </div>
-                                            </div>
+                                                );
+                                            })()}
 
                                             {/* Integrated Quantity Controls */}
                                             <div className="mt-5">
@@ -508,7 +547,6 @@ const BillingItems = ({ onAddToCart, onUpdateQuantity, onRemoveItem, cart = [], 
                         )}
                     </div>
                 </div>
-            </div>
 
             <BarcodeScannerModal
                 isOpen={showScanner}
