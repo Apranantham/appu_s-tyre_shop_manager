@@ -17,7 +17,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useSettings } from '../../context/SettingsContext';
 import { translations } from '../../utils/translations';
 import { cn } from '../../utils/cn';
-import { formatMoney as fmt } from '../../utils/format';
+import { formatMoney as fmt, toInputDate } from '../../utils/format';
 import { openWhatsApp } from '../../utils/whatsapp';
 import WhatsAppIcon from '../../components/ui/WhatsAppIcon';
 import Loader from '../../components/ui/Loader';
@@ -56,16 +56,18 @@ const DuesPage = () => {
         if (pay <= 0) return;
         setSettling(true);
         try {
-            const nowISO = new Date().toISOString();
+            // Payment is dated when the customer actually paid (noon local, so
+            // day-grouping never drifts across timezones); recordedAt = entry time.
+            const paidISO = new Date(`${settle.date || toInputDate()}T12:00:00`).toISOString();
             const newBalance = (inv.balanceAmount || 0) - pay;
             const newStatus = newBalance <= 0 ? 'paid' : 'partially_paid';
             await updateInvoice(inv.id, {
                 balanceAmount: Math.max(0, newBalance),
                 paymentStatus: newStatus,
                 paidAmount: (inv.paidAmount || 0) + pay,
-                payments: [...(inv.payments || []), { amount: pay, date: nowISO, mode: settle.mode, recordedAt: nowISO }],
+                payments: [...(inv.payments || []), { amount: pay, date: paidISO, mode: settle.mode, recordedAt: new Date().toISOString() }],
                 isClosed: newStatus === 'paid',
-                settledDate: newStatus === 'paid' ? nowISO : (inv.settledDate || null)
+                settledDate: newStatus === 'paid' ? paidISO : (inv.settledDate || null)
             });
             setSettle(null);
         } catch (err) {
@@ -282,7 +284,7 @@ const DuesPage = () => {
                                     return (
                                         <button
                                             key={b.id}
-                                            onClick={() => setSettle({ inv: b.inv, amount: b.balance, mode: 'cash' })}
+                                            onClick={() => setSettle({ inv: b.inv, amount: b.balance, mode: 'cash', date: toInputDate() })}
                                             title={lang === 'ta' ? 'பணம் வசூலிக்க தட்டவும்' : 'Tap to collect payment'}
                                             className={cn(
                                                 "flex items-center gap-1.5 px-2.5 py-1 rounded-pill text-[11px] font-bold transition-transform active:scale-95 hover:ring-1 hover:ring-current",
@@ -315,6 +317,20 @@ const DuesPage = () => {
                             <p className="text-[12px] font-semibold text-[var(--color-text-gray)] mt-1">
                                 {lang === 'ta' ? 'நிலுவை' : 'Outstanding'}: <span className="text-[var(--color-warning)] font-black">{fmt(settle.inv.balanceAmount)}</span>
                             </p>
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium text-[var(--color-text-gray)]">
+                                {lang === 'ta' ? 'செலுத்திய தேதி' : 'Payment date'}
+                            </label>
+                            <input
+                                type="date"
+                                value={settle.date}
+                                max={toInputDate()}
+                                onChange={(e) => setSettle(s => ({ ...s, date: e.target.value }))}
+                                onClick={(e) => e.target.showPicker?.()}
+                                className="w-full rounded-md border border-[var(--color-border)] bg-[var(--color-bg-dark)] px-3 py-3 text-sm font-bold text-[var(--color-text-white)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] cursor-pointer"
+                            />
                         </div>
 
                         <div className="space-y-2">

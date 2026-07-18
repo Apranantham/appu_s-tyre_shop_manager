@@ -559,6 +559,7 @@ Thank you for your business!`;
                                                                     e.stopPropagation();
                                                                     setSelectedInvoice(inv);
                                                                     setSettleAmount(inv.balanceAmount || 0);
+                                                                    setSettleDate(new Date().toISOString().split('T')[0]);
                                                                     setShowSettleModal(true);
                                                                 }}
                                                                 className="h-8 w-8 bg-primary text-white rounded-lg flex items-center justify-center hover:scale-110 active:scale-95 transition-all shadow-lg shadow-black/25"
@@ -628,6 +629,7 @@ Thank you for your business!`;
                                                         e.stopPropagation();
                                                         setSelectedInvoice(inv);
                                                         setSettleAmount(inv.balanceAmount || 0);
+                                                        setSettleDate(new Date().toISOString().split('T')[0]);
                                                         setShowSettleModal(true);
                                                     }}
                                                     className="flex-1 flex items-center justify-center gap-2 bg-primary text-white px-4 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest active:scale-95 transition-all shadow-lg shadow-black/25"
@@ -876,8 +878,10 @@ Thank you for your business!`;
                                     <input
                                         type="date"
                                         value={settleDate}
+                                        max={new Date().toISOString().split('T')[0]}
                                         onChange={(e) => setSettleDate(e.target.value)}
-                                        className="w-full bg-[var(--color-bg-dark)] border border-[var(--color-border)] rounded-2xl px-5 py-4 text-sm font-black focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-warning transition-all text-[var(--color-text-white)] shadow-inner"
+                                        onClick={(e) => e.target.showPicker?.()}
+                                        className="w-full bg-[var(--color-bg-dark)] border border-[var(--color-border)] rounded-2xl px-5 py-4 text-sm font-black focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-warning transition-all text-[var(--color-text-white)] shadow-inner cursor-pointer"
                                     />
                                 </div>
 
