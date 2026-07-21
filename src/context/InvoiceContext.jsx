@@ -256,11 +256,18 @@ export const InvoiceProvider = ({ children }) => {
 
     const updateCustomerInfo = async (identifier, newInfo) => {
         const customerInvoices = getCustomerHistory(identifier);
-        const updatePromises = customerInvoices.map(inv => {
-            const updatedCustomer = { ...inv.customer, ...newInfo };
-            return updateInvoice(inv.id, { customer: updatedCustomer });
-        });
-        await Promise.all(updatePromises);
+        // allSettled (not all): one failed write must not hide that the rest
+        // succeeded. Report how many failed so the caller can warn the user
+        // instead of silently leaving the customer half-renamed across bills.
+        const results = await Promise.allSettled(
+            customerInvoices.map(inv =>
+                updateInvoice(inv.id, { customer: { ...inv.customer, ...newInfo } })
+            )
+        );
+        const failed = results.filter(r => r.status === 'rejected').length;
+        if (failed > 0) {
+            throw new Error(`${failed} of ${customerInvoices.length} records could not be updated`);
+        }
     };
 
     return (

@@ -44,7 +44,7 @@ const ServiceForm = ({ onSubmit, initialData, onCancel, t }) => {
                 <label className="text-sm font-medium text-[var(--color-text-gray)]">{t.price} (₹)</label>
                 <input
                     required
-                    type="number"
+                    type="number" inputMode="decimal"
                     value={formData.price}
                     onChange={(e) => setFormData({ ...formData, price: e.target.value })}
                     className="w-full rounded-md border border-[var(--color-border)] bg-[var(--color-bg-dark)] px-3 py-2 text-sm text-[var(--color-text)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"

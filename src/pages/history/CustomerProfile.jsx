@@ -89,6 +89,8 @@ const CustomerProfile = () => {
     const [showOptions, setShowOptions] = useState(false);
     const [showEditModal, setShowEditModal] = useState(false);
     const [editData, setEditData] = useState({ name: '', phone: '', vehicle: '' });
+    const [savingCustomer, setSavingCustomer] = useState(false);
+    const [editError, setEditError] = useState('');
     const printRef = useRef();
 
     const handlePrint = useReactToPrint({
@@ -160,7 +162,10 @@ Thank you for your business! 🏁`;
     };
 
     const shareViaSMS = (invoice) => {
-        const message = `TurboTyre: Hello ${invoice.customer.name}, your bill of ₹${invoice.total.toFixed(2)} is paid. Invoice #${invoice.invoiceNo || invoice.id}. Thank you!`;
+        // Use the configured shop name — never a hardcoded placeholder in a
+        // message that goes to a real customer.
+        const shop = shopDetails?.shopName || 'Tyre Shop';
+        const message = `${shop}: Hello ${invoice.customer.name}, your bill of ₹${invoice.total.toFixed(2)} is paid. Invoice #${invoice.invoiceNo || invoice.id}. Thank you!`;
         const smsUrl = `sms:${invoice.customer.phone}?body=${encodeURIComponent(message)}`;
         window.open(smsUrl);
     };
@@ -236,12 +241,18 @@ _Generated via ${shopDisplayName}_`;
     const handleUpdateCustomer = async (e) => {
         e.preventDefault();
         const newPhone = editData.phone;
-        // Use customerPhone from params as the reliable identifier for all the customer's invoices
-        await updateCustomerInfo(customerPhone, editData);
-        setShowEditModal(false);
-        if (customerPhone !== newPhone) {
-            navigate(`/customers/${newPhone}`, { replace: true });
-        }
+        setSavingCustomer(true); setEditError('');
+        try {
+            // customerPhone (route param) identifies all of this customer's invoices
+            await updateCustomerInfo(customerPhone, editData);
+            setShowEditModal(false);
+            if (customerPhone !== newPhone) {
+                navigate(`/customers/${encodeURIComponent(newPhone)}`, { replace: true });
+            }
+        } catch (err) {
+            console.error('Update customer failed:', err);
+            setEditError(lang === 'ta' ? 'சில பதிவுகளைப் புதுப்பிக்க முடியவில்லை. மீண்டும் முயற்சிக்கவும்.' : 'Some records could not be updated. Please try again.');
+        } finally { setSavingCustomer(false); }
     };
 
     return (
@@ -448,7 +459,7 @@ _Generated via ${shopDisplayName}_`;
                                             </span>
                                         )}
                                     </div>
-                                    <div className="flex items-center text-[var(--color-text-gray)] text-[10px] space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <div className="flex items-center text-[var(--color-text-gray)] text-[10px] space-x-2 opacity-60 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
                                         <Eye className="h-3 w-3" />
                                         <span>{t.view_details}</span>
                                     </div>
@@ -535,6 +546,11 @@ _Generated via ${shopDisplayName}_`;
                 title={t.edit_customer}
             >
                 <form onSubmit={handleUpdateCustomer} className="space-y-4">
+                    {editError && (
+                        <div className="px-4 py-3 rounded-card bg-danger-soft border border-danger/30 text-danger text-sm font-bold">
+                            {editError}
+                        </div>
+                    )}
                     <div className="space-y-2">
                         <label className="text-sm font-medium text-[var(--color-text-gray)]">{t.name}</label>
                         <input
@@ -564,8 +580,8 @@ _Generated via ${shopDisplayName}_`;
                         />
                     </div>
                     <div className="flex justify-end space-x-2 pt-4">
-                        <Button type="button" variant="outline" onClick={() => setShowEditModal(false)}>{t.cancel}</Button>
-                        <Button type="submit" variant="primary">{t.update_records}</Button>
+                        <Button type="button" variant="outline" onClick={() => setShowEditModal(false)} disabled={savingCustomer}>{t.cancel}</Button>
+                        <Button type="submit" variant="primary" isLoading={savingCustomer}>{t.update_records}</Button>
                     </div>
                 </form>
             </Modal>

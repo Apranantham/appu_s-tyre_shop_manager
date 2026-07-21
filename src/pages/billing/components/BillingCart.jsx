@@ -240,7 +240,7 @@ const BillingCart = ({
                                                     <div className="flex items-center justify-end">
                                                         <span className="font-black text-xl text-[var(--color-primary)]">₹</span>
                                                         <input
-                                                            type="number"
+                                                            type="number" inputMode="decimal"
                                                             min="0"
                                                             value={item.price}
                                                             onFocus={(e) => e.target.select()}
@@ -267,7 +267,7 @@ const BillingCart = ({
                                                     <Minus className="h-4 w-4" />
                                                 </button>
                                                 <input
-                                                    type="number"
+                                                    type="number" inputMode="decimal"
                                                     min="1"
                                                     value={item.quantity}
                                                     onFocus={(e) => e.target.select()}
@@ -363,7 +363,7 @@ const BillingCart = ({
                             <div className="relative w-32">
                                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-black text-warning">₹</span>
                                 <input
-                                    type="number"
+                                    type="number" inputMode="decimal"
                                     value={paidAmount}
                                     onChange={(e) => setPaidAmount(Number(e.target.value))}
                                     className="w-full bg-[var(--color-bg-card)] border border-warning/30 rounded-xl px-3 pl-7 py-2 text-right text-base font-black text-warning focus:outline-none focus:ring-2 focus:ring-orange-500/20"
@@ -407,14 +407,17 @@ const BillingCart = ({
                                 <span className="text-xs font-black text-primary">₹</span>
                             </div>
                             <input
-                                type="number"
+                                type="number" inputMode="decimal"
                                 min="0"
-                                max={Math.max(0, subtotal)}
                                 value={discount}
                                 onFocus={(e) => e.target.select()}
                                 onChange={(e) => {
-                                    const v = Math.min(Math.max(0, Number(e.target.value) || 0), Math.max(0, subtotal));
-                                    setDiscount(v);
+                                    // Store the RAW typed value; do NOT clamp against subtotal here.
+                                    // Clamping live to [0, subtotal] forced the field to 0 and made it
+                                    // uneditable whenever subtotal was 0 (empty / old-parts-only cart).
+                                    // The total math clamps discount safely (see `total` below), so the
+                                    // bill can still never go negative.
+                                    setDiscount(e.target.value === '' ? 0 : Math.max(0, Number(e.target.value) || 0));
                                 }}
                                 className="w-full bg-transparent border-none p-0 text-right text-lg font-black focus:outline-none text-[var(--color-text-white)] placeholder:text-[var(--color-text-gray)]/20"
                                 placeholder="0"

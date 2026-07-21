@@ -116,7 +116,7 @@ const OldItemsMasterPage = () => {
                                 </div>
                                 <span className="font-bold text-sm tracking-tight">{item.name}</span>
                             </div>
-                            <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <div className="flex items-center gap-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
                                 <button
                                     onClick={() => setEditingItem(item)}
                                     className="p-2.5 rounded-lg bg-[var(--color-primary)]/10 text-[var(--color-primary)] hover:bg-[var(--color-primary)] hover:text-white transition-all"

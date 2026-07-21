@@ -346,7 +346,7 @@ const DuesPage = () => {
                                 </button>
                             </div>
                             <input
-                                type="number"
+                                type="number" inputMode="decimal"
                                 min="1"
                                 max={settle.inv.balanceAmount}
                                 value={settle.amount}

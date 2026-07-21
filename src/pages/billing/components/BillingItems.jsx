@@ -263,7 +263,7 @@ const BillingItems = ({ onAddToCart, onUpdateQuantity, onRemoveItem, cart = [], 
                                             <div className="flex flex-col w-full">
                                                 <span className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-gray)] sm:hidden mb-1.5 block ml-1">Qty</span>
                                                 <input
-                                                    type="number"
+                                                    type="number" inputMode="decimal"
                                                     min="1"
                                                     value={row.qty}
                                                     onFocus={(e) => e.target.select()}
@@ -275,7 +275,7 @@ const BillingItems = ({ onAddToCart, onUpdateQuantity, onRemoveItem, cart = [], 
                                             <div className="flex flex-col w-full">
                                                 <span className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-gray)] sm:hidden mb-1.5 block pl-1 text-right">Exchange ₹</span>
                                                 <input
-                                                    type="number"
+                                                    type="number" inputMode="decimal"
                                                     value={row.exchangeValue}
                                                     onFocus={(e) => e.target.select()}
                                                     onChange={(e) => updateRow(row.id, 'exchangeValue', e.target.value)}
@@ -287,7 +287,7 @@ const BillingItems = ({ onAddToCart, onUpdateQuantity, onRemoveItem, cart = [], 
                                             <div className="flex flex-col w-full">
                                                 <span className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-gray)] sm:hidden mb-1.5 block pl-1 text-right">Scrap ₹</span>
                                                 <input
-                                                    type="number"
+                                                    type="number" inputMode="decimal"
                                                     value={row.scrapValue}
                                                     onFocus={(e) => e.target.select()}
                                                     onChange={(e) => updateRow(row.id, 'scrapValue', e.target.value)}

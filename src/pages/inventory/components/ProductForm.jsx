@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '../../../components/ui/Button';
 import { PRODUCT_CATEGORIES } from '../../../utils/constants';
 
-const ProductForm = ({ onSubmit, initialData, onCancel, canEditPrice = true }) => {
+const ProductForm = ({ onSubmit, initialData, onCancel, canEditPrice = true, saving = false }) => {
     const [formData, setFormData] = useState({
         name: '',
         brand: '',
@@ -126,7 +126,7 @@ const ProductForm = ({ onSubmit, initialData, onCancel, canEditPrice = true }) =
                 <div className="space-y-2">
                     <label className="text-sm font-medium text-[var(--color-text-gray)]">Mfg. Year</label>
                     <input
-                        type="number"
+                        type="number" inputMode="decimal"
                         name="manufactureYear"
                         value={formData.manufactureYear}
                         onChange={handleChange}
@@ -159,7 +159,7 @@ const ProductForm = ({ onSubmit, initialData, onCancel, canEditPrice = true }) =
                 <div className="space-y-2">
                     <label className="text-sm font-medium text-[var(--color-text-gray)]">Cost Price (₹)</label>
                     <input
-                        type="number"
+                        type="number" inputMode="decimal"
                         name="costPrice"
                         value={formData.costPrice}
                         onChange={handleChange}
@@ -173,7 +173,7 @@ const ProductForm = ({ onSubmit, initialData, onCancel, canEditPrice = true }) =
                     </label>
                     <input
                         required
-                        type="number"
+                        type="number" inputMode="decimal"
                         name="price"
                         value={formData.price}
                         onChange={handleChange}
@@ -196,7 +196,7 @@ const ProductForm = ({ onSubmit, initialData, onCancel, canEditPrice = true }) =
                     <label className="text-sm font-medium text-[var(--color-text-gray)]">Stock</label>
                     <input
                         required
-                        type="number"
+                        type="number" inputMode="decimal"
                         name="stock"
                         value={formData.stock}
                         onChange={handleChange}
@@ -208,7 +208,7 @@ const ProductForm = ({ onSubmit, initialData, onCancel, canEditPrice = true }) =
                     <label className="text-sm font-medium text-[var(--color-text-gray)]">Min Alert</label>
                     <input
                         required
-                        type="number"
+                        type="number" inputMode="decimal"
                         name="minStock"
                         value={formData.minStock}
                         onChange={handleChange}
@@ -292,8 +292,8 @@ const ProductForm = ({ onSubmit, initialData, onCancel, canEditPrice = true }) =
             </div>
 
             <div className="flex justify-end space-x-2 pt-4">
-                <Button type="button" variant="outline" onClick={onCancel}>Cancel</Button>
-                <Button type="submit" variant="primary">Save Product</Button>
+                <Button type="button" variant="outline" onClick={onCancel} disabled={saving}>Cancel</Button>
+                <Button type="submit" variant="primary" isLoading={saving}>Save Product</Button>
             </div>
         </form>
     );

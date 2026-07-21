@@ -28,6 +28,8 @@ const InventoryPage = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingProduct, setEditingProduct] = useState(null);
     const [productToDelete, setProductToDelete] = useState(null);
+    const [saving, setSaving] = useState(false);
+    const [modalError, setModalError] = useState('');
 
     // Stock valuation across ACTIVE products — owner's view of money on the shelf.
     const valuation = useMemo(() => {
@@ -61,24 +63,41 @@ const InventoryPage = () => {
         return matchesSearch && matchesCategory;
     });
 
-    const handleAddProduct = (data) => {
-        addProduct(data);
-        setIsModalOpen(false);
+    // Await the write and only close on success — a failed save (permission,
+    // offline, Firestore quota from the base64 image) must surface, not silently
+    // close the modal and let the card revert (the reported "edit didn't work").
+    const handleAddProduct = async (data) => {
+        setSaving(true); setModalError('');
+        try {
+            await addProduct(data);
+            setIsModalOpen(false);
+        } catch (err) {
+            console.error('Add product failed:', err);
+            setModalError(lang === 'ta' ? 'சேமிக்க முடியவில்லை. மீண்டும் முயற்சிக்கவும்.' : 'Could not save. Please try again.');
+        } finally { setSaving(false); }
     };
 
-    const handleEditProduct = (data) => {
-        updateProduct(editingProduct.id, data);
-        setEditingProduct(null);
-        setIsModalOpen(false);
+    const handleEditProduct = async (data) => {
+        setSaving(true); setModalError('');
+        try {
+            await updateProduct(editingProduct.id, data);
+            setEditingProduct(null);
+            setIsModalOpen(false);
+        } catch (err) {
+            console.error('Update product failed:', err);
+            setModalError(lang === 'ta' ? 'புதுப்பிக்க முடியவில்லை. மீண்டும் முயற்சிக்கவும்.' : 'Could not update. Please try again.');
+        } finally { setSaving(false); }
     };
 
     const openAddModal = () => {
         setEditingProduct(null);
+        setModalError('');
         setIsModalOpen(true);
     };
 
     const openEditModal = (product) => {
         setEditingProduct(product);
+        setModalError('');
         setIsModalOpen(true);
     };
 
@@ -189,7 +208,7 @@ const InventoryPage = () => {
                                 {/* Overlay Gradient */}
                                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
-                                <div className="absolute top-4 right-4 flex space-x-2 opacity-0 group-hover:opacity-100 transition-all transform translate-y-2 group-hover:translate-y-0 duration-300">
+                                <div className="absolute top-4 right-4 flex space-x-2 opacity-100 translate-y-0 md:opacity-0 md:translate-y-2 md:group-hover:opacity-100 md:group-hover:translate-y-0 transition-all duration-300">
                                     <div className="flex bg-black/60 backdrop-blur-md rounded-2xl p-1 border border-white/10">
                                         <Button
                                             size="icon"
@@ -310,11 +329,17 @@ const InventoryPage = () => {
                 onClose={() => setIsModalOpen(false)}
                 title={editingProduct ? t.edit_product : t.add_product}
             >
+                {modalError && (
+                    <div className="mb-4 px-4 py-3 rounded-card bg-danger-soft border border-danger/30 text-danger text-sm font-bold">
+                        {modalError}
+                    </div>
+                )}
                 <ProductForm
                     initialData={editingProduct}
                     onSubmit={editingProduct ? handleEditProduct : handleAddProduct}
                     onCancel={() => setIsModalOpen(false)}
                     canEditPrice={isAdmin || !editingProduct}
+                    saving={saving}
                 />
             </Modal>
 

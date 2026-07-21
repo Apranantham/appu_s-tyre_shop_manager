@@ -170,9 +170,19 @@ const SalesChart = ({ staffFilter = 'all' }) => {
             }
 
             invoices.forEach(inv => {
-                (inv.payments || []).forEach(payment => {
-                    const year = new Date(payment.date).getFullYear();
-                    if (dataMap[year] !== undefined) dataMap[year].revenue += (payment.amount || 0);
+                // Same synthesized-payment convention as the days/weeks/months
+                // ranges — without it the years view drops revenue for invoices
+                // whose money lives only in paidAmount (legacy/empty payments[]).
+                const recordedPayments = inv.payments || [];
+                const recordedPaymentsTotal = recordedPayments.reduce((sum, p) => sum + (p.amount || 0), 0);
+                const synthesizedPayments = [];
+                if ((inv.paidAmount || 0) > recordedPaymentsTotal) {
+                    synthesizedPayments.push({ amount: inv.paidAmount - recordedPaymentsTotal, date: inv.date });
+                }
+                [...synthesizedPayments, ...recordedPayments].forEach(payment => {
+                    if (!payment.amount) return;
+                    const year = new Date(payment.date || inv.date).getFullYear();
+                    if (dataMap[year] !== undefined) dataMap[year].revenue += payment.amount;
                 });
             });
 

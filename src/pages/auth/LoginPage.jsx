@@ -447,7 +447,7 @@ const LoginPage = () => {
 
                 <div className="mt-8 text-center">
                     <p className="text-[10px] text-[var(--color-text-gray)] opacity-50 font-medium">
-                        &copy; 2026 TurboTyre Tech Solutions.<br />
+                        &copy; 2026 Tyre Shop Manager.<br />
                         Secure Login Path Activated.
                     </p>
                 </div>

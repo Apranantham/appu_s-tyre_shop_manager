@@ -337,9 +337,9 @@ const SuppliersPage = () => {
                                             <option key={p.id} value={p.id}>{p.name} {p.size ? `(${p.size})` : ''}</option>
                                         ))}
                                     </select>
-                                    <input type="number" min="1" placeholder={ta ? 'எண்' : 'Qty'} className={inputCls}
+                                    <input type="number" inputMode="decimal" min="1" placeholder={ta ? 'எண்' : 'Qty'} className={inputCls}
                                         value={l.qty} onChange={e => setLine(idx, 'qty', e.target.value)} />
-                                    <input type="number" min="0" placeholder={ta ? 'விலை ₹' : 'Cost ₹'} className={inputCls}
+                                    <input type="number" inputMode="decimal" min="0" placeholder={ta ? 'விலை ₹' : 'Cost ₹'} className={inputCls}
                                         value={l.unitCost} onChange={e => setLine(idx, 'unitCost', e.target.value)} />
                                 </div>
                             ))}
@@ -357,7 +357,7 @@ const SuppliersPage = () => {
                                 <label className="text-sm font-medium text-[var(--color-text-gray)]">
                                     {ta ? 'இப்போது செலுத்தியது' : 'Paid now'} ({ta ? 'மொத்தம்' : 'total'} {fmt(purchaseTotal)})
                                 </label>
-                                <input type="number" min="0" className={inputCls} value={purchaseModal.paidAmount}
+                                <input type="number" inputMode="decimal" min="0" className={inputCls} value={purchaseModal.paidAmount}
                                     placeholder={ta ? '0 = கடன்' : '0 = on credit'}
                                     onChange={e => setPurchaseModal(m => ({ ...m, paidAmount: e.target.value }))} />
                             </div>
@@ -396,7 +396,7 @@ const SuppliersPage = () => {
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
                                 <label className="text-sm font-medium text-[var(--color-text-gray)]">{ta ? 'தொகை' : 'Amount'}</label>
-                                <input type="number" min="0" max={settleModal.purchase.balanceAmount} className={inputCls}
+                                <input type="number" inputMode="decimal" min="0" max={settleModal.purchase.balanceAmount} className={inputCls}
                                     value={settleModal.amount}
                                     onChange={e => setSettleModal(m => ({ ...m, amount: e.target.value }))} />
                             </div>

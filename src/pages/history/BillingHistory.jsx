@@ -894,7 +894,7 @@ Thank you for your business!`;
                                     <div className="relative group">
                                         <span className="absolute left-5 top-1/2 -translate-y-1/2 text-2xl font-black text-warning/40 group-focus-within:text-warning transition-colors">₹</span>
                                         <input
-                                            type="number"
+                                            type="number" inputMode="decimal"
                                             value={settleAmount}
                                             onChange={(e) => setSettleAmount(Number(e.target.value))}
                                             max={selectedInvoice.balanceAmount}

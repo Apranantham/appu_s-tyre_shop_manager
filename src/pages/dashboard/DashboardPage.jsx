@@ -156,9 +156,10 @@ const DashboardPage = () => {
             const allInvPayments = [...synthesizedPayments, ...recordedPayments];
 
             allInvPayments.forEach(payment => {
-                if (!payment.amount || !payment.date) return;
-
-                const d = new Date(payment.date);
+                if (!payment.amount) return;
+                // Fall back to the invoice date when a payment lacks its own
+                // date — otherwise that money was silently dropped from every total.
+                const d = new Date(payment.date || inv.date);
                 const pDay = d.toDateString();
                 const pMonth = d.getMonth();
                 const pYear = d.getFullYear();
@@ -192,7 +193,7 @@ const DashboardPage = () => {
         filteredInvoices.forEach(inv => {
             const d = new Date(inv.date);
             if (d.getMonth() === thisMonth && d.getFullYear() === thisYear) {
-                inv.items.forEach(item => {
+                (inv.items || []).forEach(item => {
                     if (item.type === 'old_part') {
                         const margin = (item.scrapValue || item.price || 0) - (item.exchangeValue || item.buyPrice || 0);
                         oldPartProfit += margin * (item.quantity || 1);
@@ -226,6 +227,11 @@ const DashboardPage = () => {
                 <div>
                     <h1 className="text-2xl font-black tracking-tight uppercase">{t.dashboard}</h1>
                     <p className="text-[var(--color-text-gray)] text-sm">{t.real_time_overview}</p>
+                    {!isAdmin && (
+                        <span className="inline-block mt-1.5 px-2.5 py-1 rounded-pill bg-warning-soft text-warning text-[10px] font-black uppercase tracking-wide">
+                            {lang === 'ta' ? 'உங்கள் பில்கள் மட்டும்' : 'Your bills only — not shop-wide'}
+                        </span>
+                    )}
                 </div>
                 <div className="flex items-center space-x-3">
                     {/* Admin Staff Filter */}

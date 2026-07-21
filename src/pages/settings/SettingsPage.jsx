@@ -462,7 +462,7 @@ const SettingsPage = () => {
                         </span>
                     </div>
                     <div className="text-center pt-4 space-y-2">
-                        <p className="text-[10px] text-[var(--color-text-gray)] font-black uppercase tracking-[0.2em] opacity-40">© 2026 TurboTyre Tech Solutions Inc.</p>
+                        <p className="text-[10px] text-[var(--color-text-gray)] font-black uppercase tracking-[0.2em] opacity-40">{shopDetails?.shopName || 'Tyre Shop Manager'}</p>
                         <p className="text-[9px] text-[var(--color-primary)] font-black uppercase tracking-[0.3em] opacity-60">Cloud Sync Active</p>
                     </div>
                 </div>

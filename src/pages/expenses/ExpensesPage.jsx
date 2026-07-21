@@ -42,15 +42,21 @@ const DATE_FILTERS = [
     { id: 'custom', label: 'Custom', labelTa: 'தேதி தேர்வு' },
 ];
 
-const getLocalDateTime = () => {
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, '0');
-    const day = String(now.getDate()).padStart(2, '0');
-    const hours = String(now.getHours()).padStart(2, '0');
-    const minutes = String(now.getMinutes()).padStart(2, '0');
+// Format a Date as a LOCAL datetime-local string (YYYY-MM-DDTHH:mm).
+// Must NOT use toISOString() — that converts to UTC and, fed back through
+// new Date(...).toISOString() on save, shifts the stored time by the local
+// offset (−5:30 in IST) on every edit, silently corrupting Day Book cash-by-date.
+const toDateTimeLocal = (d) => {
+    const dt = d instanceof Date ? d : new Date(d);
+    const year = dt.getFullYear();
+    const month = String(dt.getMonth() + 1).padStart(2, '0');
+    const day = String(dt.getDate()).padStart(2, '0');
+    const hours = String(dt.getHours()).padStart(2, '0');
+    const minutes = String(dt.getMinutes()).padStart(2, '0');
     return `${year}-${month}-${day}T${hours}:${minutes}`;
 };
+
+const getLocalDateTime = () => toDateTimeLocal(new Date());
 
 const getStartOfWeek = (date) => {
     const d = new Date(date);
@@ -127,7 +133,9 @@ const ExpensesPage = () => {
 
     const openEdit = (expense) => {
         setEditingExpense(expense);
-        const dateStr = new Date(expense.date).toISOString().slice(0, 16);
+        // Local time, not UTC — otherwise the picker shows a −5:30-shifted time
+        // and every save drifts the stored timestamp earlier.
+        const dateStr = toDateTimeLocal(expense.date);
         const isCustom = !CATEGORIES.find(c => c.id === expense.category);
         setForm({
             category: isCustom ? 'custom' : expense.category,
@@ -542,7 +550,7 @@ const ExpensesPage = () => {
                                             </div>
                                             <div className="flex items-center gap-3">
                                                 <span className="font-black text-lg text-danger">₹{(expense.amount || 0).toLocaleString()}</span>
-                                                <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <div className="flex gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
                                                     <button onClick={() => openEdit(expense)} className="p-2 hover:bg-[var(--color-bg-dark)] rounded-lg text-[var(--color-text-gray)] hover:text-primary transition-colors">
                                                         <Edit3 className="h-4 w-4" />
                                                     </button>
@@ -602,7 +610,7 @@ const ExpensesPage = () => {
                         <label className="text-[9px] font-bold text-[var(--color-text-gray)]/60 uppercase tracking-widest">{t.amount || 'Amount'}</label>
                         <div className="relative">
                             <span className="absolute left-4 top-1/2 -translate-y-1/2 text-lg font-black text-primary">₹</span>
-                            <input type="number" placeholder="0" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })}
+                            <input type="number" inputMode="decimal" placeholder="0" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })}
                                 className="w-full bg-[var(--color-bg-dark)] border border-[var(--color-border)] rounded-xl pl-10 pr-4 py-3 text-2xl font-black focus:outline-none focus:ring-2 focus:ring-primary/20 text-[var(--color-text-white)]"
                             />
                         </div>
