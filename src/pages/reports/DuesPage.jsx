@@ -18,6 +18,7 @@ import { useSettings } from '../../context/SettingsContext';
 import { translations } from '../../utils/translations';
 import { cn } from '../../utils/cn';
 import { formatMoney as fmt, toInputDate } from '../../utils/format';
+import { isOpenDue } from '../../utils/dues';
 import { openWhatsApp } from '../../utils/whatsapp';
 import WhatsAppIcon from '../../components/ui/WhatsAppIcon';
 import Loader from '../../components/ui/Loader';
@@ -80,11 +81,7 @@ const DuesPage = () => {
 
     const { customers, bucketTotals, totalDue } = useMemo(() => {
         const now = Date.now();
-        const open = invoices.filter(inv =>
-            !inv.isClosed &&
-            (inv.paymentStatus === 'pending' || inv.paymentStatus === 'partially_paid') &&
-            (inv.balanceAmount || 0) > 0
-        );
+        const open = invoices.filter(isOpenDue);
 
         // Group by customer (phone first — names collide more easily).
         const map = new Map();

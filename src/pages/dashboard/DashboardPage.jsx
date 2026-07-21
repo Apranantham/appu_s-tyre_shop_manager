@@ -15,6 +15,7 @@ import { useSettings } from '../../context/SettingsContext';
 import { useAuth } from '../../context/AuthContext';
 import { translations } from '../../utils/translations';
 import { cn } from '../../utils/cn';
+import { sumOutstanding } from '../../utils/dues';
 import { StatSkeleton, CompactStatSkeleton } from '../../components/ui/SkeletonVariants';
 
 const DashboardPage = () => {
@@ -130,13 +131,11 @@ const DashboardPage = () => {
         let yesterdaySales = 0;
         let monthlySales = 0;
         let prevMonthlySales = 0;
-        let pendingTotal = 0;
+        // Pending uses the SAME shared predicate as the Dues page, so the card
+        // and the page it links to always show the same number.
+        const pendingTotal = sumOutstanding(filteredInvoices);
 
         filteredInvoices.forEach(inv => {
-            if (!inv.isClosed && (inv.paymentStatus === 'pending' || inv.paymentStatus === 'partially_paid')) {
-                pendingTotal += (inv.balanceAmount || 0);
-            }
-
             const yesterday = new Date(now);
             yesterday.setDate(now.getDate() - 1);
             const yesterdayDateStr = yesterday.toDateString();
