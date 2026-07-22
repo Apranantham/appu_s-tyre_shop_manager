@@ -211,6 +211,20 @@ const ExpensesPage = () => {
         return filteredExpenses.reduce((sum, e) => sum + (e.amount || 0), 0);
     }, [filteredExpenses]);
 
+    // Current-month total (independent of the list filters). The summary card
+    // previously showed filteredTotal even when unfiltered — with the default
+    // "All" date filter that was the ALL-TIME total mislabelled "Monthly", i.e.
+    // the reported wrong amount.
+    const monthly = useMemo(() => {
+        const now = new Date();
+        const m = now.getMonth(), y = now.getFullYear();
+        const rows = expenses.filter(e => {
+            const d = new Date(e.date);
+            return d.getMonth() === m && d.getFullYear() === y;
+        });
+        return { total: rows.reduce((s, e) => s + (e.amount || 0), 0), count: rows.length };
+    }, [expenses]);
+
     // Group by date
     const groupedExpenses = useMemo(() => {
         const groups = {};
@@ -271,20 +285,23 @@ const ExpensesPage = () => {
 
             {/* Summary Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <Card className="rounded-3xl p-5 bg-[var(--color-bg-card)] border border-[var(--color-border)]">
-                    <p className="text-[var(--color-text-gray)] text-xs font-black uppercase tracking-widest mb-1">
-                        {activeFilterCount > 0
-                            ? (lang === 'ta' ? 'வடிகட்டிய மொத்தம்' : 'Filtered Total')
-                            : (t.monthly_expenses || 'Total Expenses')
-                        }
-                    </p>
-                    <h3 className="text-3xl font-bold text-danger">
-                        ₹{filteredTotal.toLocaleString()}
-                    </h3>
-                    <p className="text-[10px] text-[var(--color-text-gray)] mt-1">
-                        {filteredExpenses.length} {lang === 'ta' ? 'பதிவுகள்' : 'records'}
-                    </p>
-                </Card>
+                {(() => {
+                    const noFilters = activeFilterCount === 0 && !searchTerm;
+                    const total = noFilters ? monthly.total : filteredTotal;
+                    const count = noFilters ? monthly.count : filteredExpenses.length;
+                    const label = noFilters
+                        ? (lang === 'ta' ? 'இந்த மாதம்' : 'This Month')
+                        : (lang === 'ta' ? 'வடிகட்டிய மொத்தம்' : 'Filtered Total');
+                    return (
+                        <Card className="rounded-3xl p-5 bg-[var(--color-bg-card)] border border-[var(--color-border)]">
+                            <p className="text-[var(--color-text-gray)] text-xs font-black uppercase tracking-widest mb-1">{label}</p>
+                            <h3 className="text-3xl font-bold text-danger">₹{total.toLocaleString()}</h3>
+                            <p className="text-[10px] text-[var(--color-text-gray)] mt-1">
+                                {count} {lang === 'ta' ? 'பதிவுகள்' : 'records'}
+                            </p>
+                        </Card>
+                    );
+                })()}
 
                 <Card className="rounded-3xl p-5 bg-[var(--color-bg-card)] border border-[var(--color-border)] col-span-1 md:col-span-2">
                     <p className="text-[var(--color-text-gray)] text-xs font-black uppercase tracking-widest mb-3">

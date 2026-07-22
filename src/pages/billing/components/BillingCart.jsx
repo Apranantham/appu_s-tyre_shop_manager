@@ -424,11 +424,26 @@ const BillingCart = ({
                             />
                         </div>
 
-                        {/* Grand Total Row */}
-                        <div className="flex justify-between items-center pt-2 border-t border-[var(--color-border)]/50">
-                            <span className="text-[11px] font-black text-[var(--color-text-white)] uppercase tracking-widest opacity-40">{t.total_amount || 'TOTAL AMOUNT'}</span>
-                            <span className="text-3xl font-black text-[var(--color-primary)] leading-none">₹{total.toLocaleString()}</span>
-                        </div>
+                        {/* Grand Total Row — negative total = customer credit
+                            (old parts worth more than the bill; shop owes them). */}
+                        {total < 0 ? (
+                            <div className="pt-2 border-t border-[var(--color-border)]/50">
+                                <div className="flex justify-between items-center">
+                                    <span className="text-[11px] font-black uppercase tracking-widest text-[var(--color-secondary)]">
+                                        {lang === 'ta' ? 'வாடிக்கையாளர் கிரெடிட்' : 'CUSTOMER CREDIT'}
+                                    </span>
+                                    <span className="text-3xl font-black text-[var(--color-secondary)] leading-none">₹{Math.abs(total).toLocaleString()}</span>
+                                </div>
+                                <p className="text-[10px] font-bold text-[var(--color-text-gray)] mt-1 text-right">
+                                    {lang === 'ta' ? 'கடை வாடிக்கையாளருக்கு தர வேண்டும்' : 'Shop owes the customer'}
+                                </p>
+                            </div>
+                        ) : (
+                            <div className="flex justify-between items-center pt-2 border-t border-[var(--color-border)]/50">
+                                <span className="text-[11px] font-black text-[var(--color-text-white)] uppercase tracking-widest opacity-40">{t.total_amount || 'TOTAL AMOUNT'}</span>
+                                <span className="text-3xl font-black text-[var(--color-primary)] leading-none">₹{total.toLocaleString()}</span>
+                            </div>
+                        )}
                     </div>
 
                     <div className="flex gap-3">
@@ -445,6 +460,10 @@ const BillingCart = ({
                     )}
                     <Button
                         className="flex-1 h-14 bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white rounded-2xl shadow-[0_10px_20px_rgba(255,122,47,0.25)] active:scale-[0.98] transition-all flex flex-row items-center justify-center gap-3 border-none"
+                        // preventDefault on mousedown so a tap while a number field
+                        // is focused doesn't just blur it (losing the first tap) —
+                        // the click then fires on the FIRST tap, every time.
+                        onMouseDown={(e) => e.preventDefault()}
                         onClick={onCheckout}
                         isLoading={isSubmitting}
                         disabled={cart.length === 0}
@@ -456,7 +475,9 @@ const BillingCart = ({
                             <>
                                 <div className="h-6 w-[1px] bg-white/20" />
                                 <span className="text-[9px] font-bold uppercase tracking-widest opacity-90">
-                                    {paymentStatuses.find(s => s.id === paymentStatus)?.label} • {paymentModes.find(m => m.id === paymentMode)?.label}
+                                    {total < 0
+                                        ? (lang === 'ta' ? 'கிரெடிட்' : 'CREDIT')
+                                        : `${paymentStatuses.find(s => s.id === paymentStatus)?.label} • ${paymentModes.find(m => m.id === paymentMode)?.label}`}
                                 </span>
                             </>
                         )}

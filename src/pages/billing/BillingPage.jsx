@@ -52,6 +52,10 @@ const BillingPage = () => {
     const [editOriginal, setEditOriginal] = useState(null);
     // Guards against double-taps creating duplicate invoices.
     const [isSubmitting, setIsSubmitting] = useState(false);
+    // Synchronous re-entry guard: state updates are async, so two very fast
+    // taps could both pass an `if (isSubmitting)` check before re-render. A ref
+    // flips immediately and blocks the duplicate.
+    const submittingRef = useRef(false);
     const [heldBills, setHeldBills] = useState(() => {
         try { return JSON.parse(localStorage.getItem(HELD_KEY) || '[]'); } catch { return []; }
     });
@@ -348,40 +352,52 @@ const BillingPage = () => {
     };
 
     const handleCheckout = async () => {
-        if (cart.length === 0 || isSubmitting) return; // guard against double-submit
+        if (cart.length === 0 || submittingRef.current) return; // guard against double-submit
+        submittingRef.current = true;
         setIsSubmitting(true);
         try {
             const totalItems = cart.filter(i => i.type !== 'old_part').reduce((sum, item) => sum + (item.price * item.quantity), 0);
             const totalExchange = cart.filter(i => i.type === 'old_part').reduce((sum, item) => sum + ((item.exchangeValue || 0) * (item.quantity || 1)), 0);
             const subtotal = totalItems - totalExchange;
-            // Clamp discount to [0, subtotal] so the total can never go negative.
             const discountVal = Math.min(Math.max(0, Number(discount) || 0), Math.max(0, subtotal));
+            // total may be NEGATIVE when trade-in old parts are worth more than
+            // the bill — that is a valid "shop owes the customer" credit, not an
+            // error, and must save.
             const total = subtotal - discountVal;
 
-            // Preserve any previously recorded payments; only add the new money as
-            // an extra payment line so installment history is never wiped on edit.
+            // Preserve previously recorded payments; only add new money as an
+            // extra line so installment history is never wiped on edit.
             const priorPayments = editingId ? (editOriginal?.payments || []) : [];
             const recordedTotal = priorPayments.reduce((s, p) => s + (p.amount || 0), 0);
 
-            let finalPaidAmount = Number(paidAmount) || 0;
-            if (paymentStatus === 'paid') finalPaidAmount = total;
-            else if (paymentStatus === 'pending') finalPaidAmount = 0;
-            // Never drop money that was actually recorded against this bill.
-            finalPaidAmount = Math.max(finalPaidAmount, recordedTotal);
-
             const payments = [...priorPayments];
-            if (finalPaidAmount > recordedTotal) {
-                payments.push({
-                    amount: finalPaidAmount - recordedTotal,
-                    date: new Date(billingDate).toISOString(),
-                    mode: paymentMode,
-                    note: paymentNote || (editingId ? 'Adjustment' : 'Initial payment')
-                });
-            }
+            let finalPaidAmount = 0;
+            let derivedStatus;
+            let creditAmount = 0;
 
-            const derivedStatus = finalPaidAmount <= 0
-                ? 'pending'
-                : (finalPaidAmount >= total ? 'paid' : 'partially_paid');
+            if (total < 0) {
+                // Customer credit: the shop owes the customer -total. Nothing is
+                // collected; the bill is closed as a credit (kept out of dues).
+                creditAmount = -total;
+                finalPaidAmount = 0;
+                derivedStatus = 'credit';
+            } else {
+                finalPaidAmount = Number(paidAmount) || 0;
+                if (paymentStatus === 'paid') finalPaidAmount = total;
+                else if (paymentStatus === 'pending') finalPaidAmount = 0;
+                finalPaidAmount = Math.max(finalPaidAmount, recordedTotal);
+                if (finalPaidAmount > recordedTotal) {
+                    payments.push({
+                        amount: finalPaidAmount - recordedTotal,
+                        date: new Date(billingDate).toISOString(),
+                        mode: paymentMode,
+                        note: paymentNote || (editingId ? 'Adjustment' : 'Initial payment')
+                    });
+                }
+                derivedStatus = finalPaidAmount <= 0
+                    ? 'pending'
+                    : (finalPaidAmount >= total ? 'paid' : 'partially_paid');
+            }
 
             const invoiceData = {
                 id: editingId || Date.now(),
@@ -396,9 +412,12 @@ const BillingPage = () => {
                 paymentMode,
                 paymentStatus: derivedStatus,
                 paidAmount: finalPaidAmount,
+                creditAmount,
                 paymentNote: paymentNote || '',
+                // Negative balance = shop owes the customer (excluded from dues,
+                // which only count balanceAmount > 0).
                 balanceAmount: total - finalPaidAmount,
-                isClosed: derivedStatus === 'paid',
+                isClosed: derivedStatus === 'paid' || derivedStatus === 'credit',
                 invoiceNo: editingInvoiceNo,
                 isDeleted: false,
                 deletedAt: null,
@@ -450,6 +469,7 @@ const BillingPage = () => {
                 ? 'பில் சேமிப்பதில் பிழை ஏற்பட்டது. மீண்டும் முயற்சிக்கவும்.'
                 : 'Could not save the bill. Please try again.');
         } finally {
+            submittingRef.current = false;
             setIsSubmitting(false);
         }
     };
@@ -464,6 +484,7 @@ const BillingPage = () => {
         setEditingId(null);
         setEditingInvoiceNo(null);
         setEditOriginal(null);
+        submittingRef.current = false;
         setIsSubmitting(false);
         setDiscount(0);
         setPaymentMode('cash');
