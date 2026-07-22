@@ -5,6 +5,7 @@ import { Button } from '../../../components/ui/Button';
 
 import { useProducts } from '../../../context/ProductContext';
 import { FALLBACK_IMAGE } from '../../../utils/constants';
+import { isStockTracked } from '../../../utils/stock';
 import { useNavigate } from 'react-router-dom';
 
 const LowStockAlert = () => {
@@ -12,8 +13,9 @@ const LowStockAlert = () => {
     const { products } = useProducts();
 
     const lowStockItems = React.useMemo(() => {
+        // Only tracked products can be low on stock (untracked have no count).
         return products
-            .filter(p => p.stock <= p.minStock)
+            .filter(p => p.isActive !== false && isStockTracked(p) && Number(p.stock) <= (Number(p.minStock) || 5))
             .sort((a, b) => a.stock - b.stock)
             .slice(0, 4);
     }, [products]);

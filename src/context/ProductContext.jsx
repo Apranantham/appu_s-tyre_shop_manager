@@ -99,6 +99,12 @@ export const ProductProvider = ({ children }) => {
     // `meta` feeds the stock-movement audit trail.
     const updateStock = async (id, quantity, meta = {}) => {
         try {
+            // Untracked products (blank/null stock) are never decremented or
+            // logged — they behave like unlimited-stock / service items.
+            const liveProduct = products.find(p => p.id === id);
+            if (liveProduct && (liveProduct.stock === null || liveProduct.stock === undefined || liveProduct.stock === '')) {
+                return;
+            }
             const productRef = doc(db, 'inventory', id);
             await updateDoc(productRef, {
                 stock: increment(-quantity)

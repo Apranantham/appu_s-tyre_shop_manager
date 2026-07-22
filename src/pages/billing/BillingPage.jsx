@@ -17,6 +17,7 @@ import { CheckCircle2, Printer, X, Plus, Home, ShoppingCart, Edit2, QrCode, Paus
 import WhatsAppIcon from '../../components/ui/WhatsAppIcon';
 import ThermalReceipt from './components/ThermalReceipt';
 import { shareInvoiceImage } from '../../utils/invoiceImage';
+import { isStockTracked } from '../../utils/stock';
 
 // Local persistence keys: the in-progress bill survives refreshes, and bills can
 // be parked ("held") to serve another customer, then resumed.
@@ -227,7 +228,9 @@ const BillingPage = () => {
     // own units, which otherwise falsely blocks legitimate quantity increases).
     const availableStock = (id) => {
         const liveProduct = products.find(p => p.id === id);
-        let stock = liveProduct?.stock || 0;
+        // Untracked products (blank stock) have no limit — always sellable.
+        if (!isStockTracked(liveProduct)) return Infinity;
+        let stock = Number(liveProduct.stock) || 0;
         if (editOriginal?.items) {
             const original = editOriginal.items.find(i => i.type === 'product' && i.id === id);
             stock += Number(original?.quantity) || 0;

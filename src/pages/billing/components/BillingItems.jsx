@@ -10,6 +10,7 @@ import { useSettings } from '../../../context/SettingsContext';
 import { translations } from '../../../utils/translations';
 import { FALLBACK_IMAGE, PRODUCT_CATEGORIES } from '../../../utils/constants';
 import { matchesQuery, displayNames } from '../../../utils/itemName';
+import { isStockTracked, isSellable } from '../../../utils/stock';
 import { useItemStats, rankItems } from '../../../hooks/useItemStats';
 
 // Visual identity per service TYPE (the `icon` field set in the Services page).
@@ -31,7 +32,10 @@ const FAV_KEY = 'tyreshop_favorites';
 const ItemRow = React.memo(function ItemRow({ item, type, qty, fav, ta, t, onAdd, onStep, onRemove, onToggleFav }) {
     const { primary, secondary } = displayNames(item);
     const meta = type === 'service' ? (SERVICE_META[item.icon] || SERVICE_META.tool) : null;
-    const outOfStock = type === 'product' && !(item.stock > 0);
+    // Untracked products (blank stock) are always sellable; only tracked
+    // products with 0 on hand are "out of stock".
+    const tracked = type === 'product' && isStockTracked(item);
+    const outOfStock = type === 'product' && !isSellable(item);
     const inCart = qty > 0;
 
     return (
@@ -62,7 +66,7 @@ const ItemRow = React.memo(function ItemRow({ item, type, qty, fav, ta, t, onAdd
                     {type === 'product' && item.size && (
                         <span className="text-[10px] font-bold text-[var(--color-text-gray)]">{item.size}</span>
                     )}
-                    {type === 'product' && (
+                    {tracked && (
                         <span className={cn('text-[10px] font-black uppercase tracking-wide', outOfStock ? 'text-danger' : 'text-success')}>
                             {outOfStock ? (t.out_of_stock || 'Out') : `${t.in_stock || 'Stock'} ${item.stock}`}
                         </span>

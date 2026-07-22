@@ -6,6 +6,30 @@ export const PRODUCT_CATEGORIES = [
     { id: 'truck', label: 'Truck', label_ta: 'லாரி' },
 ];
 
+// Product TYPE — what kind of thing it is. Only 'tyre'/'tube' reveal the
+// tyre-specific fields (size, load index, tube type, mfg year, vehicle class).
+// Everything else is a plain generic product.
+export const PRODUCT_TYPES = [
+    { id: 'general', label: 'General', label_ta: 'பொது' },
+    { id: 'tyre', label: 'Tyre', label_ta: 'டயர்' },
+    { id: 'tube', label: 'Tube', label_ta: 'டியூப்' },
+    { id: 'oil', label: 'Oil / Lubricant', label_ta: 'ஆயில்' },
+    { id: 'battery', label: 'Battery', label_ta: 'பேட்டரி' },
+    { id: 'accessory', label: 'Accessory', label_ta: 'அணிகலன்' },
+    { id: 'spare', label: 'Spare Part', label_ta: 'உதிரி பாகம்' },
+];
+
+export const TYRE_TYPES = ['tyre', 'tube'];
+
+export const PRODUCT_UNITS = [
+    { id: 'pcs', label: 'Piece', label_ta: 'எண்' },
+    { id: 'set', label: 'Set', label_ta: 'செட்' },
+    { id: 'pair', label: 'Pair', label_ta: 'ஜோடி' },
+    { id: 'litre', label: 'Litre', label_ta: 'லிட்டர்' },
+    { id: 'box', label: 'Box', label_ta: 'பாக்ஸ்' },
+    { id: 'kg', label: 'Kg', label_ta: 'கிலோ' },
+];
+
 export const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1543465077-111d4e4c965c?w=400&q=80';
 
 

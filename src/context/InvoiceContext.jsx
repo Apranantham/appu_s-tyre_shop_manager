@@ -15,6 +15,7 @@ import {
 import { db } from '../firebase';
 import { useAuth } from './AuthContext';
 import { logStockMovements } from '../utils/stockLog';
+import { isStockTracked } from '../utils/stock';
 
 const InvoiceContext = createContext();
 
@@ -142,10 +143,11 @@ export const InvoiceProvider = ({ children }) => {
                 }
                 const invData = invSnap.data();
 
-                // Restore Stock
+                // Restore Stock (only for tracked products; untracked have no
+                // stock number to move).
                 if (invData.items && Array.isArray(invData.items)) {
                     for (const item of invData.items) {
-                        if (item.type === 'product' && item.id) {
+                        if (item.type === 'product' && item.id && isStockTracked(item)) {
                             const productRef = doc(db, 'inventory', String(item.id));
                             transaction.update(productRef, { stock: increment(item.quantity || 0) });
                         }
@@ -165,7 +167,7 @@ export const InvoiceProvider = ({ children }) => {
             if (deletedData) {
                 logStockMovements(
                     (deletedData.items || [])
-                        .filter(it => it.type === 'product' && it.id)
+                        .filter(it => it.type === 'product' && it.id && isStockTracked(it))
                         .map(it => ({
                             productId: it.id,
                             productName: it.name,
@@ -193,10 +195,10 @@ export const InvoiceProvider = ({ children }) => {
                 }
                 const invData = invSnap.data();
 
-                // Deduct Stock
+                // Deduct Stock (tracked products only).
                 if (invData.items && Array.isArray(invData.items)) {
                     for (const item of invData.items) {
-                        if (item.type === 'product' && item.id) {
+                        if (item.type === 'product' && item.id && isStockTracked(item)) {
                             const productRef = doc(db, 'inventory', String(item.id));
                             transaction.update(productRef, { stock: increment(-(item.quantity || 0)) });
                         }
@@ -216,7 +218,7 @@ export const InvoiceProvider = ({ children }) => {
             if (restoredData) {
                 logStockMovements(
                     (restoredData.items || [])
-                        .filter(it => it.type === 'product' && it.id)
+                        .filter(it => it.type === 'product' && it.id && isStockTracked(it))
                         .map(it => ({
                             productId: it.id,
                             productName: it.name,

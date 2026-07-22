@@ -13,7 +13,12 @@ import { useSettings } from '../../context/SettingsContext';
 import { translations } from '../../utils/translations';
 import { PRODUCT_CATEGORIES, FALLBACK_IMAGE } from '../../utils/constants';
 import { matchesQuery, displayNames } from '../../utils/itemName';
+import { isStockTracked } from '../../utils/stock';
 import { ProductCardSkeleton } from '../../components/ui/SkeletonVariants';
+
+// Low-stock only applies to TRACKED products; untracked (blank stock) is never
+// "low" (null <= minStock would otherwise be truthy in JS).
+const isLowStock = (p) => isStockTracked(p) && Number(p.stock) <= (Number(p.minStock) || 5);
 
 const InventoryPage = () => {
     const location = useLocation();
@@ -54,7 +59,7 @@ const InventoryPage = () => {
         if (activeCategory === 'all') {
             matchesCategory = true;
         } else if (activeCategory === 'low_stock') {
-            matchesCategory = product.stock <= product.minStock;
+            matchesCategory = isLowStock(product);
         } else {
             matchesCategory = product.category === activeCategory;
         }
@@ -228,7 +233,7 @@ const InventoryPage = () => {
                                         )}
                                     </div>
                                 </div>
-                                {product.stock <= product.minStock && product.isActive !== false && (
+                                {isLowStock(product) && product.isActive !== false && (
                                     <div className="absolute top-4 left-4 px-3 py-1.5 bg-danger text-white text-[9px] font-black uppercase tracking-widest rounded-full flex items-center shadow-lg border border-danger/50">
                                         <AlertTriangle className="h-3 w-3 mr-1.5" />
                                         {t.low_stock}
@@ -301,12 +306,16 @@ const InventoryPage = () => {
                                 <div className="pt-4 flex items-center justify-between border-t border-[var(--color-border)]">
                                     <div className="flex items-center text-[10px] font-black uppercase tracking-widest text-[var(--color-text-gray)]">
                                         <Package className="h-4 w-4 mr-2" />
-                                        {t.stock}: <span className={cn(
-                                            "ml-1.5 px-2 py-0.5 rounded-lg border",
-                                            product.stock <= product.minStock
-                                                ? "text-danger bg-danger-soft border-danger/20"
-                                                : "text-success bg-success-soft border-success/20"
-                                        )}>{product.stock}</span>
+                                        {isStockTracked(product) ? (
+                                            <>{t.stock}: <span className={cn(
+                                                "ml-1.5 px-2 py-0.5 rounded-lg border",
+                                                isLowStock(product)
+                                                    ? "text-danger bg-danger-soft border-danger/20"
+                                                    : "text-success bg-success-soft border-success/20"
+                                            )}>{product.stock}</span></>
+                                        ) : (
+                                            <span className="ml-1.5 px-2 py-0.5 rounded-lg border text-[var(--color-text-gray)] border-[var(--color-border)]">{lang === 'ta' ? 'கண்காணிப்பு இல்லை' : 'Not tracked'}</span>
+                                        )}
                                     </div>
                                     <div className="text-[9px] font-black text-gray-500 uppercase tracking-[0.2em] bg-[var(--color-bg-dark)] px-2 py-1 rounded-lg">
                                         {product.category}
