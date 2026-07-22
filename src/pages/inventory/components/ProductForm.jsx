@@ -5,6 +5,7 @@ import { PRODUCT_CATEGORIES } from '../../../utils/constants';
 const ProductForm = ({ onSubmit, initialData, onCancel, canEditPrice = true, saving = false }) => {
     const [formData, setFormData] = useState({
         name: '',
+        nameAlt: '',
         brand: '',
         size: '',
         pattern: '',
@@ -74,6 +75,20 @@ const ProductForm = ({ onSubmit, initialData, onCancel, canEditPrice = true, sav
                         placeholder="e.g. Michelin"
                     />
                 </div>
+            </div>
+
+            {/* Bilingual name — the same product's name in the other language.
+                Optional; when filled, both names show on the bill screen and the
+                item can be searched by typing either language. */}
+            <div className="space-y-2">
+                <label className="text-sm font-medium text-[var(--color-text-gray)]">Name in other language (optional)</label>
+                <input
+                    name="nameAlt"
+                    value={formData.nameAlt}
+                    onChange={handleChange}
+                    className="w-full rounded-md border border-[var(--color-border)] bg-[var(--color-bg-dark)] px-3 py-2 text-sm text-[var(--color-text-white)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                    placeholder="Tamil ⇄ English — e.g. மிச்செலின் டயர்"
+                />
             </div>
 
             <div className="grid grid-cols-2 gap-4">

@@ -1,19 +1,19 @@
-import React, { useState, useCallback } from 'react';
-import { Search, Package, Wrench, ChevronRight, Plus, Minus, X, ArrowLeft, History, Trash2, ScanLine, Activity, Disc, Circle, Wind } from 'lucide-react';
+import React, { useState, useCallback, useMemo } from 'react';
+import { Search, Package, Wrench, Plus, Minus, X, ArrowLeft, History, Trash2, ScanLine, Star, Activity, Disc, Circle, Wind } from 'lucide-react';
 import BarcodeScannerModal, { isBarcodeScanSupported } from '../../../components/common/BarcodeScannerModal';
 import { cn } from '../../../utils/cn';
-import { Card } from '../../../components/ui/Card';
 import { Button } from '../../../components/ui/Button';
 import { useProducts } from '../../../context/ProductContext';
 import { useServices } from '../../../context/ServiceContext';
 import { useOldItemsMaster } from '../../../context/OldItemContext';
 import { useSettings } from '../../../context/SettingsContext';
 import { translations } from '../../../utils/translations';
-import { FALLBACK_IMAGE } from '../../../utils/constants';
+import { FALLBACK_IMAGE, PRODUCT_CATEGORIES } from '../../../utils/constants';
+import { matchesQuery, displayNames } from '../../../utils/itemName';
+import { useItemStats, rankItems } from '../../../hooks/useItemStats';
 
 // Visual identity per service TYPE (the `icon` field set in the Services page).
-// Fixed categorical hues — deliberately not theme tokens, so the five types
-// stay distinguishable from each other whatever accent the user picks.
+// Fixed categorical hues so the types stay distinct whatever accent is chosen.
 const SERVICE_META = {
     align: { Icon: Activity, color: '#22D3EE', soft: 'rgba(34, 211, 238, 0.13)', label: 'Alignment', label_ta: 'அலைன்மென்ட்' },
     balance: { Icon: Disc, color: '#A78BFA', soft: 'rgba(167, 139, 250, 0.13)', label: 'Balancing', label_ta: 'பேலன்சிங்' },
@@ -22,16 +22,35 @@ const SERVICE_META = {
     tool: { Icon: Wrench, color: '#60A5FA', soft: 'rgba(96, 165, 250, 0.13)', label: 'Repair', label_ta: 'பழுது' },
 };
 
+const FAV_KEY = 'tyreshop_favorites';
+
 const BillingItems = ({ onAddToCart, onUpdateQuantity, onRemoveItem, cart = [], onBack, editingInvoiceNo }) => {
     const { products } = useProducts();
     const { services } = useServices();
     const { oldItemsMaster } = useOldItemsMaster();
     const { shopDetails } = useSettings();
     const lang = shopDetails?.appLanguage || 'ta';
+    const ta = lang === 'ta';
     const t = translations[lang];
+    const stats = useItemStats();
+
     const [activeTab, setActiveTab] = useState('services');
     const [searchTerm, setSearchTerm] = useState('');
+    const [category, setCategory] = useState('all');
     const [showScanner, setShowScanner] = useState(false);
+
+    // Favorites (⭐) — pinned to the top, device-local like the other prefs.
+    const [favorites, setFavorites] = useState(() => {
+        try { return new Set(JSON.parse(localStorage.getItem(FAV_KEY) || '[]')); } catch { return new Set(); }
+    });
+    const toggleFavorite = (key) => setFavorites(prev => {
+        const next = new Set(prev);
+        next.has(key) ? next.delete(key) : next.add(key);
+        localStorage.setItem(FAV_KEY, JSON.stringify([...next]));
+        return next;
+    });
+
+    const switchTab = (tab) => { setActiveTab(tab); setCategory('all'); };
 
     // Camera scan → add the matching product straight to the cart.
     const handleBarcodeDetected = useCallback((code) => {
@@ -44,43 +63,32 @@ const BillingItems = ({ onAddToCart, onUpdateQuantity, onRemoveItem, cart = [], 
             onAddToCart(product, 'product');
             setSearchTerm('');
         } else {
-            // No match — drop the code into search so staff can see what scanned.
             setActiveTab('products');
             setSearchTerm(String(code));
         }
     }, [products, onAddToCart]);
 
+    // ---- Old parts (unchanged data-entry form) ----
     const newRow = () => ({ id: Date.now() + Math.random(), name: '', qty: 1, exchangeValue: '', scrapValue: '' });
     const [oldPartRows, setOldPartRows] = useState([newRow()]);
     const [focusedRowId, setFocusedRowId] = useState(null);
-
     const updateRow = useCallback((rowId, field, value) => {
         setOldPartRows(prev => prev.map(r => r.id === rowId ? { ...r, [field]: value } : r));
     }, []);
-
     const addRow = () => setOldPartRows(prev => [...prev, newRow()]);
     const removeRow = (rowId) => setOldPartRows(prev => prev.length > 1 ? prev.filter(r => r.id !== rowId) : [newRow()]);
-
     const addRowToCart = (row) => {
         if (!row.name || !row.exchangeValue) return;
         const slug = `${row.name}_${row.exchangeValue}`.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase();
-        const item = {
-            id: `old_${slug}`,
-            name: row.name,
-            price: 0,
-            exchangeValue: Number(row.exchangeValue),
-            scrapValue: Number(row.scrapValue) || 0,
-            quantity: Number(row.qty) || 1,
-            type: 'old_part'
-        };
-        onAddToCart(item, 'old_part');
+        onAddToCart({
+            id: `old_${slug}`, name: row.name, price: 0,
+            exchangeValue: Number(row.exchangeValue), scrapValue: Number(row.scrapValue) || 0,
+            quantity: Number(row.qty) || 1, type: 'old_part'
+        }, 'old_part');
         removeRow(row.id);
     };
-
     const addAllToCart = () => {
-        oldPartRows.forEach(row => {
-            if (row.name && row.exchangeValue) addRowToCart(row);
-        });
+        oldPartRows.forEach(row => { if (row.name && row.exchangeValue) addRowToCart(row); });
         setOldPartRows([newRow()]);
     };
 
@@ -89,470 +97,308 @@ const BillingItems = ({ onAddToCart, onUpdateQuantity, onRemoveItem, cart = [], 
         return item ? item.quantity : 0;
     };
 
-    const filteredProducts = products.filter(p => {
-        const name = (p.name || '').toLowerCase();
-        const size = (p.size || '').toLowerCase();
-        const barcode = (p.barcode || '').toLowerCase();
-        const search = searchTerm.toLowerCase();
-        return (p.isActive !== false) && (name.includes(search) || size.includes(search) || (barcode && barcode.includes(search)));
-    });
+    // ---- Category chips for the active tab ----
+    const serviceTypesPresent = useMemo(() => {
+        const set = new Set(services.filter(s => s.active !== false).map(s => s.icon || 'tool'));
+        return Object.keys(SERVICE_META).filter(k => set.has(k));
+    }, [services]);
 
-    const filteredServices = services.filter(s => {
-        const name = (s.name || '').toLowerCase();
-        const search = searchTerm.toLowerCase();
-        return (s.active !== false) && name.includes(search);
-    });
+    const chips = useMemo(() => {
+        const base = [
+            { id: 'all', label: ta ? 'அனைத்தும்' : 'All' },
+            { id: 'fav', label: '★', title: ta ? 'பிடித்தவை' : 'Favorites' },
+        ];
+        if (activeTab === 'products') {
+            return base.concat(
+                PRODUCT_CATEGORIES.filter(c => ['car', 'bike', 'truck'].includes(c.id))
+                    .map(c => ({ id: c.id, label: ta && c.label_ta ? c.label_ta : c.label }))
+            );
+        }
+        return base.concat(serviceTypesPresent.map(k => ({ id: k, label: ta ? SERVICE_META[k].label_ta : SERVICE_META[k].label })));
+    }, [activeTab, serviceTypesPresent, ta]);
+
+    // ---- Filtered + ranked lists ----
+    const visibleProducts = useMemo(() => {
+        let list = products.filter(p => p.isActive !== false && matchesQuery(p, searchTerm, ['size', 'brand', 'barcode']));
+        if (category === 'fav') list = list.filter(p => favorites.has(`product:${p.id}`));
+        else if (['car', 'bike', 'truck'].includes(category)) list = list.filter(p => p.category === category);
+        return rankItems(list, 'product', stats, favorites);
+    }, [products, searchTerm, category, favorites, stats]);
+
+    const visibleServices = useMemo(() => {
+        let list = services.filter(s => s.active !== false && matchesQuery(s, searchTerm));
+        if (category === 'fav') list = list.filter(s => favorites.has(`service:${s.id}`));
+        else if (SERVICE_META[category]) list = list.filter(s => (s.icon || 'tool') === category);
+        return rankItems(list, 'service', stats, favorites);
+    }, [services, searchTerm, category, favorites, stats]);
+
+    // ---- Compact row ----
+    const ItemRow = ({ item, type }) => {
+        const qty = getItemQuantity(item.id, type);
+        const favKey = `${type}:${item.id}`;
+        const fav = favorites.has(favKey);
+        const { primary, secondary } = displayNames(item);
+        const meta = type === 'service' ? (SERVICE_META[item.icon] || SERVICE_META.tool) : null;
+        const outOfStock = type === 'product' && !(item.stock > 0);
+        const inCart = qty > 0;
+
+        return (
+            <div
+                onClick={() => { if (!outOfStock) onAddToCart(item, type); }}
+                className={cn(
+                    'flex items-center gap-3 px-3 py-2.5 rounded-card border transition-colors select-none',
+                    inCart ? 'border-primary/50 bg-primary-soft'
+                        : 'border-[var(--color-border)] bg-[var(--color-bg-dark)]/40 active:bg-[var(--color-bg-dark)]/70',
+                    outOfStock ? 'opacity-45' : 'cursor-pointer'
+                )}
+            >
+                {/* Thumb / type icon */}
+                {type === 'product' ? (
+                    <div className="h-11 w-11 shrink-0 rounded-control overflow-hidden bg-[var(--color-bg-dark)] border border-[var(--color-border)]">
+                        <img src={item.image || FALLBACK_IMAGE} alt="" className="h-full w-full object-cover" />
+                    </div>
+                ) : (
+                    <div className="h-11 w-11 shrink-0 rounded-control flex items-center justify-center border border-white/5"
+                        style={{ backgroundColor: meta.soft, color: meta.color }}>
+                        <meta.Icon className="h-5 w-5" />
+                    </div>
+                )}
+
+                {/* Names + meta */}
+                <div className="flex-1 min-w-0">
+                    <p className="font-bold text-sm text-[var(--color-text-white)] leading-tight truncate">{primary}</p>
+                    {secondary && <p className="text-[11px] text-[var(--color-text-gray)] leading-tight truncate">{secondary}</p>}
+                    <div className="flex items-center gap-1.5 mt-0.5">
+                        {type === 'product' && item.size && (
+                            <span className="text-[10px] font-bold text-[var(--color-text-gray)]">{item.size}</span>
+                        )}
+                        {type === 'product' && (
+                            <span className={cn('text-[10px] font-black uppercase tracking-wide', outOfStock ? 'text-danger' : 'text-success')}>
+                                {outOfStock ? (t.out_of_stock || 'Out') : `${t.in_stock || 'Stock'} ${item.stock}`}
+                            </span>
+                        )}
+                        {type === 'service' && (
+                            <span className="text-[10px] font-black uppercase tracking-wide" style={{ color: meta.color }}>
+                                {ta ? meta.label_ta : meta.label}
+                            </span>
+                        )}
+                    </div>
+                </div>
+
+                {/* Price */}
+                <span className="font-black text-sm text-[var(--color-text-white)] tabular-nums shrink-0">₹{Number(item.price || 0).toLocaleString('en-IN')}</span>
+
+                {/* Favorite */}
+                <button
+                    onClick={(e) => { e.stopPropagation(); toggleFavorite(favKey); }}
+                    className={cn('h-9 w-9 shrink-0 flex items-center justify-center rounded-control transition-colors',
+                        fav ? 'text-warning' : 'text-[var(--color-text-gray)]/40 hover:text-[var(--color-text-gray)]')}
+                    title={ta ? 'பிடித்தது' : 'Favorite'}
+                >
+                    <Star className="h-4 w-4" fill={fav ? 'currentColor' : 'none'} />
+                </button>
+
+                {/* Stepper (only when in cart) or add hint */}
+                {inCart ? (
+                    <div className="flex items-center gap-1 shrink-0 bg-[var(--color-bg-card)] rounded-control p-0.5 border border-[var(--color-border)]" onClick={(e) => e.stopPropagation()}>
+                        <button
+                            onClick={() => qty > 1 ? onUpdateQuantity(item.id, type, -1) : onRemoveItem(item.id, type)}
+                            className="h-9 w-9 flex items-center justify-center rounded-[10px] text-[var(--color-text-white)] hover:bg-[var(--color-bg-dark)]"
+                        >
+                            <Minus className="h-4 w-4" />
+                        </button>
+                        <span className="w-6 text-center font-black text-sm tabular-nums">{qty}</span>
+                        <button
+                            onClick={() => onAddToCart(item, type)}
+                            disabled={outOfStock}
+                            className="h-9 w-9 flex items-center justify-center rounded-[10px] bg-primary text-white disabled:opacity-30"
+                        >
+                            <Plus className="h-4 w-4" />
+                        </button>
+                    </div>
+                ) : (
+                    <div className={cn('h-9 w-9 shrink-0 flex items-center justify-center rounded-control',
+                        outOfStock ? 'text-[var(--color-text-gray)]/30' : 'bg-primary/15 text-primary')}>
+                        <Plus className="h-5 w-5" />
+                    </div>
+                )}
+            </div>
+        );
+    };
+
+    const list = activeTab === 'products' ? visibleProducts : visibleServices;
+    const emptyLabel = activeTab === 'products'
+        ? (ta ? 'பொருட்கள் இல்லை' : 'No products found')
+        : (ta ? 'சேவைகள் இல்லை' : 'No services found');
 
     return (
         <div className="flex flex-col h-full bg-[var(--color-bg-card)] border border-[var(--color-border)] rounded-xl md:mr-4 overflow-hidden w-full max-w-full">
-            {/* Header with Exit button if onBack is provided */}
-            {onBack && (
-                <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--color-border)] bg-[var(--color-bg-card)] shrink-0">
-                    <button
-                        onClick={onBack}
-                        className="flex items-center gap-2 text-[var(--color-text-gray)] hover:text-[var(--color-primary)] transition-colors group"
-                    >
-                        <ArrowLeft className="h-5 w-5 group-hover:-translate-x-1 transition-transform" />
-                        <span className="text-xs font-black uppercase tracking-widest">{t.exit || 'Exit'}</span>
-                    </button>
-                    <div className="flex items-center gap-2">
-                        <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse"></span>
-                        <h2 className="text-[10px] font-black tracking-[0.2em] text-[var(--color-text-gray)] uppercase">
-                            {editingInvoiceNo ? (lang === 'ta' ? `திருத்துதல் #${editingInvoiceNo}` : `EDITING BILL #${editingInvoiceNo}`) : (t.billing_mode || 'BILLING MODE')}
-                        </h2>
+            {/* Sticky header: exit + tabs + search + chips */}
+            <div className="shrink-0 border-b border-[var(--color-border)]">
+                {onBack && (
+                    <div className="flex items-center justify-between px-4 py-3">
+                        <button onClick={onBack} className="flex items-center gap-2 text-[var(--color-text-gray)] hover:text-primary transition-colors group">
+                            <ArrowLeft className="h-5 w-5 group-hover:-translate-x-1 transition-transform" />
+                            <span className="text-xs font-black uppercase tracking-widest">{t.exit || 'Exit'}</span>
+                        </button>
+                        <div className="flex items-center gap-2">
+                            <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
+                            <h2 className="text-[10px] font-black tracking-[0.2em] text-[var(--color-text-gray)] uppercase">
+                                {editingInvoiceNo ? (ta ? `திருத்துதல் #${editingInvoiceNo}` : `EDITING #${editingInvoiceNo}`) : (t.billing_mode || 'BILLING')}
+                            </h2>
+                        </div>
                     </div>
-                </div>
-            )}
-            {/* ... tabs ... */}
-            <div className="p-4 border-b border-[var(--color-border)] space-y-4">
-                {/* ... existing tab buttons ... */}
-                <div className="flex bg-[var(--color-bg-dark)]/50 p-1 rounded-2xl border border-[var(--color-border)]">
-                    <button
-                        onClick={() => setActiveTab('services')}
-                        className={`flex-1 flex items-center justify-center py-3 rounded-xl shadow-sm transition-all duration-300 ${activeTab === 'services'
-                            ? 'bg-[var(--color-primary)] text-white font-black'
-                            : 'text-[var(--color-text-gray)] hover:bg-[var(--color-bg-card)]'
-                            }`}
-                    >
-                        <Wrench className={`h-5 w-5 mr-2 ${activeTab === 'services' ? 'animate-bounce' : ''}`} />
-                        <div className="text-left">
-                            <p className="text-[10px] uppercase opacity-70 leading-none">{t.services_tab}</p>
-                            <p className="text-sm uppercase tracking-tighter font-black">{t.services_tab}</p>
-                        </div>
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('products')}
-                        className={`flex-1 flex items-center justify-center py-3 rounded-xl shadow-sm transition-all duration-300 ${activeTab === 'products'
-                            ? 'bg-[var(--color-primary)] text-white font-black'
-                            : 'text-[var(--color-text-gray)] hover:bg-[var(--color-bg-card)]'
-                            }`}
-                    >
-                        <Package className={`h-5 w-5 mr-2 ${activeTab === 'products' ? 'animate-bounce' : ''}`} />
-                        <div className="text-left">
-                            <p className="text-[10px] uppercase opacity-70 leading-none">{t.products}</p>
-                            <p className="text-sm uppercase tracking-tighter font-black">{t.products}</p>
-                        </div>
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('old_parts')}
-                        className={`flex-1 flex items-center justify-center py-3 rounded-xl shadow-sm transition-all duration-300 ${activeTab === 'old_parts'
-                            ? 'bg-[var(--color-primary)] text-white font-black'
-                            : 'text-[var(--color-text-gray)] hover:bg-[var(--color-bg-card)]'
-                            }`}
-                    >
-                        <History className={`h-5 w-5 mr-2 ${activeTab === 'old_parts' ? 'animate-bounce' : ''}`} />
-                        <div className="text-left">
-                            <p className="text-[10px] uppercase opacity-70 leading-none">{t.old_parts}</p>
-                            <p className="text-sm uppercase tracking-tighter font-black">{t.old_parts}</p>
-                        </div>
-                    </button>
+                )}
+
+                {/* Tabs */}
+                <div className="flex gap-1.5 px-3 pt-1">
+                    {[
+                        { id: 'services', label: t.services_tab, Icon: Wrench },
+                        { id: 'products', label: t.products, Icon: Package },
+                        { id: 'old_parts', label: t.old_parts, Icon: History },
+                    ].map(tab => (
+                        <button
+                            key={tab.id}
+                            onClick={() => switchTab(tab.id)}
+                            className={cn('flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-control text-xs font-black uppercase tracking-wide transition-colors',
+                                activeTab === tab.id ? 'bg-primary text-white' : 'text-[var(--color-text-gray)] hover:bg-[var(--color-bg-dark)]/60')}
+                        >
+                            <tab.Icon className="h-4 w-4" />
+                            <span className="hidden xs:inline">{tab.label}</span>
+                        </button>
+                    ))}
                 </div>
 
-                {activeTab !== 'old_parts' ? (
-                    <div className="flex gap-2">
-                        <div className="relative flex-1">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--color-text-gray)]" />
-                            <input
-                                placeholder={t.search_placeholder(activeTab)}
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                                className="w-full bg-[var(--color-bg-dark)] border-2 border-[var(--color-border)] rounded-xl pl-10 pr-4 py-3 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] placeholder:opacity-40"
-                            />
-                        </div>
-                        {activeTab === 'products' && isBarcodeScanSupported() && (
-                            <button
-                                onClick={() => setShowScanner(true)}
-                                className="shrink-0 px-4 rounded-xl bg-[var(--color-primary)] text-white flex items-center gap-2 active:scale-95 transition-transform"
-                                title={lang === 'ta' ? 'பார்கோடு ஸ்கேன்' : 'Scan barcode'}
-                            >
-                                <ScanLine className="h-5 w-5" />
-                                <span className="hidden sm:inline text-[10px] font-black uppercase tracking-widest">
-                                    {lang === 'ta' ? 'ஸ்கேன்' : 'Scan'}
-                                </span>
-                            </button>
-                        )}
-                    </div>
-                ) : (
-                    <div className="animate-in fade-in slide-in-from-top-2 duration-300">
-                        <div className="bg-[var(--color-bg-dark)]/80 border-2 border-[var(--color-border)] p-3 rounded-2xl space-y-3">
-                            <div className="flex items-center justify-between mb-1">
-                                <div className="flex items-center gap-2">
-                                    <History className="h-4 w-4 text-[var(--color-primary)]" />
-                                    <h3 className="text-[10px] font-black uppercase tracking-widest text-[var(--color-primary)]">{t.old_parts}</h3>
-                                </div>
-                                <button
-                                    onClick={addRow}
-                                    className="flex items-center gap-1.5 bg-[var(--color-primary)]/10 text-[var(--color-primary)] text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-lg hover:bg-[var(--color-primary)]/20 transition-all active:scale-95"
-                                >
-                                    <Plus className="h-3.5 w-3.5" /> Add Row
+                {activeTab !== 'old_parts' && (
+                    <div className="px-3 py-3 space-y-2.5">
+                        {/* Search + scan */}
+                        <div className="flex gap-2">
+                            <div className="relative flex-1">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--color-text-gray)]" />
+                                <input
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    placeholder={ta ? 'தமிழ் அல்லது English பெயர் தேடு...' : 'Search name (Tamil or English)...'}
+                                    className="w-full bg-[var(--color-bg-dark)] border border-[var(--color-border)] rounded-control pl-10 pr-9 py-2.5 text-sm font-semibold focus:outline-none focus:border-primary"
+                                />
+                                {searchTerm && (
+                                    <button onClick={() => setSearchTerm('')} className="absolute right-2 top-1/2 -translate-y-1/2 h-6 w-6 flex items-center justify-center text-[var(--color-text-gray)] hover:text-[var(--color-text-white)]">
+                                        <X className="h-4 w-4" />
+                                    </button>
+                                )}
+                            </div>
+                            {activeTab === 'products' && isBarcodeScanSupported() && (
+                                <button onClick={() => setShowScanner(true)} className="shrink-0 px-3.5 rounded-control bg-primary text-white flex items-center active:scale-95 transition-transform" title={ta ? 'ஸ்கேன்' : 'Scan'}>
+                                    <ScanLine className="h-5 w-5" />
                                 </button>
-                            </div>
+                            )}
+                        </div>
 
-                            <div className="grid gap-3 pt-1">
-                                {/* Desktop Headers */}
-                                <div className="hidden sm:grid grid-cols-[3fr_1fr_1.5fr_1.5fr_auto] gap-3 px-3 py-2 bg-[var(--color-bg-dark)]/50 rounded-xl border border-[var(--color-border)]">
-                                    <span className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-gray)]">Item Name</span>
-                                    <span className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-gray)] text-center">Qty</span>
-                                    <span className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-gray)] text-right">Exchange ₹</span>
-                                    <span className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-gray)] text-right">Scrap ₹</span>
-                                    <span className="w-9"></span>
-                                </div>
-
-                                {/* Rows */}
-                                {oldPartRows.map((row, index) => (
-                                    <div key={row.id} className="relative flex flex-col sm:grid sm:grid-cols-[3fr_1fr_1.5fr_1.5fr_auto] gap-4 sm:gap-3 items-start sm:items-center bg-[var(--color-bg-dark)]/30 sm:bg-transparent p-4 sm:p-0 rounded-2xl sm:rounded-none border border-[var(--color-border)] sm:border-transparent mt-3 sm:mt-0">
-                                        {/* Mobile Row Label */}
-                                        <div className="absolute -top-3 left-4 px-3 py-0.5 bg-[var(--color-bg-card)] sm:hidden rounded-full border border-[var(--color-border)] shadow-sm">
-                                            <span className="text-[9px] font-black uppercase tracking-[0.2em] text-[var(--color-primary)]">Part {index + 1}</span>
-                                        </div>
-
-                                        {/* Name - with custom dropdown */}
-                                        <div className="w-full relative group/input">
-                                            <span className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-gray)] sm:hidden mb-1.5 block ml-1">Item Name</span>
-                                            <input
-                                                value={row.name}
-                                                onChange={(e) => updateRow(row.id, 'name', e.target.value)}
-                                                onFocus={() => setFocusedRowId(row.id)}
-                                                onBlur={() => setTimeout(() => { if (focusedRowId === row.id) setFocusedRowId(null); }, 200)}
-                                                placeholder="Select or type item..."
-                                                className="w-full bg-[var(--color-bg-card)] border border-[var(--color-border)] rounded-xl px-4 py-2.5 text-sm font-bold focus:border-[var(--color-primary)] outline-none transition-all text-[var(--color-text-white)] shadow-sm focus:ring-2 focus:ring-[var(--color-primary)]/20"
-                                            />
-                                            {focusedRowId === row.id && oldItemsMaster.length > 0 && (
-                                                <div className="absolute left-0 right-0 top-[110%] bg-[var(--color-bg-dark)] border border-[var(--color-border)] rounded-xl shadow-2xl overflow-hidden z-[100] animate-in fade-in slide-in-from-top-2 duration-200 mt-1 max-h-48 overflow-y-auto custom-scrollbar">
-                                                    {oldItemsMaster
-                                                        .filter(item => item.name.toLowerCase().includes((row.name || '').toLowerCase()))
-                                                        .map(item => (
-                                                            <button
-                                                                key={item.id}
-                                                                type="button"
-                                                                onMouseDown={() => {
-                                                                    updateRow(row.id, 'name', item.name);
-                                                                    setFocusedRowId(null);
-                                                                }}
-                                                                className="w-full text-left px-4 py-3 text-sm font-bold text-[var(--color-text-white)] hover:bg-[var(--color-primary)] hover:text-white transition-colors border-b border-[var(--color-border)]/50 last:border-none"
-                                                            >
-                                                                {item.name}
-                                                            </button>
-                                                        ))}
-                                                </div>
-                                            )}
-                                        </div>
-
-                                        <div className="grid grid-cols-3 gap-3 w-full sm:col-span-3 sm:grid sm:grid-cols-[1fr_1.5fr_1.5fr] sm:gap-3">
-                                            {/* Qty */}
-                                            <div className="flex flex-col w-full">
-                                                <span className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-gray)] sm:hidden mb-1.5 block ml-1">Qty</span>
-                                                <input
-                                                    type="number" inputMode="decimal"
-                                                    min="1"
-                                                    value={row.qty}
-                                                    onFocus={(e) => e.target.select()}
-                                                    onChange={(e) => updateRow(row.id, 'qty', e.target.value)}
-                                                    className="w-full bg-[var(--color-bg-card)] border border-[var(--color-border)] rounded-xl px-2 py-2.5 text-sm font-bold focus:border-[var(--color-primary)] outline-none text-center shadow-sm focus:ring-2 focus:ring-[var(--color-primary)]/20"
-                                                />
-                                            </div>
-                                            {/* Exchange Value */}
-                                            <div className="flex flex-col w-full">
-                                                <span className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-gray)] sm:hidden mb-1.5 block pl-1 text-right">Exchange ₹</span>
-                                                <input
-                                                    type="number" inputMode="decimal"
-                                                    value={row.exchangeValue}
-                                                    onFocus={(e) => e.target.select()}
-                                                    onChange={(e) => updateRow(row.id, 'exchangeValue', e.target.value)}
-                                                    placeholder="0"
-                                                    className="w-full bg-[var(--color-bg-card)] border border-[var(--color-border)] rounded-xl px-3 py-2.5 text-sm font-bold focus:border-red-400 outline-none text-right text-danger shadow-sm focus:ring-2 focus:ring-red-400/20"
-                                                />
-                                            </div>
-                                            {/* Scrap Value */}
-                                            <div className="flex flex-col w-full">
-                                                <span className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-gray)] sm:hidden mb-1.5 block pl-1 text-right">Scrap ₹</span>
-                                                <input
-                                                    type="number" inputMode="decimal"
-                                                    value={row.scrapValue}
-                                                    onFocus={(e) => e.target.select()}
-                                                    onChange={(e) => updateRow(row.id, 'scrapValue', e.target.value)}
-                                                    placeholder="0"
-                                                    className="w-full bg-[var(--color-bg-card)] border border-[var(--color-border)] rounded-xl px-3 py-2.5 text-sm font-bold focus:border-[var(--color-primary)] outline-none text-right shadow-sm focus:ring-2 focus:ring-[var(--color-primary)]/20"
-                                                />
-                                            </div>
-                                        </div>
-
-                                        {/* Delete Row */}
-                                        <div className="w-full sm:w-auto mt-2 sm:mt-0 pt-3 sm:pt-0 border-t border-[var(--color-border)] sm:border-none flex justify-center">
-                                            <button
-                                                onClick={() => removeRow(row.id)}
-                                                className="w-full sm:w-9 h-10 sm:h-9 flex items-center justify-center rounded-xl bg-danger-soft text-danger hover:bg-danger hover:text-white transition-all active:scale-95 border border-danger/20 hover:border-danger"
-                                            >
-                                                <Trash2 className="h-4 w-4" />
-                                                <span className="text-[11px] uppercase font-black tracking-[0.2em] ml-2 sm:hidden">Remove Row</span>
-                                            </button>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-
-
-                            {/* Actions */}
-                            <div className="flex gap-2 pt-1">
-                                <Button
-                                    onClick={addAllToCart}
-                                    disabled={!oldPartRows.some(r => r.name && r.exchangeValue)}
-                                    className="flex-1 bg-[var(--color-primary)] rounded-xl py-2.5 font-black uppercase text-xs tracking-widest active:scale-[0.98] transition-all disabled:opacity-30"
+                        {/* Category chips */}
+                        <div className="flex gap-2 overflow-x-auto no-scrollbar -mx-1 px-1">
+                            {chips.map(c => (
+                                <button
+                                    key={c.id}
+                                    onClick={() => setCategory(c.id)}
+                                    title={c.title}
+                                    className={cn('shrink-0 px-3.5 py-1.5 rounded-pill text-[11px] font-black uppercase tracking-wide border transition-colors',
+                                        category === c.id ? 'bg-primary text-white border-primary'
+                                            : 'bg-[var(--color-bg-dark)]/40 text-[var(--color-text-gray)] border-[var(--color-border)]')}
                                 >
-                                    {t.add_old_part || 'Add All to Bill'}
-                                </Button>
-                            </div>
+                                    {c.label}
+                                </button>
+                            ))}
                         </div>
                     </div>
                 )}
             </div>
 
-            {/* Grid — a DIRECT child of the root flex column, so flex-1 +
-                overflow-y-auto genuinely constrain the height and scroll.
-                (It used to sit inside the bordered header box, where flex-1
-                was inert and the root's overflow-hidden just clipped it.) */}
-            <div className="flex-1 overflow-y-auto px-4 pb-10 min-w-0 pt-6">
-                    <div className={cn(
-                        "grid gap-4 min-w-0",
-                        (activeTab === 'products' ? filteredProducts.length > 0 : filteredServices.length > 0)
-                            ? "grid-cols-2 md:grid-cols-3 lg:grid-cols-3"
-                            : "grid-cols-1"
-                    )}>
-                        {activeTab === 'products' ? (
-                            filteredProducts.length > 0 ? (
-                                filteredProducts.map(product => {
-                                    const qtyInCart = getItemQuantity(product.id, 'product');
-                                    return (
-                                        <Card
-                                            key={product.id}
-                                            className={cn(
-                                                "relative cursor-pointer border-2 transition-all p-4 flex flex-col h-full group shadow-md hover:shadow-xl active:scale-[0.98] rounded-2xl bg-[var(--color-bg-dark)]/40",
-                                                qtyInCart > 0 ? "border-[var(--color-primary)] bg-[var(--color-primary)]/10" : "border-[var(--color-border)] hover:border-primary"
-                                            )}
-                                            onClick={() => product.stock > 0 && onAddToCart(product, 'product')}
-                                        >
-                                            {qtyInCart > 0 && (
-                                                <>
-                                                    <button
-                                                        onClick={(e) => { e.stopPropagation(); onRemoveItem(product.id, 'product'); }}
-                                                        className="absolute -top-2 -left-2 h-8 w-8 bg-danger text-white rounded-full flex items-center justify-center font-black text-sm shadow-lg border-4 border-[var(--color-bg-card)] z-20 hover:scale-110 active:scale-95 transition-all"
-                                                        title="Remove Item"
-                                                    >
-                                                        <X className="h-4 w-4 stroke-[3px]" />
-                                                    </button>
-                                                    <div className="absolute -top-2 -right-2 h-8 w-8 bg-[var(--color-primary)] text-white rounded-full flex items-center justify-center font-black text-sm shadow-lg border-4 border-[var(--color-bg-card)] z-10 animate-in zoom-in-50">
-                                                        {qtyInCart}
-                                                    </div>
-                                                </>
-                                            )}
-
-                                            <div className="mb-4">
-                                                <h4 className="font-black text-sm md:text-base leading-tight uppercase tracking-tight text-[var(--color-text-white)]">{product.name}</h4>
-                                                <p className="text-[10px] md:text-xs text-[var(--color-text-gray)] font-bold mt-1">{product.size}</p>
-                                            </div>
-
-                                            <div className="aspect-square rounded-2xl mb-4 bg-[var(--color-bg-dark)]/50 overflow-hidden border border-[var(--color-border)]/50 relative group-hover:border-primary/30 transition-colors">
-                                                <img src={product.image || FALLBACK_IMAGE} alt={product.name} className="h-full w-full object-cover group-hover:scale-110 transition-transform duration-500" />
-                                                <div className="absolute top-2 right-2 bg-black/60 backdrop-blur-md px-2 py-1 rounded-lg border border-white/10">
-                                                    <span className="font-black text-sm text-primary">₹{product.price}</span>
-                                                </div>
-                                            </div>
-
-                                            <div className="mt-auto flex justify-between items-center">
-                                                <span className={`text-[9px] font-black tracking-widest px-2 py-1 rounded-md ${product.stock > 0 ? 'bg-success-soft text-success' : 'bg-danger-soft text-danger'}`}>
-                                                    {product.stock > 0 ? `${t.in_stock.toUpperCase()}: ${product.stock}` : t.out_of_stock.toUpperCase()}
-                                                </span>
-
-                                                {qtyInCart > 0 && (
-                                                    <div className="flex items-center bg-primary-soft rounded-xl p-1 border border-primary/20 shadow-inner" onClick={(e) => e.stopPropagation()}>
-                                                        <button
-                                                            onClick={() => qtyInCart > 1 ? onUpdateQuantity(product.id, 'product', -1) : onRemoveItem(product.id, 'product')}
-                                                            className="p-1 hover:text-[var(--color-primary)] transition-colors"
-                                                        >
-                                                            <Minus className="h-4 w-4" />
-                                                        </button>
-                                                        <span className="mx-2 text-xs font-black min-w-[1rem] text-center">{qtyInCart}</span>
-                                                        <button
-                                                            onClick={() => onAddToCart(product, 'product')}
-                                                            className="p-1 hover:text-[var(--color-primary)] transition-colors"
-                                                        >
-                                                            <Plus className="h-4 w-4" />
-                                                        </button>
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </Card>
-                                    );
-                                })
-                            ) : (
-                                <div className="col-span-full py-16 text-center animate-fade-in">
-                                    <Package className="h-16 w-16 mx-auto mb-4 text-[var(--color-text-gray)] opacity-20" />
-                                    <h3 className="text-lg font-bold mb-1 uppercase tracking-widest">No Products Found</h3>
-                                    <p className="text-sm text-[var(--color-text-gray)] mb-6 uppercase opacity-60">We couldn't find anything matching your search.</p>
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() => setSearchTerm('')}
-                                        className="border-2 border-[var(--color-primary)] text-[var(--color-primary)] hover:bg-[var(--color-primary)] hover:text-[var(--color-text-white)] rounded-full px-8 py-6 font-black uppercase text-xs"
-                                    >
-                                        Clear / அழி
-                                    </Button>
-                                </div>
-                            )
-                        ) : (
-                            filteredServices.length > 0 ? (
-                                filteredServices.map(service => {
-                                    const qtyInCart = getItemQuantity(service.id, 'service');
-                                    return (
-                                        <Card
-                                            key={service.id}
-                                            className={cn(
-                                                "relative cursor-pointer border-2 transition-all p-5 flex flex-col group min-h-[14rem] shadow-xl hover:shadow-2xl active:scale-[0.98] rounded-3xl overflow-visible",
-                                                qtyInCart > 0
-                                                    ? "border-warning bg-[var(--color-bg-dark)]"
-                                                    : "border-[var(--color-border)] bg-[var(--color-bg-dark)] hover:border-warning/50"
-                                            )}
-                                            onClick={() => onAddToCart(service, 'service')}
-                                        >
-                                            {/* Remove Button - Top Left Circle */}
-                                            {qtyInCart > 0 && (
-                                                <button
-                                                    onClick={(e) => { e.stopPropagation(); onRemoveItem(service.id, 'service'); }}
-                                                    className="absolute -top-3 -left-3 h-9 w-9 bg-[var(--color-danger)] text-white rounded-full flex items-center justify-center shadow-lg hover:scale-110 active:scale-95 transition-all z-20 border-4 border-[var(--color-bg-dark)]"
-                                                    title="Remove Item"
-                                                >
-                                                    <X className="h-5 w-5 stroke-[3px]" />
+            {/* Scrollable list (or old-parts form) */}
+            {activeTab === 'old_parts' ? (
+                <div className="flex-1 overflow-y-auto p-3">
+                    <div className="bg-[var(--color-bg-dark)]/60 border border-[var(--color-border)] p-3 rounded-card space-y-3">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                                <History className="h-4 w-4 text-primary" />
+                                <h3 className="text-[10px] font-black uppercase tracking-widest text-primary">{t.old_parts}</h3>
+                            </div>
+                            <button onClick={addRow} className="flex items-center gap-1.5 bg-primary/10 text-primary text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-control active:scale-95">
+                                <Plus className="h-3.5 w-3.5" /> {ta ? 'வரிசை' : 'Add Row'}
+                            </button>
+                        </div>
+                        {oldPartRows.map((row, index) => (
+                            <div key={row.id} className="relative bg-[var(--color-bg-card)] border border-[var(--color-border)] rounded-card p-3 space-y-3">
+                                <span className="text-[9px] font-black uppercase tracking-[0.2em] text-primary">{ta ? 'பாகம்' : 'Part'} {index + 1}</span>
+                                <div className="relative">
+                                    <input
+                                        value={row.name}
+                                        onChange={(e) => updateRow(row.id, 'name', e.target.value)}
+                                        onFocus={() => setFocusedRowId(row.id)}
+                                        onBlur={() => setTimeout(() => setFocusedRowId(cur => cur === row.id ? null : cur), 200)}
+                                        placeholder={ta ? 'பொருள் பெயர்...' : 'Item name...'}
+                                        className="w-full bg-[var(--color-bg-dark)] border border-[var(--color-border)] rounded-control px-3 py-2.5 text-sm font-bold focus:border-primary outline-none"
+                                    />
+                                    {focusedRowId === row.id && oldItemsMaster.length > 0 && (
+                                        <div className="absolute left-0 right-0 top-[105%] bg-[var(--color-bg-dark)] border border-[var(--color-border)] rounded-control shadow-2xl overflow-hidden z-[100] max-h-48 overflow-y-auto">
+                                            {oldItemsMaster.filter(it => it.name.toLowerCase().includes((row.name || '').toLowerCase())).map(it => (
+                                                <button key={it.id} type="button" onMouseDown={() => { updateRow(row.id, 'name', it.name); setFocusedRowId(null); }}
+                                                    className="w-full text-left px-4 py-2.5 text-sm font-bold hover:bg-primary hover:text-white transition-colors border-b border-[var(--color-border)]/50 last:border-none">
+                                                    {it.name}
                                                 </button>
-                                            )}
-
-                                            {/* Quantity Badge - Top Right Circle */}
-                                            {qtyInCart > 0 && (
-                                                <div className="absolute -top-3 -right-3 h-9 w-9 bg-primary text-white rounded-full flex items-center justify-center font-black text-sm shadow-lg border-4 border-[var(--color-bg-dark)] z-10 animate-in zoom-in-50">
-                                                    {qtyInCart}
-                                                </div>
-                                            )}
-
-                                            {(() => {
-                                                const meta = SERVICE_META[service.icon] || SERVICE_META.tool;
-                                                return (
-                                                    <div className="flex-1 space-y-4">
-                                                        {/* Type stripe — instant visual grouping */}
-                                                        <span
-                                                            className="absolute inset-x-0 top-0 h-1 rounded-t-3xl"
-                                                            style={{ backgroundColor: meta.color, opacity: 0.85 }}
-                                                        />
-
-                                                        {/* Category eyebrow + service name */}
-                                                        <div>
-                                                            <span
-                                                                className="font-mono text-[9px] font-bold uppercase tracking-[0.18em]"
-                                                                style={{ color: meta.color }}
-                                                            >
-                                                                {lang === 'ta' ? meta.label_ta : meta.label}
-                                                            </span>
-                                                            <h4 className="font-black text-sm md:text-base uppercase tracking-tight text-[var(--color-text-white)] leading-tight min-h-[2.5rem] mt-1">
-                                                                {service.name}
-                                                            </h4>
-                                                        </div>
-
-                                                        <div className="flex items-center justify-between gap-4">
-                                                            {/* Type icon in its own colour */}
-                                                            <div
-                                                                className="h-16 w-16 rounded-2xl flex items-center justify-center shadow-inner group-hover:scale-105 transition-transform duration-300 border border-white/5"
-                                                                style={{ backgroundColor: meta.soft, color: meta.color }}
-                                                            >
-                                                                <meta.Icon className="h-8 w-8" />
-                                                            </div>
-
-                                                            {/* Price Section */}
-                                                            <div className="text-right">
-                                                                <span className="block text-[9px] text-[var(--color-text-gray)]/60 font-black uppercase tracking-[0.2em] mb-1">
-                                                                    {lang === 'ta' ? 'கட்டணம்' : 'SERVICE COST'}
-                                                                </span>
-                                                                <span className="font-black text-2xl text-[var(--color-text-white)] flex items-center justify-end tabular-nums">
-                                                                    <span className="text-lg mr-0.5 text-[var(--color-text-gray)]">₹</span>{service.price}
-                                                                </span>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                );
-                                            })()}
-
-                                            {/* Integrated Quantity Controls */}
-                                            <div className="mt-5">
-                                                <div
-                                                    className={cn(
-                                                        "flex items-center justify-between bg-[var(--color-bg-card)] rounded-2xl p-1.5 border border-white/5 shadow-inner transition-all",
-                                                        qtyInCart > 0 ? "opacity-100" : "opacity-30 group-hover:opacity-100"
-                                                    )}
-                                                    onClick={(e) => e.stopPropagation()}
-                                                >
-                                                    <button
-                                                        onClick={() => qtyInCart > 1 ? onUpdateQuantity(service.id, 'service', -1) : qtyInCart === 1 ? onRemoveItem(service.id, 'service') : null}
-                                                        disabled={qtyInCart === 0}
-                                                        className="h-10 w-10 flex items-center justify-center text-warning hover:bg-warning-soft rounded-xl transition-colors disabled:opacity-20"
-                                                    >
-                                                        <Minus className="h-5 w-5 stroke-[3px]" />
-                                                    </button>
-
-                                                    <span className="text-lg font-black text-warning min-w-[2rem] text-center">
-                                                        {qtyInCart || 0}
-                                                    </span>
-
-                                                    <button
-                                                        onClick={() => onAddToCart(service, 'service')}
-                                                        className="h-10 w-10 flex items-center justify-center text-warning hover:bg-warning-soft rounded-xl transition-colors"
-                                                    >
-                                                        <Plus className="h-5 w-5 stroke-[3px]" />
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        </Card>
-                                    );
-                                })
-                            ) : (
-                                <div className="col-span-full py-16 text-center animate-fade-in">
-                                    <Wrench className="h-16 w-16 mx-auto mb-4 text-[var(--color-text-gray)] opacity-20" />
-                                    <h3 className="text-lg font-bold mb-1 uppercase tracking-widest">{t.clear}</h3>
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() => setSearchTerm('')}
-                                        className="border-2 border-warning text-warning hover:bg-primary hover:text-[var(--color-text-white)] rounded-full px-8 py-6 font-black uppercase text-xs"
-                                    >
-                                        {t.clear}
-                                    </Button>
+                                            ))}
+                                        </div>
+                                    )}
                                 </div>
-                            )
-                        )}
+                                <div className="grid grid-cols-3 gap-2">
+                                    <div>
+                                        <label className="text-[9px] font-black uppercase tracking-widest text-[var(--color-text-gray)] block mb-1">{ta ? 'எண்' : 'Qty'}</label>
+                                        <input type="number" inputMode="decimal" min="1" value={row.qty} onFocus={(e) => e.target.select()} onChange={(e) => updateRow(row.id, 'qty', e.target.value)}
+                                            className="w-full bg-[var(--color-bg-dark)] border border-[var(--color-border)] rounded-control px-2 py-2.5 text-sm font-bold text-center outline-none focus:border-primary" />
+                                    </div>
+                                    <div>
+                                        <label className="text-[9px] font-black uppercase tracking-widest text-[var(--color-text-gray)] block mb-1">{ta ? 'மாற்று ₹' : 'Exchange ₹'}</label>
+                                        <input type="number" inputMode="decimal" value={row.exchangeValue} onFocus={(e) => e.target.select()} onChange={(e) => updateRow(row.id, 'exchangeValue', e.target.value)} placeholder="0"
+                                            className="w-full bg-[var(--color-bg-dark)] border border-[var(--color-border)] rounded-control px-2 py-2.5 text-sm font-bold text-right text-danger outline-none focus:border-danger" />
+                                    </div>
+                                    <div>
+                                        <label className="text-[9px] font-black uppercase tracking-widest text-[var(--color-text-gray)] block mb-1">{ta ? 'ஸ்கிராப் ₹' : 'Scrap ₹'}</label>
+                                        <input type="number" inputMode="decimal" value={row.scrapValue} onFocus={(e) => e.target.select()} onChange={(e) => updateRow(row.id, 'scrapValue', e.target.value)} placeholder="0"
+                                            className="w-full bg-[var(--color-bg-dark)] border border-[var(--color-border)] rounded-control px-2 py-2.5 text-sm font-bold text-right outline-none focus:border-primary" />
+                                    </div>
+                                </div>
+                                <button onClick={() => removeRow(row.id)} className="w-full h-9 flex items-center justify-center gap-2 rounded-control bg-danger-soft text-danger text-[11px] font-black uppercase tracking-widest active:scale-95">
+                                    <Trash2 className="h-4 w-4" /> {ta ? 'நீக்கு' : 'Remove'}
+                                </button>
+                            </div>
+                        ))}
+                        <Button onClick={addAllToCart} disabled={!oldPartRows.some(r => r.name && r.exchangeValue)} className="w-full rounded-control py-3 font-black uppercase text-xs tracking-widest disabled:opacity-30">
+                            {t.add_old_part || 'Add All to Bill'}
+                        </Button>
                     </div>
                 </div>
+            ) : (
+                <div className="flex-1 overflow-y-auto px-3 pt-3 pb-28 md:pb-6 space-y-2">
+                    {list.length === 0 ? (
+                        <div className="py-16 text-center">
+                            <Package className="h-12 w-12 mx-auto mb-3 text-[var(--color-text-gray)] opacity-20" />
+                            <p className="text-sm font-bold text-[var(--color-text-gray)]">{emptyLabel}</p>
+                            {searchTerm && (
+                                <button onClick={() => setSearchTerm('')} className="mt-3 text-primary text-xs font-black uppercase tracking-widest">
+                                    {t.clear || 'Clear'}
+                                </button>
+                            )}
+                        </div>
+                    ) : (
+                        list.map(item => <ItemRow key={`${activeTab}-${item.id}`} item={item} type={activeTab === 'products' ? 'product' : 'service'} />)
+                    )}
+                </div>
+            )}
 
             <BarcodeScannerModal
                 isOpen={showScanner}
                 onClose={() => setShowScanner(false)}
                 onDetect={handleBarcodeDetected}
-                title={lang === 'ta' ? 'பார்கோடு ஸ்கேன்' : 'Scan barcode'}
+                title={ta ? 'பார்கோடு ஸ்கேன்' : 'Scan barcode'}
             />
         </div>
     );

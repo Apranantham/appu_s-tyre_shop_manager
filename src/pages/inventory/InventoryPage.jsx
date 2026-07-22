@@ -12,6 +12,7 @@ import ProductForm from './components/ProductForm';
 import { useSettings } from '../../context/SettingsContext';
 import { translations } from '../../utils/translations';
 import { PRODUCT_CATEGORIES, FALLBACK_IMAGE } from '../../utils/constants';
+import { matchesQuery, displayNames } from '../../utils/itemName';
 import { ProductCardSkeleton } from '../../components/ui/SkeletonVariants';
 
 const InventoryPage = () => {
@@ -45,11 +46,9 @@ const InventoryPage = () => {
     }, [products]);
 
     const filteredProducts = products.filter(product => {
-        const matchesSearch =
-            product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            product.brand.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            product.size.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            (product.barcode || '').toLowerCase().includes(searchTerm.toLowerCase());
+        // Shared cross-language matcher (also crash-safe when brand/size are
+        // blank on a generic product, and matches the bilingual nameAlt).
+        const matchesSearch = matchesQuery(product, searchTerm, ['brand', 'size', 'barcode']);
 
         let matchesCategory = false;
         if (activeCategory === 'all') {
@@ -255,7 +254,10 @@ const InventoryPage = () => {
                                 <div className="flex justify-between items-start gap-4">
                                     <div className="min-w-0">
                                         <h3 className="font-black text-xl leading-tight text-[var(--color-text-white)] tracking-tight truncate group-hover:text-[var(--color-primary)] transition-colors">{product.name}</h3>
-                                        <p className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-gray)] mt-1 opacity-60">{product.brand}</p>
+                                        {displayNames(product).secondary && (
+                                            <p className="text-[11px] font-semibold text-[var(--color-text-gray)] truncate leading-tight">{displayNames(product).secondary}</p>
+                                        )}
+                                        {product.brand && <p className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-gray)] mt-1 opacity-60">{product.brand}</p>}
                                     </div>
                                     <div className="text-right flex-shrink-0">
                                         <p className="font-black text-xl text-[var(--color-primary)]">₹{product.price.toLocaleString()}</p>

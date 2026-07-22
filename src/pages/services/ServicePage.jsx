@@ -21,8 +21,10 @@ const iconMap = {
     tool: Wrench
 };
 
-const ServiceForm = ({ onSubmit, initialData, onCancel, t }) => {
-    const [formData, setFormData] = useState(initialData || { name: '', price: '', icon: 'tool', category: 'maintenance' });
+const ServiceForm = ({ onSubmit, initialData, onCancel, t, lang }) => {
+    // Defaults first so nameAlt is always controlled, even for older services
+    // saved before the field existed.
+    const [formData, setFormData] = useState({ name: '', nameAlt: '', price: '', icon: 'tool', category: 'maintenance', ...(initialData || {}) });
 
     const handleSubmit = (e) => {
         e.preventDefault();
@@ -37,6 +39,17 @@ const ServiceForm = ({ onSubmit, initialData, onCancel, t }) => {
                     required
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    className="w-full rounded-md border border-[var(--color-border)] bg-[var(--color-bg-dark)] px-3 py-2 text-sm text-[var(--color-text)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                />
+            </div>
+            <div className="space-y-2">
+                <label className="text-sm font-medium text-[var(--color-text-gray)]">
+                    {lang === 'ta' ? 'மற்ற மொழி பெயர் (விருப்பம்)' : 'Name in other language (optional)'}
+                </label>
+                <input
+                    value={formData.nameAlt}
+                    onChange={(e) => setFormData({ ...formData, nameAlt: e.target.value })}
+                    placeholder={lang === 'ta' ? 'English ⇄ தமிழ்' : 'Tamil ⇄ English'}
                     className="w-full rounded-md border border-[var(--color-border)] bg-[var(--color-bg-dark)] px-3 py-2 text-sm text-[var(--color-text)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                 />
             </div>
@@ -188,6 +201,7 @@ const ServicePage = () => {
             >
                 <ServiceForm
                     t={t}
+                    lang={lang}
                     initialData={editingService}
                     onSubmit={editingService ? handleEdit : handleAdd}
                     onCancel={() => setIsModalOpen(false)}

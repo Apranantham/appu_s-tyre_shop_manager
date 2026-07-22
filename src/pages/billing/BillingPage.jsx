@@ -725,7 +725,10 @@ Thank you for your business!`;
             )}
 
             {/* Left Side: Items (Search/Grid) */}
-            <div className={`w-full lg:w-[60%] h-fit lg:h-full flex-col gap-3 ${showCart ? 'hidden md:flex' : 'flex'}`}>
+            {/* Bounded height on mobile so BillingItems owns its own scroll —
+                its sticky search/tabs/chips header stays put while only the item
+                list scrolls (100dvh minus the top app header + bottom cart bar). */}
+            <div className={`w-full lg:w-[60%] h-[calc(100dvh-11rem)] lg:h-full flex-col gap-3 ${showCart ? 'hidden md:flex' : 'flex'}`}>
                 {/* Held (parked) bills — resume or discard */}
                 {heldBills.length > 0 && (
                     <div className="flex items-center gap-2 p-2.5 rounded-card border border-[var(--color-warning)]/30 bg-[var(--color-warning-soft)] overflow-x-auto shrink-0">
