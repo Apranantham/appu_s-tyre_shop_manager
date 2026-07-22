@@ -82,7 +82,9 @@ const ExpensesPage = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [filterCategory, setFilterCategory] = useState('all');
     const [showCategoryFilter, setShowCategoryFilter] = useState(false);
-    const [dateFilter, setDateFilter] = useState(location.state?.dateFilter || 'all');
+    // Default to the current month so the chip, the list, and the summary total
+    // all agree (an expenses page almost always wants "this month" first).
+    const [dateFilter, setDateFilter] = useState(location.state?.dateFilter || 'month');
     const [customDateFrom, setCustomDateFrom] = useState('');
     const [customDateTo, setCustomDateTo] = useState('');
     const [staffFilter, setStaffFilter] = useState('all');
@@ -211,20 +213,6 @@ const ExpensesPage = () => {
         return filteredExpenses.reduce((sum, e) => sum + (e.amount || 0), 0);
     }, [filteredExpenses]);
 
-    // Current-month total (independent of the list filters). The summary card
-    // previously showed filteredTotal even when unfiltered — with the default
-    // "All" date filter that was the ALL-TIME total mislabelled "Monthly", i.e.
-    // the reported wrong amount.
-    const monthly = useMemo(() => {
-        const now = new Date();
-        const m = now.getMonth(), y = now.getFullYear();
-        const rows = expenses.filter(e => {
-            const d = new Date(e.date);
-            return d.getMonth() === m && d.getFullYear() === y;
-        });
-        return { total: rows.reduce((s, e) => s + (e.amount || 0), 0), count: rows.length };
-    }, [expenses]);
-
     // Group by date
     const groupedExpenses = useMemo(() => {
         const groups = {};
@@ -286,18 +274,21 @@ const ExpensesPage = () => {
             {/* Summary Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {(() => {
-                    const noFilters = activeFilterCount === 0 && !searchTerm;
-                    const total = noFilters ? monthly.total : filteredTotal;
-                    const count = noFilters ? monthly.count : filteredExpenses.length;
-                    const label = noFilters
-                        ? (lang === 'ta' ? 'இந்த மாதம்' : 'This Month')
-                        : (lang === 'ta' ? 'வடிகட்டிய மொத்தம்' : 'Filtered Total');
+                    // The summary ALWAYS mirrors the current filter/list, so the
+                    // chip, the list, and this total can never disagree.
+                    const onlyDate = filterCategory === 'all' && staffFilter === 'all' && !searchTerm;
+                    let label;
+                    if (onlyDate && dateFilter === 'month') label = lang === 'ta' ? 'இந்த மாதம்' : 'This Month';
+                    else if (onlyDate && dateFilter === 'all') label = lang === 'ta' ? 'மொத்தம்' : 'All Time';
+                    else if (onlyDate && dateFilter === 'today') label = lang === 'ta' ? 'இன்று' : 'Today';
+                    else if (onlyDate && dateFilter === 'week') label = lang === 'ta' ? 'இந்த வாரம்' : 'This Week';
+                    else label = lang === 'ta' ? 'வடிகட்டிய மொத்தம்' : 'Filtered Total';
                     return (
                         <Card className="rounded-3xl p-5 bg-[var(--color-bg-card)] border border-[var(--color-border)]">
                             <p className="text-[var(--color-text-gray)] text-xs font-black uppercase tracking-widest mb-1">{label}</p>
-                            <h3 className="text-3xl font-bold text-danger">₹{total.toLocaleString()}</h3>
+                            <h3 className="text-3xl font-bold text-danger">₹{filteredTotal.toLocaleString()}</h3>
                             <p className="text-[10px] text-[var(--color-text-gray)] mt-1">
-                                {count} {lang === 'ta' ? 'பதிவுகள்' : 'records'}
+                                {filteredExpenses.length} {lang === 'ta' ? 'பதிவுகள்' : 'records'}
                             </p>
                         </Card>
                     );

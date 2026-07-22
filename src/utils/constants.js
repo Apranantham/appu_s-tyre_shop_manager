@@ -30,6 +30,20 @@ export const PRODUCT_UNITS = [
     { id: 'kg', label: 'Kg', label_ta: 'கிலோ' },
 ];
 
+// Suggested service groups — used to organize the Service page and the
+// collapsible groups on the Billing page. Shops can also type their own; any
+// group they save is remembered and offered as a suggestion thereafter.
+export const SERVICE_GROUPS = [
+    'Tyre Services',
+    'Wheel Alignment',
+    'Wheel Balancing',
+    'Oil Services',
+    'Washing',
+    'Mechanical',
+    'Electrical',
+    'Others',
+];
+
 export const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1543465077-111d4e4c965c?w=400&q=80';
 
 

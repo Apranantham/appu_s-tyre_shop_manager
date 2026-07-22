@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useMemo } from 'react';
-import { Search, Package, Wrench, Plus, Minus, X, ArrowLeft, History, Trash2, ScanLine, Star, Activity, Disc, Circle, Wind } from 'lucide-react';
+import { Search, Package, Wrench, Plus, Minus, X, ArrowLeft, History, Trash2, ScanLine, Star, ChevronDown, Activity, Disc, Circle, Wind } from 'lucide-react';
 import BarcodeScannerModal, { isBarcodeScanSupported } from '../../../components/common/BarcodeScannerModal';
 import { cn } from '../../../utils/cn';
 import { Button } from '../../../components/ui/Button';
@@ -49,19 +49,19 @@ const ItemRow = React.memo(function ItemRow({ item, type, qty, fav, ta, t, onAdd
             )}
         >
             {type === 'product' ? (
-                <div className="h-11 w-11 shrink-0 rounded-control overflow-hidden bg-[var(--color-bg-dark)] border border-[var(--color-border)]">
+                <div className="h-10 w-10 shrink-0 rounded-control overflow-hidden bg-[var(--color-bg-dark)] border border-[var(--color-border)]">
                     <img src={item.image || FALLBACK_IMAGE} alt="" className="h-full w-full object-cover" />
                 </div>
             ) : (
-                <div className="h-11 w-11 shrink-0 rounded-control flex items-center justify-center border border-white/5"
+                <div className="h-10 w-10 shrink-0 rounded-control flex items-center justify-center border border-white/5"
                     style={{ backgroundColor: meta.soft, color: meta.color }}>
                     <meta.Icon className="h-5 w-5" />
                 </div>
             )}
 
             <div className="flex-1 min-w-0">
-                <p className="font-bold text-sm text-[var(--color-text-white)] leading-tight truncate">{primary}</p>
-                {secondary && <p className="text-[11px] text-[var(--color-text-gray)] leading-tight truncate">{secondary}</p>}
+                <p className="font-bold text-sm text-[var(--color-text-white)] leading-snug line-clamp-2">{primary}</p>
+                {secondary && <p className="text-[11px] text-[var(--color-text-gray)] leading-tight line-clamp-1">{secondary}</p>}
                 <div className="flex items-center gap-1.5 mt-0.5">
                     {type === 'product' && item.size && (
                         <span className="text-[10px] font-bold text-[var(--color-text-gray)]">{item.size}</span>
@@ -81,30 +81,43 @@ const ItemRow = React.memo(function ItemRow({ item, type, qty, fav, ta, t, onAdd
 
             <span className="font-black text-sm text-[var(--color-text-white)] tabular-nums shrink-0">₹{Number(item.price || 0).toLocaleString('en-IN')}</span>
 
-            <button
-                onClick={(e) => { e.stopPropagation(); onToggleFav(`${type}:${item.id}`); }}
-                className={cn('h-9 w-9 shrink-0 flex items-center justify-center rounded-control transition-colors',
-                    fav ? 'text-warning' : 'text-[var(--color-text-gray)]/40 hover:text-[var(--color-text-gray)]')}
-                title={ta ? 'பிடித்தது' : 'Favorite'}
-            >
-                <Star className="h-4 w-4" fill={fav ? 'currentColor' : 'none'} />
-            </button>
+            {/* Star only pre-selection, to keep selected rows uncluttered */}
+            {!inCart && (
+                <button
+                    onClick={(e) => { e.stopPropagation(); onToggleFav(`${type}:${item.id}`); }}
+                    className={cn('h-9 w-9 shrink-0 flex items-center justify-center rounded-control transition-colors',
+                        fav ? 'text-warning' : 'text-[var(--color-text-gray)]/40 hover:text-[var(--color-text-gray)]')}
+                    title={ta ? 'பிடித்தது' : 'Favorite'}
+                >
+                    <Star className="h-4 w-4" fill={fav ? 'currentColor' : 'none'} />
+                </button>
+            )}
 
             {inCart ? (
-                <div className="flex items-center gap-1 shrink-0 bg-[var(--color-bg-card)] rounded-control p-0.5 border border-[var(--color-border)]" onClick={(e) => e.stopPropagation()}>
+                <div className="flex items-center gap-1 shrink-0" onClick={(e) => e.stopPropagation()}>
+                    <div className="flex items-center gap-0.5 bg-[var(--color-bg-card)] rounded-control p-0.5 border border-[var(--color-border)]">
+                        <button
+                            onClick={() => qty > 1 ? onStep(item.id, type, -1) : onRemove(item.id, type)}
+                            className="h-9 w-9 flex items-center justify-center rounded-[10px] text-[var(--color-text-white)] hover:bg-[var(--color-bg-dark)]"
+                        >
+                            <Minus className="h-4 w-4" />
+                        </button>
+                        <span className="w-5 text-center font-black text-sm tabular-nums">{qty}</span>
+                        <button
+                            onClick={() => onAdd(item, type)}
+                            disabled={outOfStock}
+                            className="h-9 w-9 flex items-center justify-center rounded-[10px] bg-primary text-white disabled:opacity-30"
+                        >
+                            <Plus className="h-4 w-4" />
+                        </button>
+                    </div>
+                    {/* One-tap remove the whole line */}
                     <button
-                        onClick={() => qty > 1 ? onStep(item.id, type, -1) : onRemove(item.id, type)}
-                        className="h-9 w-9 flex items-center justify-center rounded-[10px] text-[var(--color-text-white)] hover:bg-[var(--color-bg-dark)]"
+                        onClick={() => onRemove(item.id, type)}
+                        title={ta ? 'நீக்கு' : 'Remove'}
+                        className="h-9 w-9 shrink-0 flex items-center justify-center rounded-control text-danger bg-danger-soft"
                     >
-                        <Minus className="h-4 w-4" />
-                    </button>
-                    <span className="w-6 text-center font-black text-sm tabular-nums">{qty}</span>
-                    <button
-                        onClick={() => onAdd(item, type)}
-                        disabled={outOfStock}
-                        className="h-9 w-9 flex items-center justify-center rounded-[10px] bg-primary text-white disabled:opacity-30"
-                    >
-                        <Plus className="h-4 w-4" />
+                        <X className="h-4 w-4" />
                     </button>
                 </div>
             ) : (
@@ -191,9 +204,10 @@ const BillingItems = ({ onAddToCart, onUpdateQuantity, onRemoveItem, cart = [], 
     };
 
     // ---- Category chips for the active tab ----
-    const serviceTypesPresent = useMemo(() => {
-        const set = new Set(services.filter(s => s.active !== false).map(s => s.icon || 'tool'));
-        return Object.keys(SERVICE_META).filter(k => set.has(k));
+    // Services are organised by their Service Group; products by vehicle class.
+    const serviceGroupsPresent = useMemo(() => {
+        const set = new Set(services.filter(s => s.active !== false).map(s => (s.group || '').trim() || 'Others'));
+        return Array.from(set).sort();
     }, [services]);
 
     const chips = useMemo(() => {
@@ -207,8 +221,14 @@ const BillingItems = ({ onAddToCart, onUpdateQuantity, onRemoveItem, cart = [], 
                     .map(c => ({ id: c.id, label: ta && c.label_ta ? c.label_ta : c.label }))
             );
         }
-        return base.concat(serviceTypesPresent.map(k => ({ id: k, label: ta ? SERVICE_META[k].label_ta : SERVICE_META[k].label })));
-    }, [activeTab, serviceTypesPresent, ta]);
+        return base.concat(serviceGroupsPresent.map(g => ({ id: g, label: g })));
+    }, [activeTab, serviceGroupsPresent, ta]);
+
+    // Collapsible service groups (Billing shows services grouped, not one long list).
+    const [collapsed, setCollapsed] = useState(() => new Set());
+    const toggleCollapse = (g) => setCollapsed(prev => {
+        const n = new Set(prev); n.has(g) ? n.delete(g) : n.add(g); return n;
+    });
 
     // ---- Filtered + ranked lists ----
     const visibleProducts = useMemo(() => {
@@ -221,9 +241,22 @@ const BillingItems = ({ onAddToCart, onUpdateQuantity, onRemoveItem, cart = [], 
     const visibleServices = useMemo(() => {
         let list = services.filter(s => s.active !== false && matchesQuery(s, searchTerm));
         if (category === 'fav') list = list.filter(s => favorites.has(`service:${s.id}`));
-        else if (SERVICE_META[category]) list = list.filter(s => (s.icon || 'tool') === category);
+        else if (category !== 'all') list = list.filter(s => ((s.group || '').trim() || 'Others') === category);
         return rankItems(list, 'service', stats, favorites);
     }, [services, searchTerm, category, favorites, stats]);
+
+    // Collapsible group sections are used only on the Services tab when nothing
+    // is being searched/filtered; otherwise a flat ranked list is clearer.
+    const showGroupedServices = activeTab === 'services' && category === 'all' && !searchTerm;
+    const serviceSections = useMemo(() => {
+        if (!showGroupedServices) return null;
+        const map = {};
+        visibleServices.forEach(s => {
+            const g = (s.group || '').trim() || 'Others';
+            (map[g] = map[g] || []).push(s);
+        });
+        return Object.entries(map).sort((a, b) => a[0].localeCompare(b[0]));
+    }, [visibleServices, showGroupedServices]);
 
     // ItemRow is hoisted to module scope (defined below imports) so its
     // component TYPE identity is stable — otherwise React remounted every row's
@@ -232,6 +265,22 @@ const BillingItems = ({ onAddToCart, onUpdateQuantity, onRemoveItem, cart = [], 
     const emptyLabel = activeTab === 'products'
         ? (ta ? 'பொருட்கள் இல்லை' : 'No products found')
         : (ta ? 'சேவைகள் இல்லை' : 'No services found');
+
+    const renderRow = (item, rowType) => (
+        <ItemRow
+            key={`${rowType}-${item.id}`}
+            item={item}
+            type={rowType}
+            qty={getItemQuantity(item.id, rowType)}
+            fav={favorites.has(`${rowType}:${item.id}`)}
+            ta={ta}
+            t={t}
+            onAdd={onAddToCart}
+            onStep={onUpdateQuantity}
+            onRemove={onRemoveItem}
+            onToggleFav={toggleFavorite}
+        />
+    );
 
     return (
         <div className="flex flex-col h-full bg-[var(--color-bg-card)] border border-[var(--color-border)] rounded-xl md:mr-4 overflow-hidden w-full max-w-full">
@@ -390,25 +439,27 @@ const BillingItems = ({ onAddToCart, onUpdateQuantity, onRemoveItem, cart = [], 
                                 </button>
                             )}
                         </div>
-                    ) : (
-                        list.map(item => {
-                            const rowType = activeTab === 'products' ? 'product' : 'service';
+                    ) : showGroupedServices ? (
+                        // Collapsible group sections (Services tab, unfiltered).
+                        serviceSections.map(([group, items]) => {
+                            const isCollapsed = collapsed.has(group);
                             return (
-                                <ItemRow
-                                    key={`${rowType}-${item.id}`}
-                                    item={item}
-                                    type={rowType}
-                                    qty={getItemQuantity(item.id, rowType)}
-                                    fav={favorites.has(`${rowType}:${item.id}`)}
-                                    ta={ta}
-                                    t={t}
-                                    onAdd={onAddToCart}
-                                    onStep={onUpdateQuantity}
-                                    onRemove={onRemoveItem}
-                                    onToggleFav={toggleFavorite}
-                                />
+                                <div key={group} className="space-y-2">
+                                    <button
+                                        onClick={() => toggleCollapse(group)}
+                                        className="w-full flex items-center gap-2 px-1 py-1.5 sticky top-0 bg-[var(--color-bg-card)] z-[1]"
+                                    >
+                                        <ChevronDown className={cn('h-4 w-4 text-[var(--color-text-gray)] transition-transform', isCollapsed && '-rotate-90')} />
+                                        <span className="text-xs font-black uppercase tracking-widest text-[var(--color-text-gray)]">{group}</span>
+                                        <span className="text-[10px] font-bold text-[var(--color-text-gray)]/60">{items.length}</span>
+                                        <div className="flex-1 h-px bg-[var(--color-border)]" />
+                                    </button>
+                                    {!isCollapsed && <div className="space-y-2">{items.map(s => renderRow(s, 'service'))}</div>}
+                                </div>
                             );
                         })
+                    ) : (
+                        list.map(item => renderRow(item, activeTab === 'products' ? 'product' : 'service'))
                     )}
                 </div>
             )}
