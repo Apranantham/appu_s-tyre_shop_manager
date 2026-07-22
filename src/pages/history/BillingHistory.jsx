@@ -540,20 +540,21 @@ Thank you for your business!`;
                                                         "text-[8px] font-black uppercase tracking-[0.2em] px-2 py-1 rounded-full border",
                                                         inv.paymentStatus === 'paid' ? "bg-success-soft border-success/20 text-success" :
                                                             inv.paymentStatus === 'partially_paid' ? "bg-warning-soft border-warning/20 text-warning" :
-                                                                "bg-danger-soft border-danger/20 text-danger"
+                                                                inv.paymentStatus === 'credit' ? "bg-secondary-soft border-secondary/20 text-secondary" :
+                                                                    "bg-danger-soft border-danger/20 text-danger"
                                                     )}>
-                                                        {(inv.paymentStatus || 'unknown').replace('_', ' ')}
+                                                        {inv.paymentStatus === 'credit' ? (lang === 'ta' ? 'கிரெடிட்' : 'credit') : (inv.paymentStatus || 'unknown').replace('_', ' ')}
                                                     </span>
                                                 </td>
                                                 <td className="px-6 py-4">
                                                     <p className="font-black text-sm text-[var(--color-primary)]">₹{inv.total.toFixed(2)}</p>
-                                                    {inv.paymentStatus !== 'paid' && (
+                                                    {inv.paymentStatus !== 'paid' && inv.paymentStatus !== 'credit' && (
                                                         <p className="text-[9px] font-black text-warning mt-0.5 italic">Bal: ₹{(inv.balanceAmount || 0).toLocaleString()}</p>
                                                     )}
                                                 </td>
                                                 <td className="px-6 py-4 text-right">
                                                     <div className="flex items-center justify-end space-x-2">
-                                                        {inv.paymentStatus !== 'paid' && (
+                                                        {inv.paymentStatus !== 'paid' && inv.paymentStatus !== 'credit' && (
                                                             <button
                                                                 onClick={(e) => {
                                                                     e.stopPropagation();
@@ -614,16 +615,17 @@ Thank you for your business!`;
                                                 "inline-block mt-2 text-[8px] font-black uppercase tracking-[0.1em] px-2.5 py-1 rounded-lg border",
                                                 inv.paymentStatus === 'paid' ? "bg-success-soft border-success/20 text-success" :
                                                     inv.paymentStatus === 'partially_paid' ? "bg-warning-soft border-warning/20 text-warning" :
-                                                        "bg-danger-soft border-danger/20 text-danger"
+                                                        inv.paymentStatus === 'credit' ? "bg-secondary-soft border-secondary/20 text-secondary" :
+                                                            "bg-danger-soft border-danger/20 text-danger"
                                             )}>
-                                                {inv.paymentStatus}
+                                                {inv.paymentStatus === 'credit' ? (lang === 'ta' ? 'கிரெடிட்' : 'credit') : inv.paymentStatus}
                                             </span>
                                         </div>
                                     </div>
 
                                     <div className="flex items-center justify-between gap-3">
                                         <div className="flex gap-2 flex-1">
-                                            {inv.paymentStatus !== 'paid' && (
+                                            {inv.paymentStatus !== 'paid' && inv.paymentStatus !== 'credit' && (
                                                 <button
                                                     onClick={(e) => {
                                                         e.stopPropagation();
