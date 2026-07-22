@@ -547,7 +547,7 @@ Thank you for your business!`;
     }, 0);
 
     return (
-        <div ref={pageRef} className="min-h-[calc(100vh-2rem)] lg:h-[calc(100vh-2rem)] flex flex-col lg:flex-row gap-4 overflow-y-auto lg:overflow-hidden relative pb-20 lg:pb-0">
+        <div ref={pageRef} className="lg:h-[calc(100vh-2rem)] flex flex-col lg:flex-row gap-4 overflow-y-auto lg:overflow-hidden relative pb-4 lg:pb-0">
             {/* Success Overlay */}
             {isCheckoutSuccess && lastInvoice && createPortal(
                 <div className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-xl flex items-start justify-center overflow-y-auto p-4 py-8 print:hidden">

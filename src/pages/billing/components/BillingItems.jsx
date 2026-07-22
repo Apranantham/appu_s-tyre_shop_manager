@@ -24,6 +24,95 @@ const SERVICE_META = {
 
 const FAV_KEY = 'tyreshop_favorites';
 
+// Module-scope so its component TYPE is stable across BillingItems renders
+// (React updates rows in place instead of remounting every DOM subtree per
+// keystroke). All data + handlers arrive as props. React.memo skips rows whose
+// props are unchanged.
+const ItemRow = React.memo(function ItemRow({ item, type, qty, fav, ta, t, onAdd, onStep, onRemove, onToggleFav }) {
+    const { primary, secondary } = displayNames(item);
+    const meta = type === 'service' ? (SERVICE_META[item.icon] || SERVICE_META.tool) : null;
+    const outOfStock = type === 'product' && !(item.stock > 0);
+    const inCart = qty > 0;
+
+    return (
+        <div
+            onClick={() => { if (!outOfStock) onAdd(item, type); }}
+            className={cn(
+                'flex items-center gap-3 px-3 py-2.5 rounded-card border transition-colors select-none',
+                inCart ? 'border-primary/50 bg-primary-soft'
+                    : 'border-[var(--color-border)] bg-[var(--color-bg-dark)]/40 active:bg-[var(--color-bg-dark)]/70',
+                outOfStock ? 'opacity-45' : 'cursor-pointer'
+            )}
+        >
+            {type === 'product' ? (
+                <div className="h-11 w-11 shrink-0 rounded-control overflow-hidden bg-[var(--color-bg-dark)] border border-[var(--color-border)]">
+                    <img src={item.image || FALLBACK_IMAGE} alt="" className="h-full w-full object-cover" />
+                </div>
+            ) : (
+                <div className="h-11 w-11 shrink-0 rounded-control flex items-center justify-center border border-white/5"
+                    style={{ backgroundColor: meta.soft, color: meta.color }}>
+                    <meta.Icon className="h-5 w-5" />
+                </div>
+            )}
+
+            <div className="flex-1 min-w-0">
+                <p className="font-bold text-sm text-[var(--color-text-white)] leading-tight truncate">{primary}</p>
+                {secondary && <p className="text-[11px] text-[var(--color-text-gray)] leading-tight truncate">{secondary}</p>}
+                <div className="flex items-center gap-1.5 mt-0.5">
+                    {type === 'product' && item.size && (
+                        <span className="text-[10px] font-bold text-[var(--color-text-gray)]">{item.size}</span>
+                    )}
+                    {type === 'product' && (
+                        <span className={cn('text-[10px] font-black uppercase tracking-wide', outOfStock ? 'text-danger' : 'text-success')}>
+                            {outOfStock ? (t.out_of_stock || 'Out') : `${t.in_stock || 'Stock'} ${item.stock}`}
+                        </span>
+                    )}
+                    {type === 'service' && (
+                        <span className="text-[10px] font-black uppercase tracking-wide" style={{ color: meta.color }}>
+                            {ta ? meta.label_ta : meta.label}
+                        </span>
+                    )}
+                </div>
+            </div>
+
+            <span className="font-black text-sm text-[var(--color-text-white)] tabular-nums shrink-0">₹{Number(item.price || 0).toLocaleString('en-IN')}</span>
+
+            <button
+                onClick={(e) => { e.stopPropagation(); onToggleFav(`${type}:${item.id}`); }}
+                className={cn('h-9 w-9 shrink-0 flex items-center justify-center rounded-control transition-colors',
+                    fav ? 'text-warning' : 'text-[var(--color-text-gray)]/40 hover:text-[var(--color-text-gray)]')}
+                title={ta ? 'பிடித்தது' : 'Favorite'}
+            >
+                <Star className="h-4 w-4" fill={fav ? 'currentColor' : 'none'} />
+            </button>
+
+            {inCart ? (
+                <div className="flex items-center gap-1 shrink-0 bg-[var(--color-bg-card)] rounded-control p-0.5 border border-[var(--color-border)]" onClick={(e) => e.stopPropagation()}>
+                    <button
+                        onClick={() => qty > 1 ? onStep(item.id, type, -1) : onRemove(item.id, type)}
+                        className="h-9 w-9 flex items-center justify-center rounded-[10px] text-[var(--color-text-white)] hover:bg-[var(--color-bg-dark)]"
+                    >
+                        <Minus className="h-4 w-4" />
+                    </button>
+                    <span className="w-6 text-center font-black text-sm tabular-nums">{qty}</span>
+                    <button
+                        onClick={() => onAdd(item, type)}
+                        disabled={outOfStock}
+                        className="h-9 w-9 flex items-center justify-center rounded-[10px] bg-primary text-white disabled:opacity-30"
+                    >
+                        <Plus className="h-4 w-4" />
+                    </button>
+                </div>
+            ) : (
+                <div className={cn('h-9 w-9 shrink-0 flex items-center justify-center rounded-control',
+                    outOfStock ? 'text-[var(--color-text-gray)]/30' : 'bg-primary/15 text-primary')}>
+                    <Plus className="h-5 w-5" />
+                </div>
+            )}
+        </div>
+    );
+});
+
 const BillingItems = ({ onAddToCart, onUpdateQuantity, onRemoveItem, cart = [], onBack, editingInvoiceNo }) => {
     const { products } = useProducts();
     const { services } = useServices();
@@ -43,12 +132,12 @@ const BillingItems = ({ onAddToCart, onUpdateQuantity, onRemoveItem, cart = [], 
     const [favorites, setFavorites] = useState(() => {
         try { return new Set(JSON.parse(localStorage.getItem(FAV_KEY) || '[]')); } catch { return new Set(); }
     });
-    const toggleFavorite = (key) => setFavorites(prev => {
+    const toggleFavorite = useCallback((key) => setFavorites(prev => {
         const next = new Set(prev);
         next.has(key) ? next.delete(key) : next.add(key);
         localStorage.setItem(FAV_KEY, JSON.stringify([...next]));
         return next;
-    });
+    }), []);
 
     const switchTab = (tab) => { setActiveTab(tab); setCategory('all'); };
 
@@ -132,100 +221,9 @@ const BillingItems = ({ onAddToCart, onUpdateQuantity, onRemoveItem, cart = [], 
         return rankItems(list, 'service', stats, favorites);
     }, [services, searchTerm, category, favorites, stats]);
 
-    // ---- Compact row ----
-    const ItemRow = ({ item, type }) => {
-        const qty = getItemQuantity(item.id, type);
-        const favKey = `${type}:${item.id}`;
-        const fav = favorites.has(favKey);
-        const { primary, secondary } = displayNames(item);
-        const meta = type === 'service' ? (SERVICE_META[item.icon] || SERVICE_META.tool) : null;
-        const outOfStock = type === 'product' && !(item.stock > 0);
-        const inCart = qty > 0;
-
-        return (
-            <div
-                onClick={() => { if (!outOfStock) onAddToCart(item, type); }}
-                className={cn(
-                    'flex items-center gap-3 px-3 py-2.5 rounded-card border transition-colors select-none',
-                    inCart ? 'border-primary/50 bg-primary-soft'
-                        : 'border-[var(--color-border)] bg-[var(--color-bg-dark)]/40 active:bg-[var(--color-bg-dark)]/70',
-                    outOfStock ? 'opacity-45' : 'cursor-pointer'
-                )}
-            >
-                {/* Thumb / type icon */}
-                {type === 'product' ? (
-                    <div className="h-11 w-11 shrink-0 rounded-control overflow-hidden bg-[var(--color-bg-dark)] border border-[var(--color-border)]">
-                        <img src={item.image || FALLBACK_IMAGE} alt="" className="h-full w-full object-cover" />
-                    </div>
-                ) : (
-                    <div className="h-11 w-11 shrink-0 rounded-control flex items-center justify-center border border-white/5"
-                        style={{ backgroundColor: meta.soft, color: meta.color }}>
-                        <meta.Icon className="h-5 w-5" />
-                    </div>
-                )}
-
-                {/* Names + meta */}
-                <div className="flex-1 min-w-0">
-                    <p className="font-bold text-sm text-[var(--color-text-white)] leading-tight truncate">{primary}</p>
-                    {secondary && <p className="text-[11px] text-[var(--color-text-gray)] leading-tight truncate">{secondary}</p>}
-                    <div className="flex items-center gap-1.5 mt-0.5">
-                        {type === 'product' && item.size && (
-                            <span className="text-[10px] font-bold text-[var(--color-text-gray)]">{item.size}</span>
-                        )}
-                        {type === 'product' && (
-                            <span className={cn('text-[10px] font-black uppercase tracking-wide', outOfStock ? 'text-danger' : 'text-success')}>
-                                {outOfStock ? (t.out_of_stock || 'Out') : `${t.in_stock || 'Stock'} ${item.stock}`}
-                            </span>
-                        )}
-                        {type === 'service' && (
-                            <span className="text-[10px] font-black uppercase tracking-wide" style={{ color: meta.color }}>
-                                {ta ? meta.label_ta : meta.label}
-                            </span>
-                        )}
-                    </div>
-                </div>
-
-                {/* Price */}
-                <span className="font-black text-sm text-[var(--color-text-white)] tabular-nums shrink-0">₹{Number(item.price || 0).toLocaleString('en-IN')}</span>
-
-                {/* Favorite */}
-                <button
-                    onClick={(e) => { e.stopPropagation(); toggleFavorite(favKey); }}
-                    className={cn('h-9 w-9 shrink-0 flex items-center justify-center rounded-control transition-colors',
-                        fav ? 'text-warning' : 'text-[var(--color-text-gray)]/40 hover:text-[var(--color-text-gray)]')}
-                    title={ta ? 'பிடித்தது' : 'Favorite'}
-                >
-                    <Star className="h-4 w-4" fill={fav ? 'currentColor' : 'none'} />
-                </button>
-
-                {/* Stepper (only when in cart) or add hint */}
-                {inCart ? (
-                    <div className="flex items-center gap-1 shrink-0 bg-[var(--color-bg-card)] rounded-control p-0.5 border border-[var(--color-border)]" onClick={(e) => e.stopPropagation()}>
-                        <button
-                            onClick={() => qty > 1 ? onUpdateQuantity(item.id, type, -1) : onRemoveItem(item.id, type)}
-                            className="h-9 w-9 flex items-center justify-center rounded-[10px] text-[var(--color-text-white)] hover:bg-[var(--color-bg-dark)]"
-                        >
-                            <Minus className="h-4 w-4" />
-                        </button>
-                        <span className="w-6 text-center font-black text-sm tabular-nums">{qty}</span>
-                        <button
-                            onClick={() => onAddToCart(item, type)}
-                            disabled={outOfStock}
-                            className="h-9 w-9 flex items-center justify-center rounded-[10px] bg-primary text-white disabled:opacity-30"
-                        >
-                            <Plus className="h-4 w-4" />
-                        </button>
-                    </div>
-                ) : (
-                    <div className={cn('h-9 w-9 shrink-0 flex items-center justify-center rounded-control',
-                        outOfStock ? 'text-[var(--color-text-gray)]/30' : 'bg-primary/15 text-primary')}>
-                        <Plus className="h-5 w-5" />
-                    </div>
-                )}
-            </div>
-        );
-    };
-
+    // ItemRow is hoisted to module scope (defined below imports) so its
+    // component TYPE identity is stable — otherwise React remounted every row's
+    // DOM subtree on each keystroke/favorite toggle. Handlers are passed as props.
     const list = activeTab === 'products' ? visibleProducts : visibleServices;
     const emptyLabel = activeTab === 'products'
         ? (ta ? 'பொருட்கள் இல்லை' : 'No products found')
@@ -315,7 +313,7 @@ const BillingItems = ({ onAddToCart, onUpdateQuantity, onRemoveItem, cart = [], 
 
             {/* Scrollable list (or old-parts form) */}
             {activeTab === 'old_parts' ? (
-                <div className="flex-1 overflow-y-auto p-3">
+                <div className="flex-1 overflow-y-auto p-3 pb-28 md:pb-6">
                     <div className="bg-[var(--color-bg-dark)]/60 border border-[var(--color-border)] p-3 rounded-card space-y-3">
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
@@ -389,7 +387,24 @@ const BillingItems = ({ onAddToCart, onUpdateQuantity, onRemoveItem, cart = [], 
                             )}
                         </div>
                     ) : (
-                        list.map(item => <ItemRow key={`${activeTab}-${item.id}`} item={item} type={activeTab === 'products' ? 'product' : 'service'} />)
+                        list.map(item => {
+                            const rowType = activeTab === 'products' ? 'product' : 'service';
+                            return (
+                                <ItemRow
+                                    key={`${rowType}-${item.id}`}
+                                    item={item}
+                                    type={rowType}
+                                    qty={getItemQuantity(item.id, rowType)}
+                                    fav={favorites.has(`${rowType}:${item.id}`)}
+                                    ta={ta}
+                                    t={t}
+                                    onAdd={onAddToCart}
+                                    onStep={onUpdateQuantity}
+                                    onRemove={onRemoveItem}
+                                    onToggleFav={toggleFavorite}
+                                />
+                            );
+                        })
                     )}
                 </div>
             )}
