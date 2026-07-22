@@ -67,8 +67,10 @@ const Sidebar = ({ isMobile }) => {
                     </div>
                 </div>
 
-                {/* Navigation */}
-                <nav className="flex-1 space-y-0.5 px-3 py-4 overflow-y-auto">
+                {/* Navigation — min-h-0 lets this flex child actually shrink so
+                    ONLY the nav scrolls when the list is long; the brand and
+                    footer stay pinned instead of the whole sidebar scrolling. */}
+                <nav className="flex-1 min-h-0 space-y-0.5 px-3 py-3 overflow-y-auto no-scrollbar">
                     {navItems.map((item) => (
                         <NavLink
                             key={item.path}

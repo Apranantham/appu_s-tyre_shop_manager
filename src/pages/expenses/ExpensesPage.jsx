@@ -264,10 +264,10 @@ const ExpensesPage = () => {
                 </div>
                 <Button
                     onClick={openAdd}
-                    className="bg-[var(--color-primary)] hover:bg-primary-hover text-white rounded-2xl px-5 py-3 font-black uppercase tracking-widest text-xs shadow-lg shadow-black/25 border-none flex items-center gap-2"
+                    className="h-11 px-5 rounded-control bg-primary text-white font-black uppercase tracking-wide text-xs shadow-card border-none flex items-center gap-2 shrink-0"
                 >
-                    <Plus className="h-4 w-4 stroke-[3px]" />
-                    {t.add_expense || 'Add Expense'}
+                    <Plus className="h-5 w-5 stroke-[3px]" />
+                    <span className="hidden xs:inline">{t.add_expense || 'Add Expense'}</span>
                 </Button>
             </div>
 
